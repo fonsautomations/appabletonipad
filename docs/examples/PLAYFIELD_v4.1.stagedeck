@@ -1,0 +1,2913 @@
+{
+  "author" : "Imported from Ableton Live Set",
+  "controlPages" : [
+    {
+      "id" : "C69004C3-B8C9-4BD9-BEC1-5CD9C106CFEE",
+      "name" : "01 PULSO",
+      "widgets" : [
+        {
+          "colorHex" : "#FF3636",
+          "id" : "E041A66A-874D-4280-9601-873AE3E22FBE",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Energía",
+          "target" : {
+            "liveParameter" : {
+              "device" : "ENERGIA subir y soltar",
+              "deviceIndex" : 0,
+              "parameter" : "Energía",
+              "parameterIndex" : 1,
+              "track" : "01 PULSO",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#FF3636",
+          "id" : "C55BDBD8-0913-4CA0-B4EC-395132FAF003",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Soltar",
+          "target" : {
+            "liveParameter" : {
+              "device" : "ENERGIA subir y soltar",
+              "deviceIndex" : 0,
+              "parameter" : "Soltar",
+              "parameterIndex" : 2,
+              "track" : "01 PULSO",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#FF3636",
+          "id" : "3CA7BD56-22B0-4028-BF8D-3E28D8F9B615",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Roll",
+          "target" : {
+            "liveParameter" : {
+              "device" : "ENERGIA subir y soltar",
+              "deviceIndex" : 0,
+              "parameter" : "Roll",
+              "parameterIndex" : 3,
+              "track" : "01 PULSO",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#FF3636",
+          "id" : "C703B822-103B-4D2C-9862-70FC33E14BAF",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Silencio",
+          "target" : {
+            "liveParameter" : {
+              "device" : "ENERGIA subir y soltar",
+              "deviceIndex" : 0,
+              "parameter" : "Silencio",
+              "parameterIndex" : 4,
+              "track" : "01 PULSO",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#FF3636",
+          "id" : "D12ABA35-5C98-4871-AEE6-A247E2BAD339",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "VOL 02 VINTAGE",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "VOL 02 VINTAGE",
+              "parameterIndex" : 1,
+              "track" : "01 PULSO",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#FF3636",
+          "id" : "6B1C281B-39F3-4F6C-A14F-0040887F3C42",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "VOL 03 SATUR",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "VOL 03 SATUR",
+              "parameterIndex" : 2,
+              "track" : "01 PULSO",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#FF3636",
+          "id" : "D783AEC7-5B97-4ADC-8340-EFE5FC683A19",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "ROAR AMOUNT",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "ROAR AMOUNT",
+              "parameterIndex" : 3,
+              "track" : "01 PULSO",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#FF3636",
+          "id" : "D6ECA504-966D-4A92-AB68-BB770BE57C66",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "FILTER",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "FILTER",
+              "parameterIndex" : 4,
+              "track" : "01 PULSO",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#FF3636",
+          "id" : "15818FA2-C496-4E7D-99B9-76C5CA05A135",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Glue Threshold",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "Glue Threshold",
+              "parameterIndex" : 6,
+              "track" : "01 PULSO",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#FF3636",
+          "id" : "0A7D0474-6561-4B5A-BC3C-F7F5C9DAF4EE",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "WIDTH",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "WIDTH",
+              "parameterIndex" : 7,
+              "track" : "01 PULSO",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#FF3636",
+          "id" : "1BEF03DE-995B-4574-9682-03325C284FBB",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "DRIVE",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "DRIVE",
+              "parameterIndex" : 8,
+              "track" : "01 PULSO",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#F66C03",
+          "id" : "E2C53CAE-995F-4F5E-B3B9-A5797F04064F",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Boom",
+          "target" : {
+            "liveParameter" : {
+              "device" : "SOUND SYSTEM",
+              "deviceIndex" : 0,
+              "parameter" : "Boom",
+              "parameterIndex" : 1,
+              "track" : "KICK",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#F66C03",
+          "id" : "EA125663-A324-42EB-BBFD-6B3A0B6DA43E",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Afinación",
+          "target" : {
+            "liveParameter" : {
+              "device" : "SOUND SYSTEM",
+              "deviceIndex" : 0,
+              "parameter" : "Afinación",
+              "parameterIndex" : 2,
+              "track" : "KICK",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#F66C03",
+          "id" : "36A17FF4-F105-418E-A500-08AD2DB1FA0E",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Cola",
+          "target" : {
+            "liveParameter" : {
+              "device" : "SOUND SYSTEM",
+              "deviceIndex" : 0,
+              "parameter" : "Cola",
+              "parameterIndex" : 3,
+              "track" : "KICK",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#F66C03",
+          "id" : "084411DA-145E-4E21-AD69-EBB45DA321B3",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Drive",
+          "target" : {
+            "liveParameter" : {
+              "device" : "SOUND SYSTEM",
+              "deviceIndex" : 0,
+              "parameter" : "Drive",
+              "parameterIndex" : 4,
+              "track" : "KICK",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#F66C03",
+          "id" : "8CCF2E60-FE72-42BF-9234-DE3E27B972D8",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Boom",
+          "target" : {
+            "liveParameter" : {
+              "device" : "SOUND SYSTEM",
+              "deviceIndex" : 0,
+              "parameter" : "Boom",
+              "parameterIndex" : 1,
+              "track" : "KICK",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#F66C03",
+          "id" : "97C4FB06-E118-436D-8F54-E265D46AE5B7",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Afinación",
+          "target" : {
+            "liveParameter" : {
+              "device" : "SOUND SYSTEM",
+              "deviceIndex" : 0,
+              "parameter" : "Afinación",
+              "parameterIndex" : 2,
+              "track" : "KICK",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#F66C03",
+          "id" : "275C9734-44B3-470E-8808-3B5D85C8158C",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Cola",
+          "target" : {
+            "liveParameter" : {
+              "device" : "SOUND SYSTEM",
+              "deviceIndex" : 0,
+              "parameter" : "Cola",
+              "parameterIndex" : 3,
+              "track" : "KICK",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#F66C03",
+          "id" : "BE3CC102-6053-4908-A870-B9DB4E09C1FB",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Drive",
+          "target" : {
+            "liveParameter" : {
+              "device" : "SOUND SYSTEM",
+              "deviceIndex" : 0,
+              "parameter" : "Drive",
+              "parameterIndex" : 4,
+              "track" : "KICK",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        }
+      ]
+    },
+    {
+      "id" : "3DCD0B5B-E380-4B4B-81E5-EAED7546824C",
+      "name" : "02 GRAVE",
+      "widgets" : [
+        {
+          "colorHex" : "#FFA529",
+          "id" : "F2BA099F-5BDA-4584-9665-C2320972C164",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Energía",
+          "target" : {
+            "liveParameter" : {
+              "device" : "ENERGIA subir y soltar",
+              "deviceIndex" : 0,
+              "parameter" : "Energía",
+              "parameterIndex" : 1,
+              "track" : "02 GRAVE",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#FFA529",
+          "id" : "8939B309-FC02-46A1-8795-6B663277C974",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Soltar",
+          "target" : {
+            "liveParameter" : {
+              "device" : "ENERGIA subir y soltar",
+              "deviceIndex" : 0,
+              "parameter" : "Soltar",
+              "parameterIndex" : 2,
+              "track" : "02 GRAVE",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#FFA529",
+          "id" : "7DCE6E38-BF17-404B-8A1A-FF1A2CDCBA19",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Roll",
+          "target" : {
+            "liveParameter" : {
+              "device" : "ENERGIA subir y soltar",
+              "deviceIndex" : 0,
+              "parameter" : "Roll",
+              "parameterIndex" : 3,
+              "track" : "02 GRAVE",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#FFA529",
+          "id" : "27ECC304-F26B-40D0-987F-B35033B4A822",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Silencio",
+          "target" : {
+            "liveParameter" : {
+              "device" : "ENERGIA subir y soltar",
+              "deviceIndex" : 0,
+              "parameter" : "Silencio",
+              "parameterIndex" : 4,
+              "track" : "02 GRAVE",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#FFA529",
+          "id" : "19DFD6C2-E6AC-4AC4-B809-F07E1FCCBD53",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "VOL 02 VINTAGE",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "VOL 02 VINTAGE",
+              "parameterIndex" : 1,
+              "track" : "02 GRAVE",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#FFA529",
+          "id" : "6C57D57D-F8D8-424D-B7BA-A196D915F97A",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "VOL 03 SATUR",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "VOL 03 SATUR",
+              "parameterIndex" : 2,
+              "track" : "02 GRAVE",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#FFA529",
+          "id" : "32F52944-9EAE-4B64-B16D-927E08177A33",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "ROAR AMOUNT",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "ROAR AMOUNT",
+              "parameterIndex" : 3,
+              "track" : "02 GRAVE",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#FFA529",
+          "id" : "7BABDF6D-5DE9-408C-9314-CFD02901AD5D",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "FILTER",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "FILTER",
+              "parameterIndex" : 4,
+              "track" : "02 GRAVE",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#FFA529",
+          "id" : "5A97D804-C507-43D6-AC55-5483F48B2977",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Glue Threshold",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "Glue Threshold",
+              "parameterIndex" : 6,
+              "track" : "02 GRAVE",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#FFA529",
+          "id" : "405CDD56-BF3F-4D5B-B9B8-C41C1FF2D323",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "WIDTH",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "WIDTH",
+              "parameterIndex" : 7,
+              "track" : "02 GRAVE",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#FFA529",
+          "id" : "EA7794E7-7647-4FC7-A4B4-E52539392269",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "DRIVE",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "DRIVE",
+              "parameterIndex" : 8,
+              "track" : "02 GRAVE",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#FFA529",
+          "id" : "3B6298BB-9D3C-4023-9672-7BEDBC8938C5",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "VOL 02 VINTAGE",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "VOL 02 VINTAGE",
+              "parameterIndex" : 1,
+              "track" : "DFAM",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#FFA529",
+          "id" : "8958C1AC-C194-4F97-B225-EE28453D225E",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "VOL 03 SATUR",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "VOL 03 SATUR",
+              "parameterIndex" : 2,
+              "track" : "DFAM",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#FFA529",
+          "id" : "F6988E0F-4BDB-4E22-A1D2-CD2478FA0D52",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "ROAR AMOUNT",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "ROAR AMOUNT",
+              "parameterIndex" : 3,
+              "track" : "DFAM",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#FFA529",
+          "id" : "CFD161C4-ABD2-4920-91E7-287FCF853C0E",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "FILTER",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "FILTER",
+              "parameterIndex" : 4,
+              "track" : "DFAM",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#FFA529",
+          "id" : "64163ADE-73C3-43F8-87FC-DD84409431F3",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Pulso",
+          "target" : {
+            "liveParameter" : {
+              "device" : "LATIDO DFAM con ritmo y eco",
+              "deviceIndex" : 0,
+              "parameter" : "Pulso",
+              "parameterIndex" : 1,
+              "track" : "DFAM 2",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#FFA529",
+          "id" : "5C3C7D50-E1A1-4D16-88A2-FD31047AFCA4",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Cuenta",
+          "target" : {
+            "liveParameter" : {
+              "device" : "LATIDO DFAM con ritmo y eco",
+              "deviceIndex" : 0,
+              "parameter" : "Cuenta",
+              "parameterIndex" : 2,
+              "track" : "DFAM 2",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#FFA529",
+          "id" : "163C1486-5F59-4366-B91E-1EB566A01698",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Mordida",
+          "target" : {
+            "liveParameter" : {
+              "device" : "LATIDO DFAM con ritmo y eco",
+              "deviceIndex" : 0,
+              "parameter" : "Mordida",
+              "parameterIndex" : 3,
+              "track" : "DFAM 2",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#FFA529",
+          "id" : "84C66031-DF8B-4382-B544-8FD449DABB76",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Sucio",
+          "target" : {
+            "liveParameter" : {
+              "device" : "LATIDO DFAM con ritmo y eco",
+              "deviceIndex" : 0,
+              "parameter" : "Sucio",
+              "parameterIndex" : 4,
+              "track" : "DFAM 2",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#FFA529",
+          "id" : "17847EEF-E164-4EF7-821D-CA3BC8A5FE7F",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Sub",
+          "target" : {
+            "liveParameter" : {
+              "device" : "ABISMO",
+              "deviceIndex" : 0,
+              "parameter" : "Sub",
+              "parameterIndex" : 1,
+              "track" : "BASS",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#FFA529",
+          "id" : "CD732D87-3C4B-4132-86D1-2CA19CEDC800",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Cuerpo",
+          "target" : {
+            "liveParameter" : {
+              "device" : "ABISMO",
+              "deviceIndex" : 0,
+              "parameter" : "Cuerpo",
+              "parameterIndex" : 2,
+              "track" : "BASS",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#FFA529",
+          "id" : "BC5E7C6A-51DA-4A01-A38A-8B36CC95EC48",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Cruce",
+          "target" : {
+            "liveParameter" : {
+              "device" : "ABISMO",
+              "deviceIndex" : 0,
+              "parameter" : "Cruce",
+              "parameterIndex" : 3,
+              "track" : "BASS",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#FFA529",
+          "id" : "4B4CAA4A-7735-451B-A44E-DBA32BDE357B",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Mordida",
+          "target" : {
+            "liveParameter" : {
+              "device" : "ABISMO",
+              "deviceIndex" : 0,
+              "parameter" : "Mordida",
+              "parameterIndex" : 4,
+              "track" : "BASS",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#FFA529",
+          "id" : "D09908E0-36DA-49D5-87B2-D900797618A7",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Presencia",
+          "target" : {
+            "liveParameter" : {
+              "device" : "RAIZ sub que respira con el kick",
+              "deviceIndex" : 0,
+              "parameter" : "Presencia",
+              "parameterIndex" : 1,
+              "track" : "RAIZ",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#FFA529",
+          "id" : "06B3A9A5-1DE9-4056-BF6D-8CECBFBCFAF2",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Respiro",
+          "target" : {
+            "liveParameter" : {
+              "device" : "RAIZ sub que respira con el kick",
+              "deviceIndex" : 0,
+              "parameter" : "Respiro",
+              "parameterIndex" : 2,
+              "track" : "RAIZ",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#FFA529",
+          "id" : "068C1897-4289-40E1-A733-E883EB68F76F",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Corte",
+          "target" : {
+            "liveParameter" : {
+              "device" : "RAIZ sub que respira con el kick",
+              "deviceIndex" : 0,
+              "parameter" : "Corte",
+              "parameterIndex" : 3,
+              "track" : "RAIZ",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#FFA529",
+          "id" : "2521A332-FB8F-4E9A-8AC7-094CB16E50C2",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Caída",
+          "target" : {
+            "liveParameter" : {
+              "device" : "RAIZ sub que respira con el kick",
+              "deviceIndex" : 0,
+              "parameter" : "Caída",
+              "parameterIndex" : 4,
+              "track" : "RAIZ",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        }
+      ]
+    },
+    {
+      "id" : "36F90192-F10E-4382-AAA5-723AA7086C53",
+      "name" : "03 VOZ",
+      "widgets" : [
+        {
+          "colorHex" : "#886CE4",
+          "id" : "36248C78-0AD2-48FF-8496-949E6B3A89AC",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Energía",
+          "target" : {
+            "liveParameter" : {
+              "device" : "ENERGIA subir y soltar",
+              "deviceIndex" : 0,
+              "parameter" : "Energía",
+              "parameterIndex" : 1,
+              "track" : "03 VOZ",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#886CE4",
+          "id" : "093E7622-076B-4FB1-9391-41D295690982",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Soltar",
+          "target" : {
+            "liveParameter" : {
+              "device" : "ENERGIA subir y soltar",
+              "deviceIndex" : 0,
+              "parameter" : "Soltar",
+              "parameterIndex" : 2,
+              "track" : "03 VOZ",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#886CE4",
+          "id" : "FC8C7C62-8296-45B2-8171-D6D008CFB3FF",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Roll",
+          "target" : {
+            "liveParameter" : {
+              "device" : "ENERGIA subir y soltar",
+              "deviceIndex" : 0,
+              "parameter" : "Roll",
+              "parameterIndex" : 3,
+              "track" : "03 VOZ",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#886CE4",
+          "id" : "EE6D2084-3366-4539-9290-E291E8AC5CC0",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Silencio",
+          "target" : {
+            "liveParameter" : {
+              "device" : "ENERGIA subir y soltar",
+              "deviceIndex" : 0,
+              "parameter" : "Silencio",
+              "parameterIndex" : 4,
+              "track" : "03 VOZ",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#886CE4",
+          "id" : "78A49938-08E6-4400-9B09-775856670D3F",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "VOL 02 VINTAGE",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "VOL 02 VINTAGE",
+              "parameterIndex" : 1,
+              "track" : "03 VOZ",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#886CE4",
+          "id" : "AEDC97BC-116E-4C4C-880F-4806382447FC",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "VOL 03 SATUR",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "VOL 03 SATUR",
+              "parameterIndex" : 2,
+              "track" : "03 VOZ",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#886CE4",
+          "id" : "551F0407-20BC-41C7-9043-2679015AE7F9",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "ROAR AMOUNT",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "ROAR AMOUNT",
+              "parameterIndex" : 3,
+              "track" : "03 VOZ",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#886CE4",
+          "id" : "FDAAA2DC-A37C-4347-82EE-0053A911A013",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "FILTER",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "FILTER",
+              "parameterIndex" : 4,
+              "track" : "03 VOZ",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#886CE4",
+          "id" : "1C29692A-2540-402A-9B69-DE163A99BC67",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Glue Threshold",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "Glue Threshold",
+              "parameterIndex" : 6,
+              "track" : "03 VOZ",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#886CE4",
+          "id" : "89392717-8223-4AE6-A47C-F596CC4E36D6",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "WIDTH",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "WIDTH",
+              "parameterIndex" : 7,
+              "track" : "03 VOZ",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#886CE4",
+          "id" : "7686DD10-9956-441F-B7D1-A9DCC534AE1D",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "DRIVE",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "DRIVE",
+              "parameterIndex" : 8,
+              "track" : "03 VOZ",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#886CE4",
+          "id" : "6A623794-D319-4CE8-B24B-070FF0083CED",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "VOL 02 VINTAGE",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "VOL 02 VINTAGE",
+              "parameterIndex" : 1,
+              "track" : "SYNTRX II",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#886CE4",
+          "id" : "6A1D401A-6A53-4670-8B5B-9795300B0BF8",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "VOL 03 SATUR",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "VOL 03 SATUR",
+              "parameterIndex" : 2,
+              "track" : "SYNTRX II",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#886CE4",
+          "id" : "E274EA98-2149-46DA-B163-4F263ACABBA7",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "ROAR AMOUNT",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "ROAR AMOUNT",
+              "parameterIndex" : 3,
+              "track" : "SYNTRX II",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#886CE4",
+          "id" : "0DD7A8C0-E674-48B3-BF86-E47CBB0F14EA",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "FILTER",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "FILTER",
+              "parameterIndex" : 4,
+              "track" : "SYNTRX II",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#886CE4",
+          "id" : "72A6507D-6704-4C68-AC70-D72D4B30DD58",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Material",
+          "target" : {
+            "liveParameter" : {
+              "device" : "GOTA voz liquida FM (1)",
+              "deviceIndex" : 0,
+              "parameter" : "Material",
+              "parameterIndex" : 1,
+              "track" : "GOTA",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#886CE4",
+          "id" : "F8AF792B-FB10-4724-9D50-8B9DAB60D6CA",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Brillo",
+          "target" : {
+            "liveParameter" : {
+              "device" : "GOTA voz liquida FM (1)",
+              "deviceIndex" : 0,
+              "parameter" : "Brillo",
+              "parameterIndex" : 2,
+              "track" : "GOTA",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#886CE4",
+          "id" : "A0068C04-E12C-4C88-81E3-28F2BB73EAF5",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Gota",
+          "target" : {
+            "liveParameter" : {
+              "device" : "GOTA voz liquida FM (1)",
+              "deviceIndex" : 0,
+              "parameter" : "Gota",
+              "parameterIndex" : 3,
+              "track" : "GOTA",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#886CE4",
+          "id" : "06FE2397-8A5E-4756-ACE5-D6AF320E4EAD",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Color",
+          "target" : {
+            "liveParameter" : {
+              "device" : "GOTA voz liquida FM (1)",
+              "deviceIndex" : 0,
+              "parameter" : "Color",
+              "parameterIndex" : 4,
+              "track" : "GOTA",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#886CE4",
+          "id" : "90504D97-4B66-4BC7-9431-55E4A756557B",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Acorde",
+          "target" : {
+            "liveParameter" : {
+              "device" : "ACORDE DUB stab dub techno",
+              "deviceIndex" : 0,
+              "parameter" : "Acorde",
+              "parameterIndex" : 1,
+              "track" : "ACORDE",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#886CE4",
+          "id" : "5A69903C-CBE7-4320-9AA0-D1DAFBFE32F0",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Filtro",
+          "target" : {
+            "liveParameter" : {
+              "device" : "ACORDE DUB stab dub techno",
+              "deviceIndex" : 0,
+              "parameter" : "Filtro",
+              "parameterIndex" : 2,
+              "track" : "ACORDE",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#886CE4",
+          "id" : "BD900849-89F0-4E78-AE01-2DFF075DF5EB",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Mordida",
+          "target" : {
+            "liveParameter" : {
+              "device" : "ACORDE DUB stab dub techno",
+              "deviceIndex" : 0,
+              "parameter" : "Mordida",
+              "parameterIndex" : 3,
+              "track" : "ACORDE",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#886CE4",
+          "id" : "8A0BEE6B-FDE0-450F-B471-86225C356A4C",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Cola",
+          "target" : {
+            "liveParameter" : {
+              "device" : "ACORDE DUB stab dub techno",
+              "deviceIndex" : 0,
+              "parameter" : "Cola",
+              "parameterIndex" : 4,
+              "track" : "ACORDE",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        }
+      ]
+    },
+    {
+      "id" : "B2ECF760-DC96-49A0-8753-BE353FC3B363",
+      "name" : "04 AIRE",
+      "widgets" : [
+        {
+          "colorHex" : "#10A4EE",
+          "id" : "6DD45DA1-2E9D-43BE-A758-900F9CC52277",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Energía",
+          "target" : {
+            "liveParameter" : {
+              "device" : "ENERGIA subir y soltar",
+              "deviceIndex" : 0,
+              "parameter" : "Energía",
+              "parameterIndex" : 1,
+              "track" : "04 AIRE",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#10A4EE",
+          "id" : "32D5A11C-3C49-44FA-BAB3-60AED48ADB87",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Soltar",
+          "target" : {
+            "liveParameter" : {
+              "device" : "ENERGIA subir y soltar",
+              "deviceIndex" : 0,
+              "parameter" : "Soltar",
+              "parameterIndex" : 2,
+              "track" : "04 AIRE",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#10A4EE",
+          "id" : "186BB0DA-C83D-400A-A5D9-BAFF47221689",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Roll",
+          "target" : {
+            "liveParameter" : {
+              "device" : "ENERGIA subir y soltar",
+              "deviceIndex" : 0,
+              "parameter" : "Roll",
+              "parameterIndex" : 3,
+              "track" : "04 AIRE",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#10A4EE",
+          "id" : "D50E3DBE-4EC2-459E-9094-1D589C4C6C7A",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Silencio",
+          "target" : {
+            "liveParameter" : {
+              "device" : "ENERGIA subir y soltar",
+              "deviceIndex" : 0,
+              "parameter" : "Silencio",
+              "parameterIndex" : 4,
+              "track" : "04 AIRE",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#10A4EE",
+          "id" : "1E09D05E-0913-4C0A-A86D-29188D03D01F",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "VOL 02 VINTAGE",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 3,
+              "parameter" : "VOL 02 VINTAGE",
+              "parameterIndex" : 1,
+              "track" : "04 AIRE",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#10A4EE",
+          "id" : "3F8041CA-4FCB-411E-B79F-442A3C358B4D",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "VOL 03 SATUR",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 3,
+              "parameter" : "VOL 03 SATUR",
+              "parameterIndex" : 2,
+              "track" : "04 AIRE",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#10A4EE",
+          "id" : "75FEC9BC-B1D1-4304-A24A-4C2062638688",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "ROAR AMOUNT",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 3,
+              "parameter" : "ROAR AMOUNT",
+              "parameterIndex" : 3,
+              "track" : "04 AIRE",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#10A4EE",
+          "id" : "D37EF2BB-C722-48F3-AE9F-9133DACE9FE5",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "FILTER",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 3,
+              "parameter" : "FILTER",
+              "parameterIndex" : 4,
+              "track" : "04 AIRE",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#10A4EE",
+          "id" : "9E2790F8-91CC-41A2-8F4A-9BF788F505BF",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Glue Threshold",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 3,
+              "parameter" : "Glue Threshold",
+              "parameterIndex" : 6,
+              "track" : "04 AIRE",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#10A4EE",
+          "id" : "B7D792D8-870B-4C47-AF42-E78585A17B90",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "WIDTH",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 3,
+              "parameter" : "WIDTH",
+              "parameterIndex" : 7,
+              "track" : "04 AIRE",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#10A4EE",
+          "id" : "386D679F-4473-4274-ABD6-C38B91B1B6EB",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "DRIVE",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 3,
+              "parameter" : "DRIVE",
+              "parameterIndex" : 8,
+              "track" : "04 AIRE",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#10A4EE",
+          "id" : "39E78358-9E69-447B-970E-5F3D534B4897",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "VOL 02 VINTAGE",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "VOL 02 VINTAGE",
+              "parameterIndex" : 1,
+              "track" : "ANIMOOG",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#10A4EE",
+          "id" : "526C79CD-1EE0-4B31-89A1-9CCFD27AA9A5",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "VOL 03 SATUR",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "VOL 03 SATUR",
+              "parameterIndex" : 2,
+              "track" : "ANIMOOG",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#10A4EE",
+          "id" : "5E0D6F30-7762-4398-BA61-102AA08D8ED8",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "ROAR AMOUNT",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "ROAR AMOUNT",
+              "parameterIndex" : 3,
+              "track" : "ANIMOOG",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#10A4EE",
+          "id" : "BAD6C43A-2EE2-41A6-8E22-D012E964762A",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "FILTER",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "FILTER",
+              "parameterIndex" : 4,
+              "track" : "ANIMOOG",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#10A4EE",
+          "id" : "5FE3FBBD-9C3D-49A9-924C-C17764EA96B5",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Sumergir",
+          "target" : {
+            "liveParameter" : {
+              "device" : "BAJO EL AGUA",
+              "deviceIndex" : 0,
+              "parameter" : "Sumergir",
+              "parameterIndex" : 1,
+              "track" : "DRONE",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#10A4EE",
+          "id" : "4540302C-92C2-459F-B8FE-674283E84F0E",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Corriente",
+          "target" : {
+            "liveParameter" : {
+              "device" : "BAJO EL AGUA",
+              "deviceIndex" : 0,
+              "parameter" : "Corriente",
+              "parameterIndex" : 2,
+              "track" : "DRONE",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#10A4EE",
+          "id" : "3FB74828-CA50-4477-83E1-A925C776B2F3",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Ondulación",
+          "target" : {
+            "liveParameter" : {
+              "device" : "BAJO EL AGUA",
+              "deviceIndex" : 0,
+              "parameter" : "Ondulación",
+              "parameterIndex" : 3,
+              "track" : "DRONE",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#10A4EE",
+          "id" : "C74AA494-78A2-47BC-B9C1-98F58A27EEF8",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Burbujas",
+          "target" : {
+            "liveParameter" : {
+              "device" : "BAJO EL AGUA",
+              "deviceIndex" : 0,
+              "parameter" : "Burbujas",
+              "parameterIndex" : 4,
+              "track" : "DRONE",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        }
+      ]
+    },
+    {
+      "id" : "27E088D5-C0B1-4BCB-BF2B-4130CA2FF920",
+      "name" : "06 TEXTURAS",
+      "widgets" : [
+        {
+          "colorHex" : "#3DC300",
+          "id" : "21A6A711-0B98-417F-B5C8-CF80B2AAC636",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Energía",
+          "target" : {
+            "liveParameter" : {
+              "device" : "ENERGIA subir y soltar",
+              "deviceIndex" : 0,
+              "parameter" : "Energía",
+              "parameterIndex" : 1,
+              "track" : "06 TEXTURAS",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#3DC300",
+          "id" : "2C098FBA-946E-41B0-8F3A-5CAEDDB81F93",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Soltar",
+          "target" : {
+            "liveParameter" : {
+              "device" : "ENERGIA subir y soltar",
+              "deviceIndex" : 0,
+              "parameter" : "Soltar",
+              "parameterIndex" : 2,
+              "track" : "06 TEXTURAS",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#3DC300",
+          "id" : "FA150661-D9B6-4518-861C-25B033D70169",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Roll",
+          "target" : {
+            "liveParameter" : {
+              "device" : "ENERGIA subir y soltar",
+              "deviceIndex" : 0,
+              "parameter" : "Roll",
+              "parameterIndex" : 3,
+              "track" : "06 TEXTURAS",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#3DC300",
+          "id" : "0AD87A2D-8264-4629-997D-7E030EBEA1E3",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Silencio",
+          "target" : {
+            "liveParameter" : {
+              "device" : "ENERGIA subir y soltar",
+              "deviceIndex" : 0,
+              "parameter" : "Silencio",
+              "parameterIndex" : 4,
+              "track" : "06 TEXTURAS",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#3DC300",
+          "id" : "6D98311D-7B08-4943-B85F-34FF02C80510",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "VOL 02 VINTAGE",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "VOL 02 VINTAGE",
+              "parameterIndex" : 1,
+              "track" : "06 TEXTURAS",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#3DC300",
+          "id" : "515E57D2-9752-4962-9D76-E087A587C483",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "VOL 03 SATUR",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "VOL 03 SATUR",
+              "parameterIndex" : 2,
+              "track" : "06 TEXTURAS",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#3DC300",
+          "id" : "6890E4FD-B50B-4D89-A64C-7E0A87FDC882",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "ROAR AMOUNT",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "ROAR AMOUNT",
+              "parameterIndex" : 3,
+              "track" : "06 TEXTURAS",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#3DC300",
+          "id" : "BBBDA6B8-7359-4645-B155-A25389C3A788",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "FILTER",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "FILTER",
+              "parameterIndex" : 4,
+              "track" : "06 TEXTURAS",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#3DC300",
+          "id" : "B4F21415-E7DE-440B-8874-B180DFBCECF1",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Glue Threshold",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "Glue Threshold",
+              "parameterIndex" : 6,
+              "track" : "06 TEXTURAS",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#3DC300",
+          "id" : "EA3C5123-D341-497D-ADAD-BD6B042C7A64",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "WIDTH",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "WIDTH",
+              "parameterIndex" : 7,
+              "track" : "06 TEXTURAS",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#3DC300",
+          "id" : "3AE50AE6-0233-448F-AB0C-AB653D4D7A53",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "DRIVE",
+          "target" : {
+            "liveParameter" : {
+              "device" : "MODULAR MIXER CHAIN",
+              "deviceIndex" : 1,
+              "parameter" : "DRIVE",
+              "parameterIndex" : 8,
+              "track" : "06 TEXTURAS",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#3DC300",
+          "id" : "B9F868E7-0A78-48E7-9AF2-5CDAF771C4EB",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Seco",
+          "target" : {
+            "liveParameter" : {
+              "device" : "CAMPO ESPECTRAL",
+              "deviceIndex" : 1,
+              "parameter" : "Seco",
+              "parameterIndex" : 1,
+              "track" : "GRANOS",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#3DC300",
+          "id" : "1C424601-FC6E-4BBC-A57A-CD5482915D3D",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Resonante",
+          "target" : {
+            "liveParameter" : {
+              "device" : "CAMPO ESPECTRAL",
+              "deviceIndex" : 1,
+              "parameter" : "Resonante",
+              "parameterIndex" : 2,
+              "track" : "GRANOS",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#3DC300",
+          "id" : "92326BE0-D4E3-4DFC-B00D-7DC5119E55D5",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Congelado",
+          "target" : {
+            "liveParameter" : {
+              "device" : "CAMPO ESPECTRAL",
+              "deviceIndex" : 1,
+              "parameter" : "Congelado",
+              "parameterIndex" : 3,
+              "track" : "GRANOS",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#3DC300",
+          "id" : "77B3E72A-D9DD-4F46-80AE-8BC9B34AE717",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Afinar",
+          "target" : {
+            "liveParameter" : {
+              "device" : "CAMPO ESPECTRAL",
+              "deviceIndex" : 1,
+              "parameter" : "Afinar",
+              "parameterIndex" : 4,
+              "track" : "GRANOS",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#3DC300",
+          "id" : "AD555354-CDC7-40BA-8FEB-E5082259FDA6",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Nube",
+          "target" : {
+            "liveParameter" : {
+              "device" : "GRANO",
+              "deviceIndex" : 1,
+              "parameter" : "Nube",
+              "parameterIndex" : 1,
+              "track" : "CAMPO",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#3DC300",
+          "id" : "03E2CCE2-9CBC-4AC1-8C2C-7C48F3C3DFCD",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Tono",
+          "target" : {
+            "liveParameter" : {
+              "device" : "GRANO",
+              "deviceIndex" : 1,
+              "parameter" : "Tono",
+              "parameterIndex" : 2,
+              "track" : "CAMPO",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#3DC300",
+          "id" : "5543A6A6-2916-4F46-8B96-49FDF3A389BA",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Azar",
+          "target" : {
+            "liveParameter" : {
+              "device" : "GRANO",
+              "deviceIndex" : 1,
+              "parameter" : "Azar",
+              "parameterIndex" : 3,
+              "track" : "CAMPO",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        },
+        {
+          "colorHex" : "#3DC300",
+          "id" : "BB44BD1B-DDD0-443E-AD6D-C955B389F986",
+          "kind" : "knob",
+          "maximum" : 1,
+          "minimum" : 0,
+          "name" : "Densidad",
+          "target" : {
+            "liveParameter" : {
+              "device" : "GRANO",
+              "deviceIndex" : 1,
+              "parameter" : "Densidad",
+              "parameterIndex" : 4,
+              "track" : "CAMPO",
+              "trackIndex" : -1
+            }
+          },
+          "targetY" : {
+            "none" : {
+
+            }
+          },
+          "value" : 0.5,
+          "valueY" : 0,
+          "width" : 1
+        }
+      ]
+    }
+  ],
+  "decks" : [
+    {
+      "colorHex" : "#FF3636",
+      "groupTrackName" : "01 PULSO",
+      "id" : "DA078FF2-028A-4295-92E7-3571A12FBD86",
+      "name" : "01 PULSO",
+      "trackNames" : [
+
+      ]
+    },
+    {
+      "colorHex" : "#FFA529",
+      "groupTrackName" : "02 GRAVE",
+      "id" : "F91962DE-1232-426E-95F1-F25B232BD13E",
+      "name" : "02 GRAVE",
+      "trackNames" : [
+
+      ]
+    },
+    {
+      "colorHex" : "#886CE4",
+      "groupTrackName" : "03 VOZ",
+      "id" : "E393DB04-FFAC-479C-8075-93543A0F9425",
+      "name" : "03 VOZ",
+      "trackNames" : [
+
+      ]
+    },
+    {
+      "colorHex" : "#10A4EE",
+      "groupTrackName" : "04 AIRE",
+      "id" : "CED130EF-191D-4942-BBBF-1377DEB44F97",
+      "name" : "04 AIRE",
+      "trackNames" : [
+
+      ]
+    },
+    {
+      "colorHex" : "#3DC300",
+      "groupTrackName" : "06 TEXTURAS",
+      "id" : "3C397DFF-828E-4BC6-8655-D22A0315BD55",
+      "name" : "06 TEXTURAS",
+      "trackNames" : [
+
+      ]
+    }
+  ],
+  "description" : "Decks from the 5 top-level groups and one CTRL page per group with the rack macros (Energía, Soltar, Roll, Silencio, Boom, Afinación…). Generated from PLAYFIELD v4.1 LIVE.als.",
+  "format" : "stagedeck-template",
+  "name" : "PLAYFIELD v4.1 LIVE",
+  "requires" : {
+    "devices" : [
+      "01 PULSO\/ENERGIA subir y soltar",
+      "01 PULSO\/MODULAR MIXER CHAIN",
+      "KICK\/SOUND SYSTEM",
+      "02 GRAVE\/ENERGIA subir y soltar",
+      "02 GRAVE\/MODULAR MIXER CHAIN",
+      "DFAM\/MODULAR MIXER CHAIN",
+      "DFAM 2\/LATIDO DFAM con ritmo y eco",
+      "BASS\/ABISMO",
+      "RAIZ\/RAIZ sub que respira con el kick",
+      "03 VOZ\/ENERGIA subir y soltar",
+      "03 VOZ\/MODULAR MIXER CHAIN",
+      "SYNTRX II\/MODULAR MIXER CHAIN",
+      "GOTA\/GOTA voz liquida FM (1)",
+      "ACORDE\/ACORDE DUB stab dub techno",
+      "04 AIRE\/ENERGIA subir y soltar",
+      "04 AIRE\/MODULAR MIXER CHAIN",
+      "ANIMOOG\/MODULAR MIXER CHAIN",
+      "DRONE\/BAJO EL AGUA",
+      "06 TEXTURAS\/ENERGIA subir y soltar",
+      "06 TEXTURAS\/MODULAR MIXER CHAIN",
+      "GRANOS\/CAMPO ESPECTRAL",
+      "CAMPO\/GRANO"
+    ],
+    "tracks" : [
+      "01 PULSO",
+      "02 GRAVE",
+      "03 VOZ",
+      "04 AIRE",
+      "06 TEXTURAS",
+      "KICK",
+      "DFAM",
+      "DFAM 2",
+      "BASS",
+      "RAIZ",
+      "SYNTRX II",
+      "GOTA",
+      "ACORDE",
+      "ANIMOOG",
+      "DRONE",
+      "GRANOS",
+      "CAMPO"
+    ]
+  },
+  "version" : 1
+}
