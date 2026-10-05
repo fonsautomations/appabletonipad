@@ -86,7 +86,7 @@ struct TrackRow: View {
                     }
                 }
                 .padding(.horizontal, 6)
-                .frame(height: 36)
+                .frame(height: 40)
                 .frame(maxWidth: .infinity)
                 .background(selected ? color : Theme.panelRaised)
                 .cornerRadius(6)
@@ -94,12 +94,12 @@ struct TrackRow: View {
             .buttonStyle(.plain)
             VStack(spacing: 2) {
                 Button(action: { sequencer.project.patterns[sequencer.currentPatternIndex].tracks[index].mute.toggle(); Haptics.tap() }) {
-                    Text("M").font(.system(size: 9, weight: .bold)).frame(width: 20, height: 16)
+                    Text("M").font(.system(size: 10, weight: .bold)).frame(width: 24, height: 19)
                         .background(track.mute ? Theme.red : Theme.panelRaised).foregroundColor(track.mute ? .black : Theme.textSecondary).cornerRadius(3)
                 }
                 .buttonStyle(.plain)
                 Button(action: { sequencer.project.patterns[sequencer.currentPatternIndex].tracks[index].solo.toggle(); Haptics.tap() }) {
-                    Text("S").font(.system(size: 9, weight: .bold)).frame(width: 20, height: 16)
+                    Text("S").font(.system(size: 10, weight: .bold)).frame(width: 24, height: 19)
                         .background(track.solo ? Theme.yellow : Theme.panelRaised).foregroundColor(track.solo ? .black : Theme.textSecondary).cornerRadius(3)
                 }
                 .buttonStyle(.plain)
@@ -171,7 +171,7 @@ struct StepGrid: View {
                         Text("\(p * 16 + 1)-\(p * 16 + 16)")
                             .font(.system(size: 10, weight: .bold, design: .rounded))
                             .foregroundColor(sequencer.stepPage == p ? .black : (enabled ? Theme.textPrimary : Theme.textSecondary.opacity(0.3)))
-                            .frame(width: 60, height: 22)
+                            .frame(width: 66, height: 28)
                             .background(sequencer.stepPage == p ? Theme.textPrimary : (playing ? Theme.green.opacity(0.4) : Theme.panelRaised))
                             .cornerRadius(5)
                     }

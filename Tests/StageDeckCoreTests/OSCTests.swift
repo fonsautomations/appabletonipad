@@ -360,3 +360,37 @@ final class MixerBusTests: XCTestCase {
         XCTAssertEqual(song.devices(ofTrack: LiveSongState.masterTrackIndex).count, 2)
     }
 }
+
+final class MixerLayoutTests: XCTestCase {
+    func testTwoDecksFitInTwoRowsWithoutScrolling() {
+        // 11" iPad landscape, master column removed: ~970 x 640, two decks of 10 stems + a 3-bus section.
+        let plan = MixerLayoutPlan.plan(width: 970, height: 640, counts: [10, 10, 3], sends: 3)
+        XCTAssertEqual(plan.rows, [[0], [1, 2]])
+        XCTAssertTrue(plan.overflowingSections.isEmpty)
+        XCTAssertGreaterThanOrEqual(plan.metrics.stripWidth, MixerLayoutPlan.minStripWidth)
+        XCTAssertLessThanOrEqual(MixerLayoutPlan.rowWidth(strips: 13, sections: 2, stripWidth: plan.metrics.stripWidth), 970)
+        XCTAssertEqual(plan.metrics.density, .medium)
+        XCTAssertGreaterThanOrEqual(plan.metrics.faderHeight, 80)
+    }
+
+    func testFocusedDeckIsFullSize() {
+        let plan = MixerLayoutPlan.plan(width: 970, height: 640, counts: [10, 10], sends: 3, focus: 1)
+        XCTAssertEqual(plan.rows, [[1]])
+        XCTAssertEqual(plan.metrics.density, .full)
+        XCTAssertEqual(plan.metrics.stripWidth, 91)
+    }
+
+    func testManyDecksGoCompactNotScrolling() {
+        let plan = MixerLayoutPlan.plan(width: 970, height: 640, counts: [7, 7, 8, 8, 10], sends: 2)
+        XCTAssertEqual(plan.rows, [[0, 1], [2, 3], [4]])
+        XCTAssertEqual(plan.metrics.density, .compact)
+        XCTAssertTrue(plan.overflowingSections.isEmpty)
+        XCTAssertGreaterThanOrEqual(plan.metrics.faderHeight, 60)
+    }
+
+    func testHugeDeckOverflows() {
+        let plan = MixerLayoutPlan.plan(width: 600, height: 640, counts: [30], sends: 0)
+        XCTAssertEqual(plan.overflowingSections, [0])
+        XCTAssertEqual(plan.metrics.stripWidth, MixerLayoutPlan.minStripWidth)
+    }
+}

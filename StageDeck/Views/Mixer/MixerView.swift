@@ -1,38 +1,87 @@
 import SwiftUI
 
-/// Stem mixer: every track of each deck with sends, filter, fader, meter and buttons,
-/// plus editable bus strips (groups, returns, master, any track) and the master section.
+/// Stem mixer. Everything stays on screen: sections (decks, buses) are packed into rows that fit the
+/// width, strips adapt to the row height, and the master column is always visible on the right.
+/// Tap a deck tab to see it alone at full size.
 struct MixerView: View {
     @EnvironmentObject var store: AppStore
     @EnvironmentObject var live: LiveSession
     @State private var editing = false
     @State private var showAddBus = false
+    /// -1 = all sections; otherwise an index into `sections`.
+    @State private var focus: Int = -1
 
-    var body: some View {
-        VStack(spacing: 6) {
-            header
-            GeometryReader { geo in
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(alignment: .top, spacing: 10) {
-                        ForEach(Array(store.decks.enumerated()), id: \.offset) { (i, deck) in
-                            DeckMixer(deck: deck, deckIndex: i)
-                            if i < store.decks.count - 1 { Divider().background(Theme.line) }
-                        }
-                        if !store.profile.mixerBuses.isEmpty || editing {
-                            Divider().background(Theme.line)
-                            BusesSection(editing: editing, onAdd: { showAddBus = true })
-                        }
-                        ReturnsAndMaster()
-                    }
-                    .padding(10)
-                    .frame(minWidth: geo.size.width, alignment: .leading)
-                }
-            }
-        }
-        .sheet(isPresented: $showAddBus) { AddBusSheet().environmentObject(store).environmentObject(live) }
+    enum Section: Equatable { case deck(Int), buses }
+
+    private var sections: [Section] {
+        var out: [Section] = store.decks.indices.map { .deck($0) }
+        if !store.profile.mixerBuses.isEmpty || editing { out.append(.buses) }
+        return out
     }
 
-    private var header: some View {
+    private func stripCount(_ section: Section) -> Int {
+        switch section {
+        case .deck(let i):
+            let deck = store.decks[i]
+            let group = store.profile.showGroupStrips && deck.groupTrackName != nil ? 1 : 0
+            return deck.resolveTracks(in: live.song).count + group
+        case .buses:
+            return max(1, store.profile.mixerBuses.count)
+        }
+    }
+
+    private var sendCount: Int { store.profile.showSends ? store.profile.sendIndices(in: live.song).count : 0 }
+
+    var body: some View {
+        let sections = self.sections
+        let focusIndex: Int? = (focus >= 0 && focus < sections.count) ? focus : nil
+        VStack(spacing: 6) {
+            header(sections: sections)
+            HStack(alignment: .top, spacing: 10) {
+                GeometryReader { geo in
+                    let plan = MixerLayoutPlan.plan(width: geo.size.width, height: geo.size.height,
+                                                    counts: sections.map { stripCount($0) }, sends: sendCount,
+                                                    showPan: store.profile.showPan, focus: focusIndex)
+                    VStack(spacing: MixerLayoutPlan.rowGap) {
+                        ForEach(Array(plan.rows.enumerated()), id: \.offset) { (_, row) in
+                            let overflowing = row.contains(where: { plan.overflowingSections.contains($0) })
+                            Group {
+                                if overflowing {
+                                    ScrollView(.horizontal, showsIndicators: false) { rowView(row, sections: sections, plan: plan) }
+                                } else {
+                                    rowView(row, sections: sections, plan: plan)
+                                }
+                            }
+                            .frame(height: plan.rowHeight, alignment: .top)
+                        }
+                    }
+                    .frame(width: geo.size.width, height: geo.size.height, alignment: .top)
+                }
+                MasterColumn()
+                    .frame(width: 186)
+            }
+            .padding(.horizontal, 10)
+            .padding(.bottom, 8)
+        }
+        .sheet(isPresented: $showAddBus) { AddBusSheet().environmentObject(store).environmentObject(live) }
+        .onChange(of: sections.count) { n in if focus >= n { focus = -1 } }
+    }
+
+    private func rowView(_ row: [Int], sections: [Section], plan: MixerLayoutPlan) -> some View {
+        HStack(alignment: .top, spacing: MixerLayoutPlan.sectionGap) {
+            ForEach(row, id: \.self) { s in
+                switch sections[s] {
+                case .deck(let i):
+                    DeckMixer(deck: store.decks[i], deckIndex: i, metrics: plan.metrics)
+                case .buses:
+                    BusesSection(editing: editing, metrics: plan.metrics, onAdd: { showAddBus = true })
+                }
+            }
+            Spacer(minLength: 0)
+        }
+    }
+
+    private func header(sections: [Section]) -> some View {
         HStack(spacing: 8) {
             if editing {
                 CapsLabel("SENDS", size: 9)
@@ -41,23 +90,30 @@ struct MixerView: View {
                 }
                 ForEach(live.song.returnTracks) { r in
                     let on = store.profile.sendIndices(in: live.song).contains(r.index)
-                    PadButton(title: r.name, color: Color(r.color), active: on, height: 26, fontSize: 10) { toggleSend(r.index) }
+                    PadButton(title: r.name, color: Color(r.color), active: on, height: 30, fontSize: 10) { toggleSend(r.index) }
                         .frame(width: 76)
                 }
                 Spacer()
-                PadButton(title: "GROUP STRIPS", color: Theme.secondary, active: store.profile.showGroupStrips, height: 26, fontSize: 10) {
+                PadButton(title: "GROUP STRIPS", color: Theme.secondary, active: store.profile.showGroupStrips, height: 30, fontSize: 10) {
                     store.profile.showGroupStrips.toggle()
                 }.frame(width: 110)
-                PadButton(title: "MASTER FILTER", color: Theme.green, active: store.profile.showMasterFilter, height: 26, fontSize: 10) {
+                PadButton(title: "MASTER FILTER", color: Theme.green, active: store.profile.showMasterFilter, height: 30, fontSize: 10) {
                     store.profile.showMasterFilter.toggle()
                 }.frame(width: 110)
-                PadButton(title: "+ BUS", color: Theme.accent, active: true, height: 26, fontSize: 10) { showAddBus = true }.frame(width: 70)
+                PadButton(title: "+ BUS", color: Theme.accent, active: true, height: 30, fontSize: 10) { showAddBus = true }.frame(width: 70)
             } else {
-                CapsLabel("MIXER", size: 9)
-                Text(mixerSummary).font(.system(size: 10)).foregroundColor(Theme.textSecondary).lineLimit(1)
+                let options: [(Int, String)] = [(-1, "ALL")] + sections.enumerated().map { (i, s) in
+                    switch s {
+                    case .deck(let d): return (i, store.decks[d].name)
+                    case .buses: return (i, "BUSES")
+                    }
+                }
+                Segmented(options: options, selection: $focus, height: 30)
+                    .frame(width: CGFloat(options.count) * 86)
                 Spacer()
+                Text(mixerSummary).font(.system(size: 10)).foregroundColor(Theme.textSecondary).lineLimit(1)
             }
-            PadButton(title: editing ? "DONE" : "EDIT", color: Theme.yellow, active: editing, height: 26, fontSize: 11) { editing.toggle() }.frame(width: 70)
+            PadButton(title: editing ? "DONE" : "EDIT", color: Theme.yellow, active: editing, height: 30, fontSize: 11) { editing.toggle() }.frame(width: 70)
         }
         .padding(.horizontal, 10)
         .padding(.top, 6)
@@ -66,7 +122,7 @@ struct MixerView: View {
     private var mixerSummary: String {
         let sends = store.profile.sendIndices(in: live.song).count
         let buses = store.profile.mixerBuses.count
-        return "\(store.decks.count) decks · \(sends) send\(sends == 1 ? "" : "s") · \(buses) bus\(buses == 1 ? "" : "es")" + (store.profile.showGroupStrips ? " · group strips" : "")
+        return "\(sends) send\(sends == 1 ? "" : "s")" + (buses > 0 ? " · \(buses) bus\(buses == 1 ? "" : "es")" : "") + (store.profile.showGroupStrips ? " · group strips" : "")
     }
 
     private func toggleSend(_ index: Int) {
@@ -78,9 +134,49 @@ struct MixerView: View {
     }
 }
 
+/// Always-visible master section: filter (if the master has an Auto Filter), master fader with meter, cue.
+struct MasterColumn: View {
+    @EnvironmentObject var live: LiveSession
+    @EnvironmentObject var store: AppStore
+
+    var body: some View {
+        VStack(spacing: 6) {
+            CapsLabel("MASTER", size: 9).frame(height: MixerLayoutPlan.sectionHeaderHeight - 6)
+            HStack(alignment: .bottom, spacing: 8) {
+                if store.profile.showMasterFilter, live.song.masterAutoFilter != nil {
+                    VStack(spacing: 4) {
+                        FilterFader(trackIndex: LiveSongState.masterTrackIndex, filter: live.song.masterAutoFilter, color: Theme.green)
+                            .frame(width: 48).frame(maxHeight: .infinity)
+                        CapsLabel("Filter", size: 8)
+                    }
+                }
+                VStack(spacing: 4) {
+                    Text(LiveVolume.label(fader: live.song.masterVolume))
+                        .font(.system(size: 10, weight: .semibold, design: .monospaced)).foregroundColor(Theme.textSecondary)
+                    MasterFaderView(meters: live.meters)
+                        .frame(width: 64).frame(maxHeight: .infinity)
+                    CapsLabel("Master", size: 8)
+                }
+                VStack(spacing: 4) {
+                    Text(LiveVolume.label(fader: live.song.cueVolume))
+                        .font(.system(size: 10, weight: .semibold, design: .monospaced)).foregroundColor(Theme.textSecondary)
+                    VerticalFader(value: Binding(get: { live.song.cueVolume }, set: { live.setCueVolume($0) }), color: Theme.yellow, meter: nil, label: nil)
+                        .frame(width: 44).frame(maxHeight: .infinity)
+                    CapsLabel("Cue", size: 8)
+                }
+            }
+        }
+        .padding(8)
+        .frame(maxHeight: .infinity)
+        .background(Theme.panel)
+        .cornerRadius(10)
+    }
+}
+
 struct DeckMixer: View {
     let deck: DeckDefinition
     let deckIndex: Int
+    let metrics: MixerLayoutPlan.Metrics
     @EnvironmentObject var store: AppStore
     @EnvironmentObject var live: LiveSession
 
@@ -95,22 +191,23 @@ struct DeckMixer: View {
         VStack(spacing: 6) {
             HStack(spacing: 6) {
                 let muted = !tracks.isEmpty && tracks.allSatisfy { $0.mute }
-                PadButton(title: deck.name, color: color, active: !muted, height: 40, fontSize: 16) {
+                PadButton(title: deck.name, color: color, active: !muted, height: 34, fontSize: 15) {
                     live.setMute(tracks: tracks.map { $0.index }, on: !muted)
                 }
-                .frame(width: 120)
+                .frame(width: min(120, max(70, metrics.stripWidth * 1.6)))
                 if let g = groupTrack {
                     DeckFilterControl(track: g, label: "HPF", color: color)
-                        .frame(width: 160, height: 40)
+                        .frame(width: min(160, max(90, metrics.stripWidth * 2)), height: 34)
                 }
+                Spacer(minLength: 0)
             }
-            HStack(alignment: .top, spacing: 6) {
+            .frame(height: MixerLayoutPlan.sectionHeaderHeight - 6)
+            HStack(alignment: .top, spacing: MixerLayoutPlan.stripGap) {
                 if store.profile.showGroupStrips, let g = groupTrack {
-                    ChannelStrip(track: g, deckColor: color, isGroupStrip: true)
-                    Divider().background(Theme.line).frame(height: 300)
+                    ChannelStrip(track: g, deckColor: color, metrics: metrics, isGroupStrip: true)
                 }
                 ForEach(tracks) { track in
-                    ChannelStrip(track: track, deckColor: color)
+                    ChannelStrip(track: track, deckColor: color, metrics: metrics)
                 }
             }
         }
@@ -174,66 +271,77 @@ struct StripOptions {
     var nameBackground: Color? = nil
 }
 
-/// The strip body shared by stems, group strips, buses and returns.
+/// The strip body shared by stems, group strips, buses and returns. Sizes come from the layout plan.
 struct StripBody: View {
     let model: StripModel
     let options: StripOptions
+    let metrics: MixerLayoutPlan.Metrics
     @ObservedObject var meters: LiveMeters
     var onNameLongPress: (() -> Void)? = nil
     @EnvironmentObject var live: LiveSession
     @EnvironmentObject var store: AppStore
 
+    private var w: CGFloat { CGFloat(metrics.stripWidth) }
+    private var gap: CGFloat { metrics.density == .full ? 5 : 4 }
+
     var body: some View {
-        VStack(spacing: 5) {
+        VStack(spacing: gap) {
             Text(model.name)
-                .font(.system(size: 10, weight: .bold, design: .rounded))
+                .font(.system(size: 10 * metrics.fontScale, weight: .bold, design: .rounded))
                 .foregroundColor(Theme.textPrimary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
-                .frame(width: 64, height: 22)
+                .padding(.horizontal, 2)
+                .frame(width: w, height: 22)
                 .background(options.nameBackground ?? Theme.panelRaised)
                 .cornerRadius(6)
                 .onLongPressGesture(minimumDuration: 0.5) { onNameLongPress?() }
 
-            ForEach(options.sendIndices, id: \.self) { s in
-                let name = live.song.returnTrackNames[safe: s] ?? "S\(s + 1)"
-                SendBar(value: model.sends[safe: s] ?? 0, name: name, color: model.color) { model.setSend(s, $0) }
-                    .frame(width: 64, height: 34)
+            if metrics.showSends {
+                ForEach(options.sendIndices, id: \.self) { s in
+                    let name = live.song.returnTrackNames[safe: s] ?? "S\(s + 1)"
+                    SendBar(value: model.sends[safe: s] ?? 0, name: name, color: model.color, height: CGFloat(metrics.sendHeight)) { model.setSend(s, $0) }
+                        .frame(width: w, height: CGFloat(metrics.sendHeight))
+                }
             }
 
-            if options.showFilter {
+            if options.showFilter && metrics.showFilter {
                 FilterFader(trackIndex: model.deviceTrackIndex, filter: model.autoFilter, color: model.color)
-                    .frame(width: 64, height: 110)
+                    .frame(width: w, height: CGFloat(metrics.filterHeight))
             }
 
-            Text(LiveVolume.label(fader: model.volume))
-                .font(.system(size: 10, weight: .semibold, design: .monospaced))
-                .foregroundColor(Theme.textSecondary)
-                .frame(width: 64, height: 16)
-                .background(Theme.panelRaised)
-                .cornerRadius(4)
+            if metrics.showDB {
+                Text(LiveVolume.label(fader: model.volume))
+                    .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                    .foregroundColor(Theme.textSecondary)
+                    .frame(width: w, height: 16)
+                    .background(Theme.panelRaised)
+                    .cornerRadius(4)
+            }
 
-            VerticalFader(value: Binding(get: { model.volume }, set: { model.setVolume($0) }), color: model.color, meter: model.meter(meters), label: nil)
-                .frame(width: 64, height: 180)
+            VerticalFader(value: Binding(get: { model.volume }, set: { model.setVolume($0) }), color: model.color, meter: model.meter(meters),
+                          label: metrics.showDB ? nil : LiveVolume.label(fader: model.volume))
+                .frame(width: w, height: CGFloat(metrics.faderHeight))
 
-            if options.showPan {
+            if options.showPan && metrics.density == .full {
                 HorizontalSlider(value: Binding(get: { (model.panning + 1) / 2 }, set: { model.setPanning($0 * 2 - 1) }),
                                  color: Theme.textSecondary, label: panLabel)
-                    .frame(width: 64, height: 18)
+                    .frame(width: w, height: 18)
             }
 
             HStack(spacing: 3) {
                 PadButton(title: "M", color: Theme.red, active: model.mute, height: 28, fontSize: 11) { model.setMute(!model.mute) }
-                if let solo = model.solo, let setSolo = model.setSolo {
+                if metrics.density != .compact, let solo = model.solo, let setSolo = model.setSolo {
                     PadButton(title: "CUE", color: Theme.yellow, active: solo, height: 28, fontSize: 9) { setSolo(!solo) }
                 }
             }
-            .frame(width: 64)
-            if let arm = model.arm, let setArm = model.setArm {
+            .frame(width: w)
+            if metrics.density == .full, let arm = model.arm, let setArm = model.setArm {
                 PadButton(title: "ARM", color: Theme.red, active: arm, height: 24, fontSize: 9) { setArm(!arm) }
-                    .frame(width: 64)
+                    .frame(width: w)
             }
         }
+        .frame(width: w)
     }
 
     private var panLabel: String {
@@ -247,6 +355,7 @@ struct StripBody: View {
 struct ChannelStrip: View {
     let track: LiveTrack
     let deckColor: Color
+    let metrics: MixerLayoutPlan.Metrics
     var isGroupStrip = false
     @EnvironmentObject var store: AppStore
     @EnvironmentObject var live: LiveSession
@@ -257,6 +366,7 @@ struct ChannelStrip: View {
                   options: StripOptions(sendIndices: store.profile.showSends ? store.profile.sendIndices(in: live.song) : [],
                                         showFilter: true, showPan: store.profile.showPan,
                                         nameBackground: isGroupStrip ? deckColor.opacity(0.45) : nil),
+                  metrics: metrics,
                   meters: live.meters,
                   onNameLongPress: { Haptics.heavy(); renameRequest = RenameRequest(liveName: track.name) })
             .sheet(item: $renameRequest) { r in RenameTrackSheet(liveName: r.liveName).environmentObject(store) }
@@ -316,22 +426,23 @@ struct SendBar: View {
     let value: Double
     let name: String
     let color: Color
+    var height: CGFloat = 34
     let onChange: (Double) -> Void
 
     var body: some View {
         ZStack(alignment: .bottom) {
             RoundedRectangle(cornerRadius: 6).fill(color.opacity(0.18))
             RoundedRectangle(cornerRadius: 6).fill(color.opacity(0.8))
-                .frame(height: max(3, 34 * CGFloat(value)))
+                .frame(height: max(3, height * CGFloat(value)))
             Text(name)
                 .font(.system(size: 8, weight: .semibold, design: .rounded))
                 .foregroundColor(Theme.textPrimary)
                 .lineLimit(1)
-                .padding(.bottom, 3)
+                .padding(.bottom, height < 24 ? 1 : 3)
         }
         .contentShape(Rectangle())
         .gesture(DragGesture(minimumDistance: 0).onChanged { g in
-            onChange(max(0, min(1, 1 - Double(g.location.y / 34))))
+            onChange(max(0, min(1, 1 - Double(g.location.y / height))))
         })
         .onTapGesture(count: 2) { onChange(0) }
     }
@@ -371,6 +482,7 @@ struct FilterFader: View {
 /// Editable extra strips: groups, returns, master or single tracks, in the order the performer wants.
 struct BusesSection: View {
     let editing: Bool
+    let metrics: MixerLayoutPlan.Metrics
     let onAdd: () -> Void
     @EnvironmentObject var store: AppStore
     @EnvironmentObject var live: LiveSession
@@ -381,19 +493,19 @@ struct BusesSection: View {
             HStack(spacing: 6) {
                 CapsLabel("BUSES", size: 9)
                 if editing {
-                    PadButton(title: "+ BUS", color: Theme.accent, active: true, height: 26, fontSize: 10) { onAdd() }.frame(width: 70)
+                    PadButton(title: "+ BUS", color: Theme.accent, active: true, height: 30, fontSize: 10) { onAdd() }.frame(width: 70)
                 }
-                Spacer()
+                Spacer(minLength: 0)
             }
-            .frame(height: 40)
-            HStack(alignment: .top, spacing: 6) {
+            .frame(height: MixerLayoutPlan.sectionHeaderHeight - 6)
+            HStack(alignment: .top, spacing: MixerLayoutPlan.stripGap) {
                 ForEach(store.profile.mixerBuses) { bus in
-                    BusStrip(bus: bus, editing: editing, onEdit: { editingBus = bus })
+                    BusStrip(bus: bus, editing: editing, metrics: metrics, onEdit: { editingBus = bus })
                 }
                 if store.profile.mixerBuses.isEmpty {
-                    Text(editing ? "Add a group, a return, the master or any track as its own strip." : "")
+                    Text("Add a group, a return, the master or any track as its own strip.")
                         .font(.system(size: 10, design: .rounded)).foregroundColor(Theme.textSecondary)
-                        .frame(width: 140)
+                        .frame(width: 120)
                 }
             }
         }
@@ -406,33 +518,36 @@ struct BusesSection: View {
 struct BusStrip: View {
     let bus: MixerBus
     let editing: Bool
+    let metrics: MixerLayoutPlan.Metrics
     let onEdit: () -> Void
     @EnvironmentObject var store: AppStore
     @EnvironmentObject var live: LiveSession
 
     var body: some View {
+        let w = CGFloat(metrics.stripWidth)
         VStack(spacing: 4) {
             if editing {
                 HStack(spacing: 3) {
-                    PadButton(title: "EDIT", color: Theme.yellow, active: true, height: 22, fontSize: 9) { onEdit() }
-                    PadButton(title: "×", color: Theme.red, active: false, height: 22, fontSize: 12) { remove() }.frame(width: 24)
+                    PadButton(title: "EDIT", color: Theme.yellow, active: true, height: 24, fontSize: 9) { onEdit() }
+                    PadButton(title: "×", color: Theme.red, active: false, height: 24, fontSize: 12) { remove() }.frame(width: 24)
                 }
-                .frame(width: 64)
+                .frame(width: w)
             }
             if let model = MixerChannels.model(bus: bus, live: live, store: store) {
                 StripBody(model: model,
                           options: StripOptions(sendIndices: bus.showSends && store.profile.showSends ? store.profile.sendIndices(in: live.song) : [],
                                                 showFilter: bus.showFilter, showPan: bus.showPan,
                                                 nameBackground: nameBackground(model.color)),
+                          metrics: metrics,
                           meters: live.meters,
                           onNameLongPress: { Haptics.heavy(); onEdit() })
             } else {
                 VStack(spacing: 6) {
                     Text(bus.displayName).font(.system(size: 10, weight: .bold, design: .rounded)).foregroundColor(Theme.yellow).lineLimit(1)
-                        .frame(width: 64, height: 22).background(Theme.panelRaised).cornerRadius(6)
+                        .frame(width: w, height: 22).background(Theme.panelRaised).cornerRadius(6)
                     Text("\(bus.kind.label.lowercased()) not in this set")
                         .font(.system(size: 9, design: .rounded)).foregroundColor(Theme.yellow).multilineTextAlignment(.center)
-                        .frame(width: 64, height: 60)
+                        .frame(width: w, height: 60)
                 }
             }
         }
@@ -589,43 +704,6 @@ struct AddBusSheet: View {
 }
 
 // MARK: - Master
-
-struct ReturnsAndMaster: View {
-    @EnvironmentObject var live: LiveSession
-    @EnvironmentObject var store: AppStore
-
-    var body: some View {
-        VStack(spacing: 6) {
-            CapsLabel("Master / Cue", size: 9)
-            HStack(alignment: .bottom, spacing: 8) {
-                if store.profile.showMasterFilter, live.song.masterAutoFilter != nil {
-                    VStack(spacing: 4) {
-                        FilterFader(trackIndex: LiveSongState.masterTrackIndex, filter: live.song.masterAutoFilter, color: Theme.green)
-                            .frame(width: 48, height: 300)
-                        CapsLabel("Filter", size: 8)
-                    }
-                }
-                VStack(spacing: 4) {
-                    Text(LiveVolume.label(fader: live.song.masterVolume))
-                        .font(.system(size: 10, weight: .semibold, design: .monospaced)).foregroundColor(Theme.textSecondary)
-                    MasterFaderView(meters: live.meters)
-                        .frame(width: 64, height: 300)
-                    CapsLabel("Master", size: 8)
-                }
-                VStack(spacing: 4) {
-                    Text(LiveVolume.label(fader: live.song.cueVolume))
-                        .font(.system(size: 10, weight: .semibold, design: .monospaced)).foregroundColor(Theme.textSecondary)
-                    VerticalFader(value: Binding(get: { live.song.cueVolume }, set: { live.setCueVolume($0) }), color: Theme.yellow, meter: nil, label: nil)
-                        .frame(width: 48, height: 300)
-                    CapsLabel("Cue", size: 8)
-                }
-            }
-        }
-        .padding(8)
-        .background(Theme.panel)
-        .cornerRadius(10)
-    }
-}
 
 struct MasterFaderView: View {
     @ObservedObject var meters: LiveMeters

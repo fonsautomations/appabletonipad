@@ -9,7 +9,7 @@ struct LauncherView: View {
     var body: some View {
         VStack(spacing: 6) {
             HStack(spacing: 8) {
-                Segmented(options: AppStore.LauncherMode.allCases.map { ($0, $0.rawValue) }, selection: $store.launcherMode, height: 28)
+                Segmented(options: AppStore.LauncherMode.allCases.map { ($0, $0.rawValue) }, selection: $store.launcherMode, height: 30)
                     .frame(width: 150)
                 Spacer()
                 if store.profile.performanceLock {
@@ -145,7 +145,7 @@ struct DeckPanel: View {
     private var deckTabs: some View {
         HStack(spacing: 4) {
             ForEach(Array(store.decks.enumerated()), id: \.offset) { (i, deck) in
-                PadButton(title: deck.name, color: Color(hex: deck.colorHex), active: i == deckIndex, height: 28, fontSize: 11) {
+                PadButton(title: deck.name, color: Color(hex: deck.colorHex), active: i == deckIndex, height: 30, fontSize: 12) {
                     deckIndex = i
                 }
                 .frame(maxWidth: 140)
@@ -154,7 +154,7 @@ struct DeckPanel: View {
             if store.decks.count > 1 {
                 let trackIndices = tracks.map { $0.index }
                 let muted = !tracks.isEmpty && tracks.allSatisfy { $0.mute }
-                PadButton(title: muted ? "DECK MUTED" : "CUT DECK", color: Theme.red, active: muted, height: 28, fontSize: 10) {
+                PadButton(title: muted ? "DECK MUTED" : "CUT DECK", color: Theme.red, active: muted, height: 30, fontSize: 10) {
                     live.setMute(tracks: trackIndices, on: !muted)
                 }
                 .frame(width: 110)
@@ -175,7 +175,7 @@ struct GridLayout {
 
     init(width: CGFloat, tracks: Int, groups: Int, sceneColumn: Bool, profile: PerformerProfile, compact: Bool) {
         self.sceneColumn = sceneColumn
-        let sceneW: CGFloat = sceneColumn ? (compact ? 54 : 72) : 0
+        let sceneW: CGFloat = sceneColumn ? (compact ? 48 : 72) : 0
         let groupW: CGFloat = compact ? 34 : 44
         sceneWidth = sceneW
         groupWidth = groupW
@@ -184,7 +184,7 @@ struct GridLayout {
         let trackGaps: CGFloat = CGFloat(max(0, tracks - 1)) * 3
         let available: CGFloat = width - fixed - trackGaps
         let natural: CGFloat = tracks > 0 ? available / CGFloat(tracks) : 80
-        let minW: CGFloat = compact ? 52 : 64
+        let minW: CGFloat = compact ? 44 : 56
         let maxW: CGFloat = compact ? 110 : 160
         clipWidth = max(minW, min(maxW, natural))
         let baseHeight: CGFloat = CGFloat(profile.clipHeight)

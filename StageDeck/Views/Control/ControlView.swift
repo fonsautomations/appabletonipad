@@ -20,7 +20,7 @@ struct ControlView: View {
         VStack(spacing: 8) {
             HStack(spacing: 8) {
                 CapsLabel("PAGES", size: 9, color: Theme.textSecondary)
-                Segmented(options: [(1, "1"), (2, "2"), (3, "3"), (4, "4")], selection: $store.controlPanels, height: 28).frame(width: 150)
+                Segmented(options: [(1, "1"), (2, "2"), (3, "3"), (4, "4")], selection: $store.controlPanels, height: 30).frame(width: 150)
                 Spacer()
                 if !control.lastSent.isEmpty {
                     Text(control.lastSent).font(.system(size: 10, design: .monospaced)).foregroundColor(Theme.textSecondary).lineLimit(1)
@@ -28,7 +28,7 @@ struct ControlView: View {
                 if !control.unresolved.isEmpty {
                     CapsLabel("\(control.unresolved.count) unassigned in this set", size: 9, color: Theme.yellow)
                 }
-                PadButton(title: editing ? "DONE" : "EDIT", color: Theme.yellow, active: editing, height: 28, fontSize: 11) { editing.toggle() }.frame(width: 70)
+                PadButton(title: editing ? "DONE" : "EDIT", color: Theme.yellow, active: editing, height: 30, fontSize: 11) { editing.toggle() }.frame(width: 70)
             }
             switch panelCount {
             case 2:

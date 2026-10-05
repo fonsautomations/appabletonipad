@@ -7,37 +7,45 @@ struct StepEditor: View {
     var body: some View {
         if let index = sequencer.selectedStep {
             let step = sequencer.track.step(index)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(alignment: .top, spacing: 10) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        CapsLabel("Step \(index + 1) · \(sequencer.track.name)", size: 10, color: Theme.textPrimary)
-                        HStack(spacing: 8) {
-                            ValueDial(title: "Note", value: noteBinding(step), range: 0...127, format: { MIDINote.name($0) }).frame(width: 110)
-                            ValueDial(title: "Vel", value: binding(\.velocity, step), range: 1...127).frame(width: 90)
-                            ValueDial(title: "Len /16", value: lengthBinding(step), range: 1...64, format: { String(format: "%.2g", Double($0) / 4) }).frame(width: 90)
-                            ValueDial(title: "Micro", value: binding(\.micro, step), range: -11...11, format: { $0 > 0 ? "+\($0)" : "\($0)" }).frame(width: 90)
-                            ValueDial(title: "Prob %", value: binding(\.probability, step), range: 0...100, step: 5).frame(width: 90)
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 10) {
+                    CapsLabel("Step \(index + 1) · \(sequencer.track.name)", size: 10, color: Theme.textPrimary)
+                    HStack(alignment: .bottom, spacing: 8) {
+                        ValueDial(title: "Note", value: noteBinding(step), range: 0...127, format: { MIDINote.name($0) }).frame(width: 110)
+                        ValueDial(title: "Vel", value: binding(\.velocity, step), range: 1...127).frame(width: 90)
+                        ValueDial(title: "Len /16", value: lengthBinding(step), range: 1...64, format: { String(format: "%.2g", Double($0) / 4) }).frame(width: 90)
+                        ValueDial(title: "Micro", value: binding(\.micro, step), range: -11...11, format: { $0 > 0 ? "+\($0)" : "\($0)" }).frame(width: 90)
+                        ValueDial(title: "Prob %", value: binding(\.probability, step), range: 0...100, step: 5).frame(width: 90)
+                        ToggleButton(title: "ACCENT", isOn: boolBinding(\.accent, step), color: Theme.yellow, height: 34).frame(width: 84)
+                        ToggleButton(title: "SLIDE", isOn: boolBinding(\.slide, step), color: Theme.secondary, height: 34).frame(width: 84)
+                        Spacer(minLength: 0)
+                    }
+                    HStack(alignment: .top, spacing: 16) {
+                        VStack(alignment: .leading, spacing: 6) {
+                            CapsLabel("Retrig", size: 10, color: Theme.textPrimary)
+                            HStack(spacing: 8) {
+                                ValueDial(title: "Retrig", value: binding(\.retrig.count, step), range: 1...16, format: { $0 == 1 ? "off" : "x\($0)" }).frame(width: 90)
+                                ValueDial(title: "Rate", value: retrigRateBinding(step), range: 0...(Retrig.rates.count - 1), format: { Retrig.rates[$0].label }).frame(width: 90)
+                                ValueDial(title: "Ramp %", value: binding(\.retrig.velocityRamp, step), range: -100...100, step: 10).frame(width: 90)
+                                ValueDial(title: "Prog chg", value: binding(\.programChange, step), range: -1...127, format: { $0 < 0 ? "—" : "\($0)" }).frame(width: 90)
+                            }
                         }
-                        HStack(spacing: 8) {
-                            ToggleButton(title: "ACCENT", isOn: boolBinding(\.accent, step), color: Theme.yellow, height: 32).frame(width: 84)
-                            ToggleButton(title: "SLIDE", isOn: boolBinding(\.slide, step), color: Theme.secondary, height: 32).frame(width: 84)
-                            ValueDial(title: "Retrig", value: binding(\.retrig.count, step), range: 1...16, format: { $0 == 1 ? "off" : "x\($0)" }).frame(width: 90)
-                            ValueDial(title: "Rate", value: retrigRateBinding(step), range: 0...(Retrig.rates.count - 1), format: { Retrig.rates[$0].label }).frame(width: 90)
-                            ValueDial(title: "Ramp %", value: binding(\.retrig.velocityRamp, step), range: -100...100, step: 10).frame(width: 90)
-                            ValueDial(title: "Prog chg", value: binding(\.programChange, step), range: -1...127, format: { $0 < 0 ? "—" : "\($0)" }).frame(width: 90)
+                        VStack(alignment: .leading, spacing: 6) {
+                            CapsLabel("Chord", size: 10, color: Theme.textPrimary)
+                            ChordEditor(step: step, index: index)
                         }
+                        Spacer(minLength: 0)
                     }
-                    VStack(alignment: .leading, spacing: 6) {
-                        CapsLabel("Condition", size: 10, color: Theme.textPrimary)
-                        ConditionPicker(step: step, index: index)
-                    }
-                    VStack(alignment: .leading, spacing: 6) {
-                        CapsLabel("Parameter locks", size: 10, color: Theme.textPrimary)
-                        LockEditor(step: step, index: index)
-                    }
-                    VStack(alignment: .leading, spacing: 6) {
-                        CapsLabel("Chord", size: 10, color: Theme.textPrimary)
-                        ChordEditor(step: step, index: index)
+                    HStack(alignment: .top, spacing: 16) {
+                        VStack(alignment: .leading, spacing: 6) {
+                            CapsLabel("Condition", size: 10, color: Theme.textPrimary)
+                            ConditionPicker(step: step, index: index)
+                        }
+                        VStack(alignment: .leading, spacing: 6) {
+                            CapsLabel("Parameter locks", size: 10, color: Theme.textPrimary)
+                            LockEditor(step: step, index: index)
+                        }
+                        Spacer(minLength: 0)
                     }
                 }
                 .padding(4)
@@ -205,51 +213,62 @@ struct TrackEditor: View {
     @EnvironmentObject var midi: MIDIService
 
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(alignment: .top, spacing: 12) {
-                VStack(alignment: .leading, spacing: 6) {
-                    CapsLabel("Track", size: 10, color: Theme.textPrimary)
-                    HStack(spacing: 8) {
+        ScrollView(.vertical, showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 10) {
+                CapsLabel("Track", size: 10, color: Theme.textPrimary)
+                HStack(alignment: .bottom, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        CapsLabel("Name", size: 9)
                         TextField("Name", text: Binding(get: { sequencer.track.name }, set: { v in sequencer.updateTrack { $0.name = v } }))
                             .textFieldStyle(.roundedBorder)
-                            .frame(width: 120)
-                        ValueDial(title: "Channel", value: Binding(get: { sequencer.track.channel + 1 }, set: { v in sequencer.updateTrack { $0.channel = v - 1 } }), range: 1...16).frame(width: 90)
-                        ValueDial(title: "Length", value: Binding(get: { sequencer.track.length }, set: { v in sequencer.updateTrack { $0.length = v } }), range: 1...64).frame(width: 90)
-                        ValueDial(title: "Speed", value: speedBinding, range: 0...(TrackSpeed.allCases.count - 1), format: { TrackSpeed.allCases[$0].rawValue }).frame(width: 90)
-                        ValueDial(title: "Dir", value: dirBinding, range: 0...(PlayDirection.allCases.count - 1), format: { PlayDirection.allCases[$0].label }).frame(width: 80)
+                            .frame(width: 130, height: 34)
                     }
-                    HStack(spacing: 8) {
-                        ValueDial(title: "Def note", value: Binding(get: { sequencer.track.defaultNote }, set: { v in sequencer.updateTrack { $0.defaultNote = v } }), range: 0...127, format: { MIDINote.name($0) }).frame(width: 100)
-                        ValueDial(title: "Def vel", value: Binding(get: { sequencer.track.defaultVelocity }, set: { v in sequencer.updateTrack { $0.defaultVelocity = v } }), range: 1...127).frame(width: 90)
-                        ValueDial(title: "Accent vel", value: Binding(get: { sequencer.track.accentVelocity }, set: { v in sequencer.updateTrack { $0.accentVelocity = v } }), range: 1...127).frame(width: 90)
-                        ValueDial(title: "Transpose", value: Binding(get: { sequencer.track.transpose }, set: { v in sequencer.updateTrack { $0.transpose = v } }), range: -36...36).frame(width: 90)
-                        ValueDial(title: "Chance %", value: Binding(get: { sequencer.track.chance }, set: { v in sequencer.updateTrack { $0.chance = v } }), range: 0...100, step: 5).frame(width: 90)
-                        ValueDial(title: "Swing", value: Binding(get: { sequencer.track.swing ?? sequencer.pattern.swing }, set: { v in sequencer.updateTrack { $0.swing = v } }), range: 50...80).frame(width: 90)
-                        ValueDial(title: "Prog chg", value: Binding(get: { sequencer.track.programChange }, set: { v in sequencer.updateTrack { $0.programChange = v } }), range: -1...127, format: { $0 < 0 ? "—" : "\($0 + 1)" }).frame(width: 90)
+                    ValueDial(title: "Channel", value: Binding(get: { sequencer.track.channel + 1 }, set: { v in sequencer.updateTrack { $0.channel = v - 1 } }), range: 1...16).frame(width: 90)
+                    ValueDial(title: "Length", value: Binding(get: { sequencer.track.length }, set: { v in sequencer.updateTrack { $0.length = v } }), range: 1...64).frame(width: 90)
+                    ValueDial(title: "Speed", value: speedBinding, range: 0...(TrackSpeed.allCases.count - 1), format: { TrackSpeed.allCases[$0].rawValue }).frame(width: 90)
+                    ValueDial(title: "Dir", value: dirBinding, range: 0...(PlayDirection.allCases.count - 1), format: { PlayDirection.allCases[$0].label }).frame(width: 90)
+                    ToggleButton(title: "DRUM", isOn: Binding(get: { sequencer.track.isDrum }, set: { v in sequencer.updateTrack { $0.isDrum = v } }), color: Theme.secondary, height: 34).frame(width: 80)
+                    ToggleButton(title: "SCALE LOCK", isOn: Binding(get: { sequencer.track.scaleLock }, set: { v in sequencer.updateTrack { $0.scaleLock = v } }), color: Theme.secondary, height: 34).frame(width: 110)
+                    ToggleButton(title: "MUTE", isOn: Binding(get: { sequencer.track.mute }, set: { v in sequencer.updateTrack { $0.mute = v } }), color: Theme.red, height: 34).frame(width: 70)
+                    ToggleButton(title: "SOLO", isOn: Binding(get: { sequencer.track.solo }, set: { v in sequencer.updateTrack { $0.solo = v } }), color: Theme.yellow, height: 34).frame(width: 70)
+                    Spacer(minLength: 0)
+                }
+                HStack(spacing: 8) {
+                    ValueDial(title: "Def note", value: Binding(get: { sequencer.track.defaultNote }, set: { v in sequencer.updateTrack { $0.defaultNote = v } }), range: 0...127, format: { MIDINote.name($0) }).frame(width: 100)
+                    ValueDial(title: "Def vel", value: Binding(get: { sequencer.track.defaultVelocity }, set: { v in sequencer.updateTrack { $0.defaultVelocity = v } }), range: 1...127).frame(width: 90)
+                    ValueDial(title: "Accent vel", value: Binding(get: { sequencer.track.accentVelocity }, set: { v in sequencer.updateTrack { $0.accentVelocity = v } }), range: 1...127).frame(width: 90)
+                    ValueDial(title: "Transpose", value: Binding(get: { sequencer.track.transpose }, set: { v in sequencer.updateTrack { $0.transpose = v } }), range: -36...36).frame(width: 90)
+                    ValueDial(title: "Chance %", value: Binding(get: { sequencer.track.chance }, set: { v in sequencer.updateTrack { $0.chance = v } }), range: 0...100, step: 5).frame(width: 90)
+                    ValueDial(title: "Swing", value: Binding(get: { sequencer.track.swing ?? sequencer.pattern.swing }, set: { v in sequencer.updateTrack { $0.swing = v } }), range: 50...80).frame(width: 90)
+                    ValueDial(title: "Prog chg", value: Binding(get: { sequencer.track.programChange }, set: { v in sequencer.updateTrack { $0.programChange = v } }), range: -1...127, format: { $0 < 0 ? "—" : "\($0 + 1)" }).frame(width: 90)
+                    Spacer(minLength: 0)
+                }
+                HStack(alignment: .top, spacing: 16) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        CapsLabel("MIDI output", size: 10, color: Theme.textPrimary)
+                        PortPicker(selection: Binding(get: { sequencer.track.port }, set: { v in sequencer.updateTrack { $0.port = v } }))
                     }
-                    HStack(spacing: 8) {
-                        ToggleButton(title: "DRUM", isOn: Binding(get: { sequencer.track.isDrum }, set: { v in sequencer.updateTrack { $0.isDrum = v } }), color: Theme.secondary, height: 32).frame(width: 80)
-                        ToggleButton(title: "SCALE LOCK", isOn: Binding(get: { sequencer.track.scaleLock }, set: { v in sequencer.updateTrack { $0.scaleLock = v } }), color: Theme.secondary, height: 32).frame(width: 110)
-                        ToggleButton(title: "MUTE", isOn: Binding(get: { sequencer.track.mute }, set: { v in sequencer.updateTrack { $0.mute = v } }), color: Theme.red, height: 32).frame(width: 80)
-                        ToggleButton(title: "SOLO", isOn: Binding(get: { sequencer.track.solo }, set: { v in sequencer.updateTrack { $0.solo = v } }), color: Theme.yellow, height: 32).frame(width: 80)
+                    VStack(alignment: .leading, spacing: 6) {
+                        CapsLabel("Pattern", size: 10, color: Theme.textPrimary)
+                        HStack(alignment: .bottom, spacing: 8) {
+                            VStack(alignment: .leading, spacing: 3) {
+                                CapsLabel("Name", size: 9)
+                                TextField("Pattern name", text: Binding(get: { sequencer.pattern.name }, set: { v in sequencer.pattern.name = v }))
+                                    .textFieldStyle(.roundedBorder).frame(width: 110, height: 34)
+                            }
+                            ValueDial(title: "Master len", value: Binding(get: { sequencer.pattern.masterLength }, set: { v in sequencer.pattern.masterLength = v }), range: 1...64).frame(width: 100)
+                            ValueDial(title: "Pat swing", value: Binding(get: { sequencer.pattern.swing }, set: { v in sequencer.pattern.swing = v }), range: 50...80).frame(width: 100)
+                        }
                     }
-                }
-                VStack(alignment: .leading, spacing: 6) {
-                    CapsLabel("MIDI output", size: 10, color: Theme.textPrimary)
-                    PortPicker(selection: Binding(get: { sequencer.track.port }, set: { v in sequencer.updateTrack { $0.port = v } }))
-                }
-                VStack(alignment: .leading, spacing: 6) {
-                    CapsLabel("Pattern", size: 10, color: Theme.textPrimary)
-                    ValueDial(title: "Master len", value: Binding(get: { sequencer.pattern.masterLength }, set: { v in sequencer.pattern.masterLength = v }), range: 1...64).frame(width: 100)
-                    ValueDial(title: "Pat swing", value: Binding(get: { sequencer.pattern.swing }, set: { v in sequencer.pattern.swing = v }), range: 50...80).frame(width: 100)
-                    TextField("Pattern name", text: Binding(get: { sequencer.pattern.name }, set: { v in sequencer.pattern.name = v }))
-                        .textFieldStyle(.roundedBorder).frame(width: 100)
-                }
-                VStack(alignment: .leading, spacing: 6) {
-                    CapsLabel("Key / scale", size: 10, color: Theme.textPrimary)
-                    ValueDial(title: "Root", value: $sequencer.project.rootNote, range: 0...11, format: { MIDINote.names[$0] }).frame(width: 90)
-                    ValueDial(title: "Scale", value: scaleBinding, range: 0...(Scale.all.count - 1), format: { Scale.all[$0].name }).frame(width: 150)
-                    ValueDial(title: "Global transp", value: $sequencer.project.globalTranspose, range: -24...24).frame(width: 110)
+                    VStack(alignment: .leading, spacing: 6) {
+                        CapsLabel("Key / scale", size: 10, color: Theme.textPrimary)
+                        HStack(alignment: .bottom, spacing: 8) {
+                            ValueDial(title: "Root", value: $sequencer.project.rootNote, range: 0...11, format: { MIDINote.names[$0] }).frame(width: 90)
+                            ValueDial(title: "Scale", value: scaleBinding, range: 0...(Scale.all.count - 1), format: { Scale.all[$0].name }).frame(width: 150)
+                            ValueDial(title: "Global transp", value: $sequencer.project.globalTranspose, range: -24...24).frame(width: 110)
+                        }
+                    }
+                    Spacer(minLength: 0)
                 }
             }
             .padding(4)

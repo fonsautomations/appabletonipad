@@ -216,10 +216,10 @@ private struct MasterMeterContent: View {
         HStack(spacing: 8) {
             CapsLabel("Master", size: 8)
             VStack(spacing: 3) {
-                MeterBar(level: meters.masterMeter).frame(width: 120, height: 6)
+                MeterBar(level: meters.masterMeter).frame(width: 140, height: 5)
                 HorizontalSlider(value: Binding(get: { live.song.masterVolume }, set: { live.setMasterVolume($0) }),
                                  color: Theme.green.opacity(0.8), label: "")
-                    .frame(width: 120, height: 10)
+                    .frame(width: 140, height: 16)
             }
             Text(LiveVolume.label(fader: live.song.masterVolume))
                 .font(.system(size: 13, weight: .semibold, design: .monospaced))
