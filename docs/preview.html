@@ -1,0 +1,551 @@
+<title>StageDeck Preview</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: one fixed 1180×820 "iPad" stage, scaled to fit the window; single dark stage theme like the app. */
+:root {
+  color-scheme: dark;
+  --bg: #0f0f10;
+  --panel: #1b1b1e;
+  --raised: #29292d;
+  --line: rgba(255,255,255,.08);
+  --fg: #ede9df;
+  --fg2: rgba(255,255,255,.55);
+  --accent: #f28c28;
+  --deckb: #8fb4dd;
+  --green: #7dc24d;
+  --red: #ed5445;
+  --yellow: #f2d63d;
+  --display: "Nunito", "SF Pro Rounded", system-ui, sans-serif;
+  --mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--display); padding-block: 12px; padding-inline: 16px; overflow-x: hidden; }
+.wrap { max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
+.intro { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 6px 16px; color: var(--fg2); font-size: 13px; }
+.intro b { color: var(--fg); font-weight: 800; font-size: 15px; }
+.intro .hint { font-size: 12px; }
+.fit { width: 100%; aspect-ratio: 1180 / 820; max-width: 100%; position: relative; }
+.ipad { position: absolute; top: 0; left: 0; width: 1180px; height: 820px; transform-origin: 0 0; border: 10px solid #2a2a2e; border-radius: 28px; background: var(--bg); overflow: hidden; box-shadow: 0 30px 80px rgba(0,0,0,.6); }
+.screen { position: absolute; inset: 0; display: flex; flex-direction: column; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; border-radius: 8px; }
+button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 1px; }
+.caps { text-transform: uppercase; letter-spacing: .1em; font-size: 10px; font-weight: 700; color: var(--fg2); white-space: nowrap; }
+
+/* top bar */
+.top { height: 44px; background: var(--panel); display: flex; align-items: center; gap: 12px; padding: 0 12px; border-bottom: 1px solid var(--line); }
+.status { display: flex; align-items: center; gap: 6px; min-width: 150px; font-size: 11px; font-weight: 700; color: var(--fg2); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); }
+.dot.ok { background: var(--green); } .dot.demo { background: var(--deckb); } .dot.busy { background: var(--yellow); animation: pulse .6s ease-in-out infinite alternate; }
+@keyframes pulse { to { opacity: .35; } }
+.seg { display: flex; gap: 2px; padding: 2px; background: var(--raised); border-radius: 8px; }
+.seg button { flex: 1; height: 26px; padding: 0 10px; font-size: 11px; font-weight: 800; color: var(--fg2); border-radius: 6px; white-space: nowrap; }
+.seg button.on { background: rgba(255,255,255,.9); color: #000; }
+.top .seg { width: 260px; margin: 0 auto; }
+.gear { width: 36px; height: 32px; color: var(--fg2); font-size: 18px; }
+
+/* transport bar */
+.transport { height: 52px; background: var(--panel); border-top: 1px solid var(--line); display: flex; align-items: center; gap: 10px; padding: 0 12px; }
+.tempo { display: flex; align-items: center; background: var(--raised); border-radius: 8px; color: var(--fg2); }
+.tempo button { width: 30px; height: 36px; font-size: 16px; }
+.tempo .v { width: 70px; text-align: center; }
+.tempo .v b { display: block; font-size: 18px; font-weight: 600; color: var(--fg); font-family: var(--mono); }
+.tempo .v small { font-size: 8px; letter-spacing: .1em; }
+.vsep { width: 1px; height: 28px; background: var(--line); }
+.play { width: 54px; height: 36px; background: var(--raised); border-radius: 8px; font-size: 16px; font-weight: 900; }
+.play.on { background: var(--green); color: #000; }
+.pad { height: 36px; border-radius: 8px; font-weight: 800; font-size: 11px; border: 1px solid var(--line); background: rgba(237,84,69,.35); color: var(--fg); padding: 0 12px; }
+.pad.yellow { background: rgba(242,214,61,.35); } .pad.yellow.on { background: var(--yellow); color: #000; }
+.quant { width: 64px; height: 36px; background: var(--raised); border-radius: 8px; text-align: center; font-size: 12px; font-weight: 800; }
+.quant small { display: block; font-size: 8px; letter-spacing: .1em; color: var(--fg2); font-weight: 700; }
+.mid { flex: 1; display: flex; justify-content: center; align-items: center; gap: 10px; font-size: 12px; color: var(--fg2); font-weight: 700; }
+.mid .sec { color: var(--fg); font-weight: 800; font-size: 13px; }
+.master { display: flex; align-items: center; gap: 8px; }
+.meterbar { width: 120px; height: 6px; border-radius: 3px; background: rgba(255,255,255,.08); overflow: hidden; }
+.meterbar i { display: block; height: 100%; width: 0; background: var(--green); transition: width .08s linear; }
+.master .db { font-family: var(--mono); font-size: 13px; width: 44px; text-align: right; }
+.hslide { height: 10px; border-radius: 6px; background: rgba(125,194,77,.22); position: relative; width: 120px; }
+.hslide i { position: absolute; left: 0; top: 0; bottom: 0; width: 85%; background: rgba(125,194,77,.8); border-radius: 6px; }
+
+/* content */
+.content { flex: 1; min-height: 0; position: relative; }
+.view { position: absolute; inset: 0; display: none; }
+.view.on { display: flex; flex-direction: column; }
+
+/* splash + welcome */
+.splash { position: absolute; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 5; }
+.logo { display: flex; align-items: flex-end; gap: 6px; height: 64px; }
+.logo i { display: block; width: 18px; border-radius: 5px; background: var(--fg); animation: bar .9s cubic-bezier(.2,.9,.3,1.2) both; }
+.logo i:nth-child(1){height:64px} .logo i:nth-child(2){height:30px;animation-delay:.08s} .logo i:nth-child(3){height:46px;animation-delay:.16s} .logo i:nth-child(4){height:30px;animation-delay:.24s} .logo i:nth-child(5){height:64px;animation-delay:.32s}
+@keyframes bar { from { transform: scaleY(0); transform-origin: bottom; opacity: 0 } to { transform: scaleY(1); opacity: 1 } }
+.splash .name { position: absolute; margin-top: 150px; letter-spacing: .35em; font-weight: 900; font-size: 18px; animation: fadeup .8s .5s ease both; }
+@keyframes fadeup { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }
+.splash.out { animation: splashout .5s ease forwards; }
+@keyframes splashout { to { opacity: 0; visibility: hidden; } }
+.welcome { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 40px; text-align: center; animation: fadeup .6s ease both; }
+.welcome h1 { margin: 0; font-size: 40px; font-weight: 900; }
+.welcome p { margin: 0; color: var(--fg2); font-size: 14px; }
+.welcome .steps { text-align: left; background: var(--panel); border-radius: 10px; padding: 14px 18px; color: var(--fg2); font-size: 13px; line-height: 1.7; }
+.welcome .row { display: flex; gap: 12px; }
+.bigbtn { width: 180px; height: 48px; border-radius: 8px; font-weight: 800; font-size: 14px; border: 1px solid var(--line); }
+.bigbtn.accent { background: var(--accent); color: #000; }
+.bigbtn.blue { background: rgba(143,180,221,.35); }
+.bigbtn.plain { background: rgba(41,41,45,.6); width: 140px; }
+.welcome .ip { font-family: var(--mono); font-size: 11px; color: var(--fg2); }
+.welcome.hide { display: none; }
+
+/* launcher */
+.launcher { padding: 6px 8px 4px; gap: 6px; }
+.lmodes { display: flex; align-items: center; gap: 8px; padding: 0 2px; }
+.lmodes .seg { width: 150px; }
+.decks { flex: 1; min-height: 0; display: flex; gap: 8px; }
+.deck { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.deck + .deck { border-left: 1px solid var(--line); padding-left: 8px; }
+.decktabs { display: flex; gap: 4px; align-items: center; }
+.decktabs button { height: 28px; padding: 0 16px; border-radius: 8px; font-size: 11px; font-weight: 800; border: 1px solid var(--line); background: rgba(255,255,255,.06); max-width: 140px; }
+.decktabs button.on { color: #000; }
+.decktabs .cut { margin-left: auto; width: 110px; font-size: 10px; background: rgba(237,84,69,.35); }
+.decktabs .cut.on { background: var(--red); color: #000; }
+.sections { display: flex; gap: 4px; height: 28px; overflow: hidden; }
+.sections button { height: 26px; padding: 0 12px; border-radius: 6px; background: var(--raised); color: var(--fg2); font-size: 11px; font-weight: 800; }
+.sections button.on { color: #000; }
+.gridwrap { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 3px; }
+.hrow, .srow, .frow { display: flex; gap: 3px; }
+.hrow { height: 30px; align-items: flex-end; padding-bottom: 2px; }
+.hcell { display: flex; flex-direction: column; gap: 3px; align-items: center; justify-content: flex-end; }
+.hcell b { font-size: 10px; font-weight: 800; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hcell .m { width: 100%; height: 4px; border-radius: 2px; background: rgba(255,255,255,.08); overflow: hidden; }
+.hcell .m i { display: block; height: 100%; width: 0; transition: width .08s linear; }
+.rows { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 3px; scroll-behavior: smooth; }
+.rows::-webkit-scrollbar { width: 6px; } .rows::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 3px; }
+.scene { font-size: 9px; font-weight: 700; color: var(--fg2); background: var(--raised); border-radius: 8px; padding: 2px; line-height: 1.1; }
+.scene.on { background: #fff; color: #000; }
+.grp { font-weight: 900; font-size: 12px; border-radius: 8px; color: var(--fg); }
+.grp.dim { opacity: .35; }
+.grp.on { color: #000; }
+.clip { position: relative; border-radius: 8px; text-align: left; padding: 4px 5px 9px; overflow: hidden; display: flex; flex-direction: column; gap: 1px; }
+.clip.empty { background: var(--panel); }
+.clip small { font-size: 9px; font-weight: 500; opacity: .7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.clip b { font-size: 12px; font-weight: 800; line-height: 1.1; }
+.clip em { font-style: normal; font-size: 9px; font-weight: 700; opacity: .85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.clip .prog { position: absolute; left: 5px; right: 5px; bottom: 4px; height: 5px; border-radius: 3px; background: rgba(0,0,0,.25); display: none; }
+.clip .prog i { display: block; height: 100%; width: 0; border-radius: 3px; background: rgba(0,0,0,.75); }
+.clip.playing .prog { display: block; }
+.clip.queued::after { content: ""; position: absolute; inset: 0; border: 2px solid #fff; border-radius: 8px; animation: blink .35s ease-in-out infinite alternate; }
+@keyframes blink { to { opacity: .2 } }
+.frow button { height: 30px; border-radius: 8px; background: var(--raised); color: var(--fg2); font-size: 9px; font-weight: 800; }
+.frow .stopall { background: rgba(237,84,69,.8); color: #fff; font-size: 11px; }
+.frow .stop.live { color: var(--red); }
+.frow .cue.on { background: var(--yellow); color: #000; }
+.lock { color: var(--yellow); }
+
+/* mixer */
+.mixer { padding: 10px; gap: 10px; flex-direction: row !important; overflow-x: auto; }
+.mdeck { display: flex; flex-direction: column; gap: 6px; }
+.mdeck + .mdeck { border-left: 1px solid var(--line); padding-left: 10px; }
+.mhead { display: flex; gap: 6px; }
+.mhead .deckbtn { width: 120px; height: 40px; border-radius: 8px; font-weight: 800; font-size: 16px; color: #000; border: 1px solid var(--line); }
+.hpf { width: 160px; height: 40px; border-radius: 6px; position: relative; overflow: hidden; display: flex; align-items: center; padding-left: 8px; font-size: 11px; font-weight: 800; }
+.hpf i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 6px; }
+.hpf span { position: relative; text-shadow: 0 0 2px rgba(0,0,0,.6); }
+.strips { display: flex; gap: 6px; align-items: flex-start; }
+.strip { width: 64px; display: flex; flex-direction: column; gap: 5px; align-items: center; }
+.strip .nm { width: 64px; height: 22px; border-radius: 6px; background: var(--raised); font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.send { width: 64px; height: 34px; border-radius: 6px; position: relative; overflow: hidden; display: flex; align-items: flex-end; justify-content: center; font-size: 8px; font-weight: 700; padding-bottom: 3px; cursor: ns-resize; }
+.send i { position: absolute; left: 0; right: 0; bottom: 0; border-radius: 6px; }
+.send span { position: relative; }
+.vf { width: 64px; border-radius: 6px; position: relative; overflow: hidden; cursor: ns-resize; }
+.vf.lpf { height: 110px; }
+.vf.vol { height: 180px; }
+.vf .fill { position: absolute; left: 0; right: 0; bottom: 0; border-radius: 6px; }
+.vf .line { position: absolute; left: 0; right: 0; height: 2px; background: #fff; }
+.vf .mt { position: absolute; right: 4px; bottom: 2px; width: 3px; border-radius: 2px; background: rgba(0,0,0,.6); transition: height .08s linear; }
+.vf .lbl { position: absolute; left: 0; right: 0; bottom: 6px; text-align: center; font-size: 10px; font-weight: 800; color: rgba(0,0,0,.75); }
+.strip .db { width: 64px; height: 16px; border-radius: 4px; background: var(--raised); font-family: var(--mono); font-size: 10px; color: var(--fg2); display: flex; align-items: center; justify-content: center; }
+.strip .btns { display: flex; gap: 3px; width: 64px; }
+.strip .btns button { flex: 1; height: 28px; border-radius: 8px; font-size: 10px; font-weight: 800; border: 1px solid var(--line); background: rgba(255,255,255,.06); }
+.strip .btns .m.on { background: var(--red); color: #000; } .strip .btns .c.on { background: var(--yellow); color: #000; }
+.mastbox { background: var(--panel); border-radius: 10px; padding: 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.mastbox .pair { display: flex; gap: 8px; }
+.mastbox .col { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.mastbox .dbx { font-family: var(--mono); font-size: 10px; color: var(--fg2); }
+
+/* sequencer */
+.seqv { padding: 8px; flex-direction: row !important; gap: 8px; }
+.tracks { width: 150px; display: flex; flex-direction: column; gap: 3px; overflow-y: auto; }
+.trow { display: flex; gap: 4px; }
+.trow .main { flex: 1; height: 36px; border-radius: 6px; background: var(--raised); display: flex; align-items: center; gap: 6px; padding: 0 6px; text-align: left; }
+.trow .main i { width: 4px; height: 26px; border-radius: 3px; }
+.trow .main b { display: block; font-size: 12px; font-weight: 800; }
+.trow .main small { font-size: 9px; color: var(--fg2); }
+.trow .main.on { color: #000; } .trow .main.on small { color: rgba(0,0,0,.7); }
+.trow .ms { display: flex; flex-direction: column; gap: 2px; }
+.trow .ms button { width: 20px; height: 16px; border-radius: 3px; background: var(--raised); font-size: 9px; font-weight: 800; color: var(--fg2); }
+.trow .ms .m.on { background: var(--red); color: #000; } .trow .ms .s.on { background: var(--yellow); color: #000; }
+.seqmain { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.pbar { display: flex; gap: 6px; align-items: center; }
+.pbar .pats { display: flex; gap: 4px; }
+.pbar .pats button { height: 28px; padding: 0 10px; border-radius: 6px; background: var(--raised); font-size: 11px; font-weight: 800; }
+.pbar .pats button.on { background: var(--accent); color: #000; } .pbar .pats button.q { background: rgba(242,214,61,.4); }
+.pbar .sp { flex: 1; }
+.pbar .seg { width: 200px; }
+.pbar .pp { width: 70px; height: 28px; border-radius: 8px; border: 1px solid var(--line); background: rgba(125,194,77,.35); font-size: 11px; font-weight: 800; }
+.pbar .pp.on { background: var(--green); color: #000; }
+.pbar .rec { width: 56px; height: 28px; border-radius: 8px; border: 1px solid var(--line); background: rgba(237,84,69,.35); font-size: 11px; font-weight: 800; }
+.pbar .rec.on { background: var(--red); color: #000; }
+.pages { display: flex; gap: 4px; align-items: center; }
+.pages button { width: 60px; height: 22px; border-radius: 5px; background: var(--raised); font-size: 10px; font-weight: 800; }
+.pages button.on { background: var(--fg); color: #000; }
+.pages .info { margin-left: auto; font-size: 10px; color: var(--fg2); }
+.pages .info b { font-size: 12px; }
+.steps { display: flex; gap: 4px; height: 76px; }
+.step { flex: 1; border-radius: 8px; background: var(--raised); position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 2px; }
+.step.out { background: var(--panel); }
+.step.beat { box-shadow: inset 0 0 0 1px rgba(255,255,255,.18); }
+.step.on { color: #000; }
+.step .n { font-size: 9px; font-weight: 700; color: var(--fg2); }
+.step.on .n { color: rgba(0,0,0,.7); }
+.step .note { font-size: 11px; font-weight: 800; }
+.step .tags { display: flex; gap: 2px; flex-wrap: wrap; justify-content: center; }
+.step .tags i { font-style: normal; font-size: 7px; font-weight: 800; color: #fff; background: rgba(0,0,0,.45); border-radius: 3px; padding: 1px 2px; }
+.step.sel { box-shadow: inset 0 0 0 2px var(--yellow); }
+.step.head { box-shadow: inset 0 0 0 3px #fff; }
+.panel { flex: 1; min-height: 0; background: var(--panel); border-radius: 10px; padding: 10px; overflow: auto; }
+.panel .ph { display: flex; align-items: flex-start; gap: 10px; }
+.col { display: flex; flex-direction: column; gap: 6px; }
+.col .t { font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.dials { display: flex; gap: 8px; }
+.dial { display: flex; flex-direction: column; gap: 3px; align-items: center; }
+.dial .box { display: flex; align-items: center; background: var(--raised); border-radius: 6px; color: var(--fg2); }
+.dial .box button { width: 28px; height: 34px; font-size: 14px; }
+.dial .box span { flex: 1; text-align: center; font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--fg); }
+.cond { display: grid; grid-template-columns: repeat(8, 44px); gap: 3px; }
+.cond button { height: 22px; border-radius: 4px; background: var(--raised); font-size: 9px; font-weight: 800; }
+.cond button.on { background: var(--accent); color: #000; }
+.tog { height: 32px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--line); font-size: 11px; font-weight: 800; }
+.tog.y { background: rgba(242,214,61,.35); } .tog.y.on { background: var(--yellow); color: #000; }
+.tog.b { background: rgba(143,180,221,.35); } .tog.b.on { background: var(--deckb); color: #000; }
+.hint { color: var(--fg2); font-size: 13px; display: flex; align-items: center; justify-content: center; height: 100%; text-align: center; line-height: 1.6; }
+.keys { display: flex; gap: 3px; height: 100%; }
+.key { flex: 1; border-radius: 6px; background: var(--panel); border: 1px solid var(--line); display: flex; align-items: flex-end; justify-content: center; padding-bottom: 6px; font-size: 10px; font-weight: 800; color: var(--fg2); user-select: none; }
+.key.root { background: var(--raised); } .key.held { background: var(--accent); color: #000; }
+.lfo { background: rgba(41,41,45,.5); border-radius: 8px; padding: 6px; }
+.toast { position: absolute; left: 50%; bottom: 64px; transform: translateX(-50%); background: rgba(0,0,0,.8); color: var(--fg); padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 6; }
+.toast.show { opacity: 1; }
+.legend { color: var(--fg2); font-size: 12px; line-height: 1.6; max-width: 1180px; }
+.legend b { color: var(--fg); }
+@media (prefers-reduced-motion: reduce) { .clip.queued::after, .dot.busy, .logo i, .splash .name, .welcome { animation: none; } .rows { scroll-behavior: auto; } }
+</style>
+
+<div class="wrap">
+  <div class="intro">
+    <span><b>StageDeck</b> &nbsp;·&nbsp; previsualización web interactiva de la app de iPad (set de demo, sin Live)</span>
+    <span class="hint">Pulsa <b>Demo mode</b>. Toca clips, escenas, K/R, faders y pasos. Mantén pulsado un clip para ver su nota.</span>
+  </div>
+  <div class="fit"><div class="ipad" id="ipad">
+    <div class="screen">
+      <div class="top">
+        <div class="status"><span class="dot" id="dot"></span><span id="stateLabel">Offline</span></div>
+        <div class="seg" id="tabs"><button class="on" data-tab="launch">LAUNCH</button><button data-tab="mixer">MIXER</button><button data-tab="seq">SEQ</button></div>
+        <button class="gear" aria-label="Settings">⚙</button>
+      </div>
+      <div class="content">
+        <div class="splash" id="splash"><div class="logo"><i></i><i></i><i></i><i></i><i></i></div><div class="name">STAGEDECK</div></div>
+        <div class="welcome" id="welcome">
+          <h1>StageDeck</h1>
+          <p>Clip launcher · stem mixer · step sequencer for Ableton Live</p>
+          <div class="steps">1. Install the AbletonOSC remote script on the Mac (see ableton/README.md).<br>2. Put the iPad and the Mac on the same network (Wi‑Fi or Ethernet).<br>3. Press Connect. StageDeck finds Live by itself; or type the Mac's IP in Settings.</div>
+          <div class="row"><button class="bigbtn accent" id="connectBtn">Connect</button><button class="bigbtn blue" id="demoBtn">Demo mode</button><button class="bigbtn plain">Settings</button></div>
+          <div class="ip">Your IP: en0: 192.168.1.42</div>
+        </div>
+        <div class="view launcher" id="view-launch">
+          <div class="lmodes"><div class="seg" id="lmode"><button>INDIV.</button><button class="on">DUAL</button></div><span class="caps lock" id="lockLabel" hidden>Performance lock</span></div>
+          <div class="decks" id="decks"></div>
+        </div>
+        <div class="view mixer" id="view-mixer"></div>
+        <div class="view seqv" id="view-seq">
+          <div class="tracks" id="tracks"></div>
+          <div class="seqmain">
+            <div class="pbar">
+              <div class="pats" id="pats"></div><div class="sp"></div>
+              <button class="pp" id="seqPlay">PLAY</button><button class="rec" id="seqRec">REC</button>
+              <div class="seg" id="sync"><button class="on">Internal</button><button>MIDI Clock In</button></div>
+            </div>
+            <div class="pages" id="pages"></div>
+            <div class="steps" id="steps"></div>
+            <div class="seg" id="panels"><button class="on" data-p="step">STEP</button><button data-p="track">TRACK</button><button data-p="mod">MOD</button><button data-p="keys">KEYS</button><button data-p="pat">PATTERNS</button><button data-p="tools">TOOLS</button></div>
+            <div class="panel" id="panel"></div>
+          </div>
+        </div>
+      </div>
+      <div class="transport">
+        <div class="tempo"><button id="tempoDown">−</button><div class="v"><b id="tempo">133.0</b><small class="caps">BPM</small></div><button id="tempoUp">+</button></div>
+        <div class="vsep"></div>
+        <button class="play" id="play">▶</button>
+        <button class="pad" id="stopAll">STOP ALL</button>
+        <div class="vsep"></div>
+        <div class="quant">1 Bar<small>Quant</small></div>
+        <div class="mid" id="mid"></div>
+        <div class="master"><span class="caps">Master</span><div><div class="meterbar"><i id="masterMeter"></i></div><div class="hslide" style="margin-top:3px"><i></i></div></div><span class="db">-0.0</span></div>
+      </div>
+      <div class="toast" id="toast"></div>
+    </div>
+  </div></div>
+  <div class="legend">
+    <b>Qué estás viendo:</b> el set de demo que incluye la app (dos grupos A/B con diez stems cada uno, 24 escenas en cuatro secciones). Los clips en cola parpadean y al empezar muestran la barra de progreso y el vúmetro de su pista; la barra inferior enseña la sección actual, el tempo y el master. En SEQ, toca un paso para activarlo y editarlo (nota, velocidad, condición, retrig…), PLAY mueve el cabezal. Es una maqueta HTML: la app real hace lo mismo con los datos de tu Live.
+  </div>
+</div>
+
+<script>
+(function () {
+  // ---------- scaling ----------
+  const ipad = document.getElementById('ipad');
+  function fit() { const w = ipad.parentElement.clientWidth; ipad.style.transform = 'scale(' + (w / 1180) + ')'; }
+  window.addEventListener('resize', fit); fit();
+
+  // ---------- demo set (mirrors DemoSet.make() in the app) ----------
+  const stems = [['KICK','#F28C28'],['KICK2','#C8762A'],['LO','#4CC24C'],['HI PERC','#E6DC3C'],['MID PERC','#E0A830'],['SYN-1','#3CBEE6'],['SYN-2','#2AA8D0'],['FX','#E05AE0'],['FX2-PAD','#C84AC8'],['ATMOS','#8A5AF0']];
+  const sectionNames = ['BASIL','PERPEN','BERLIN','lasP'];
+  const scenes = []; sectionNames.forEach(s => { for (let i = 1; i <= 6; i++) scenes.push(s + '_' + i); });
+  const sections = sectionNames.map((n, i) => ({ name: n, first: i * 6, last: i * 6 + 5 }));
+  const decks = [{ name: 'A', color: '#F28C28' }, { name: 'B', color: '#8FB4DD' }].map((d, di) => {
+    d.tracks = stems.map(([name, color], ti) => {
+      let seed = name.length * 7 + (di * 11 + ti) * 13; const clips = {};
+      scenes.forEach((sc, si) => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; if (seed % 3 === 0) return; clips[si] = { name: sc.toLowerCase().replace('_', 'ar_') + '-' + name, len: [4, 8, 16, 32][seed % 4], color }; });
+      return { name, color, clips, playing: -1, queued: -1, pos: 0, meter: 0, vol: 0.85 - ((ti * 37) % 20) / 100, sends: [0.1, 0, 0.3], lpf: 1, mute: false, cue: false };
+    });
+    d.hpf = 0; return d;
+  });
+  const notes = { 'basilar_5-LO': 'drop here', 'perpenar_1-FX': 'sube filtro', 'berlinar_3-SYN-1': 'key: F min' };
+  const groups = [{ label: 'K', color: '#F28C28', names: ['KICK', 'KICK2', 'LO'] }, { label: 'R', color: '#C8762A', names: ['HI PERC', 'MID PERC', 'SYN-1', 'SYN-2', 'FX', 'FX2-PAD', 'ATMOS'] }];
+  let tempo = 133, playing = false, beat = 0, lastT = 0;
+  const toastEl = document.getElementById('toast'); let toastT;
+  function toast(t) { toastEl.textContent = t; toastEl.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => toastEl.classList.remove('show'), 1400); }
+  function dbLabel(v) { if (v <= 0.0001) return '-inf'; const db = v >= 0.4 ? (v - 0.85) * 40 : -18 + 52 * Math.log10(v / 0.4); return db.toFixed(1); }
+
+  // ---------- splash / welcome ----------
+  const splash = document.getElementById('splash'), welcome = document.getElementById('welcome');
+  setTimeout(() => splash.classList.add('out'), 1500);
+  function enterDemo() { welcome.classList.add('hide'); document.getElementById('dot').className = 'dot demo'; document.getElementById('stateLabel').textContent = 'Demo'; buildLauncher(); buildMixer(); buildSeq(); toast('Demo set loaded: 2 decks · 20 stems · 24 scenes'); }
+  document.getElementById('demoBtn').onclick = enterDemo;
+  document.getElementById('connectBtn').onclick = () => { const d = document.getElementById('dot'); d.className = 'dot busy'; document.getElementById('stateLabel').textContent = 'Searching…'; toast('Looking for Ableton Live on the network… (web preview: use Demo mode)'); setTimeout(() => { d.className = 'dot'; document.getElementById('stateLabel').textContent = 'Offline'; }, 2500); };
+
+  // ---------- tabs ----------
+  document.getElementById('tabs').onclick = e => { const b = e.target.closest('button'); if (!b) return; [...e.currentTarget.children].forEach(x => x.classList.toggle('on', x === b)); document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === 'view-' + b.dataset.tab)); renderMid(); };
+  document.getElementById('view-launch').classList.add('on');
+
+  // ---------- transport ----------
+  const tempoEl = document.getElementById('tempo');
+  document.getElementById('tempoUp').onclick = () => { tempo = Math.min(300, tempo + 1); tempoEl.textContent = tempo.toFixed(1); };
+  document.getElementById('tempoDown').onclick = () => { tempo = Math.max(40, tempo - 1); tempoEl.textContent = tempo.toFixed(1); };
+  const playBtn = document.getElementById('play');
+  function setPlaying(p) { playing = p; playBtn.textContent = p ? '■' : '▶'; playBtn.classList.toggle('on', p); if (!p) decks.forEach(d => d.tracks.forEach(t => { t.pos = 0; })); }
+  playBtn.onclick = () => setPlaying(!playing);
+  document.getElementById('stopAll').onclick = () => { decks.forEach(d => d.tracks.forEach(t => { t.playing = -1; t.queued = -1; t.pos = 0; })); toast('All clips stopped'); renderClips(); };
+
+  // ---------- launcher ----------
+  const decksEl = document.getElementById('decks');
+  function fire(track, scene) { if (!track.clips[scene]) { track.playing = -1; track.queued = -1; renderClips(); return; } track.queued = scene; setPlaying(true); renderClips(); setTimeout(() => { if (track.queued === scene) { track.queued = -1; track.playing = scene; track.pos = 0; renderClips(); } }, 600); }
+  function fireRow(tracks, scene) { tracks.forEach(t => fire(t, scene)); }
+  function buildLauncher() {
+    decksEl.innerHTML = '';
+    decks.forEach((deck, di) => {
+      const el = document.createElement('div'); el.className = 'deck';
+      const tabs = document.createElement('div'); tabs.className = 'decktabs';
+      decks.forEach((d, i) => { const b = document.createElement('button'); b.textContent = d.name; if (i === di) { b.classList.add('on'); b.style.background = d.color; } tabs.appendChild(b); });
+      const cut = document.createElement('button'); cut.className = 'cut'; cut.textContent = 'CUT DECK'; cut.onclick = () => { const on = !deck.tracks.every(t => t.mute); deck.tracks.forEach(t => t.mute = on); cut.classList.toggle('on', on); cut.textContent = on ? 'DECK MUTED' : 'CUT DECK'; toast(on ? 'Deck ' + deck.name + ' muted' : 'Deck ' + deck.name + ' back'); renderClips(); };
+      tabs.appendChild(cut); el.appendChild(tabs);
+      const sec = document.createElement('div'); sec.className = 'sections'; deck.secBtns = [];
+      sections.forEach(s => { const b = document.createElement('button'); b.textContent = s.name; b.onclick = () => rows.children[s.first] && rows.children[s.first].scrollIntoView({ block: 'start', behavior: 'smooth' }); sec.appendChild(b); deck.secBtns.push(b); });
+      el.appendChild(sec);
+      const gw = document.createElement('div'); gw.className = 'gridwrap';
+      const W = 56, SW = 54, GW = 34;
+      const hrow = document.createElement('div'); hrow.className = 'hrow';
+      hrow.innerHTML = '<div class="caps" style="width:' + SW + 'px;text-align:center">Scene</div>' + groups.map(g => '<div class="caps" style="width:' + GW + 'px;text-align:center;color:' + g.color + '">' + g.label + '</div>').join('');
+      deck.tracks.forEach(t => { const h = document.createElement('div'); h.className = 'hcell'; h.style.width = W + 'px'; h.innerHTML = '<b>' + t.name + '</b><div class="m"><i style="background:' + t.color + '"></i></div>'; h.onclick = () => { t.mute = !t.mute; renderClips(); }; t.meterEl = h.querySelector('i'); t.headEl = h; hrow.appendChild(h); });
+      gw.appendChild(hrow);
+      const rows = document.createElement('div'); rows.className = 'rows';
+      scenes.forEach((sc, si) => {
+        const r = document.createElement('div'); r.className = 'srow';
+        const sb = document.createElement('button'); sb.className = 'scene'; sb.style.width = SW + 'px'; sb.style.height = '54px'; sb.textContent = sc; sb.onclick = () => fireRow(deck.tracks, si); r.appendChild(sb); sb.sceneIndex = si;
+        groups.forEach(g => { const members = deck.tracks.filter(t => g.names.includes(t.name)); const b = document.createElement('button'); b.className = 'grp'; b.style.width = GW + 'px'; b.style.height = '54px'; b.textContent = g.label; b.dataset.color = g.color; b.onclick = () => fireRow(members, si); b.members = members; b.sceneIndex = si; r.appendChild(b); });
+        deck.tracks.forEach(t => {
+          const c = t.clips[si]; const b = document.createElement('button'); b.className = 'clip'; b.style.width = W + 'px'; b.style.height = '54px';
+          if (c) { const dash = c.name.lastIndexOf('-'); const note = notes[c.name]; b.innerHTML = '<small>' + c.name.slice(0, dash + 1) + '</small><b>' + c.name.slice(dash + 1) + '</b>' + (note ? '<em>' + note + '</em>' : '') + '<div class="prog"><i></i></div>'; b.title = c.name + ' · ' + c.len + ' beats' + (note ? ' · note: ' + note : ''); } else { b.classList.add('empty'); }
+          b.onclick = () => fire(t, si);
+          let pressT; b.onpointerdown = () => { pressT = setTimeout(() => { if (c) toast('Clip note for "' + c.name + '": ' + (notes[c.name] || '(empty) — long press opens the note editor in the app')); }, 500); }; b.onpointerup = b.onpointerleave = () => clearTimeout(pressT);
+          b.track = t; b.sceneIndex = si; r.appendChild(b);
+        });
+        rows.appendChild(r);
+      });
+      gw.appendChild(rows); deck.rowsEl = rows;
+      const stop = document.createElement('div'); stop.className = 'frow';
+      stop.innerHTML = '<button class="stopall" style="width:' + SW + 'px">■</button>' + groups.map(() => '<span style="width:' + GW + 'px"></span>').join('');
+      stop.firstChild.onclick = () => { deck.tracks.forEach(t => { t.playing = -1; t.queued = -1; }); renderClips(); };
+      deck.tracks.forEach(t => { const b = document.createElement('button'); b.className = 'stop'; b.style.width = W + 'px'; b.textContent = '■'; b.onclick = () => { t.playing = -1; t.queued = -1; renderClips(); }; t.stopEl = b; stop.appendChild(b); });
+      gw.appendChild(stop);
+      const cue = document.createElement('div'); cue.className = 'frow';
+      cue.innerHTML = '<span style="width:' + SW + 'px"></span>' + groups.map(() => '<span style="width:' + GW + 'px"></span>').join('');
+      deck.tracks.forEach(t => { const b = document.createElement('button'); b.className = 'cue'; b.style.width = W + 'px'; b.textContent = 'CUE'; b.onclick = () => { t.cue = !t.cue; renderClips(); }; t.cueEl = b; cue.appendChild(b); });
+      gw.appendChild(cue); el.appendChild(gw); decksEl.appendChild(el);
+    });
+    renderClips();
+  }
+  function renderClips() {
+    decks.forEach(deck => {
+      deck.tracks.forEach(t => { if (t.headEl) t.headEl.style.opacity = t.mute ? .45 : 1; if (t.stopEl) t.stopEl.classList.toggle('live', t.playing >= 0); if (t.cueEl) t.cueEl.classList.toggle('on', t.cue); });
+      if (!deck.rowsEl) return;
+      [...deck.rowsEl.children].forEach(row => {
+        [...row.children].forEach(b => {
+          if (b.classList.contains('scene')) { b.classList.toggle('on', deck.tracks.some(t => t.playing === b.sceneIndex)); return; }
+          if (b.classList.contains('grp')) { const withClips = b.members.filter(t => t.clips[b.sceneIndex]); const on = withClips.length && withClips.every(t => t.playing === b.sceneIndex); b.classList.toggle('on', !!on); b.classList.toggle('dim', !withClips.length); b.style.background = b.dataset.color + (on ? '' : (withClips.length ? '73' : '26')); return; }
+          const t = b.track, si = b.sceneIndex, c = t.clips[si]; if (!c) return;
+          const st = t.queued === si ? 'queued' : t.playing === si ? 'playing' : 'stopped';
+          b.classList.toggle('queued', st === 'queued'); b.classList.toggle('playing', st === 'playing');
+          b.style.background = c.color + (st === 'playing' ? '' : st === 'queued' ? '80' : '52');
+          b.style.color = st === 'playing' ? '#000' : 'var(--fg)';
+        });
+      });
+      deck.secBtns.forEach((b, i) => { const s = sections[i]; const on = deck.tracks.some(t => t.playing >= s.first && t.playing <= s.last); b.classList.toggle('on', on); b.style.background = on ? deck.color : ''; });
+    });
+    renderMid();
+  }
+  function renderMid() {
+    const mid = document.getElementById('mid'); const tab = document.querySelector('#tabs .on').dataset.tab;
+    if (tab === 'seq') { mid.innerHTML = '<span style="color:var(--accent)">P' + (seq.cur + 1) + '</span><span class="mono">' + (Math.floor(seq.step / 16) + 1) + '.' + (Math.floor(seq.step / 4) % 4 + 1) + '</span><span class="caps">' + (playing ? 'follows live' : 'internal') + '</span><button class="pad yellow' + (seq.fill ? ' on' : '') + '" id="fill" style="height:32px">FILL</button><button class="pad" style="height:32px">PANIC</button>'; document.getElementById('fill').onclick = () => { seq.fill = !seq.fill; renderMid(); }; return; }
+    let scene = -1; decks.forEach(d => d.tracks.forEach(t => { scene = Math.max(scene, t.playing); }));
+    const s = sections.find(x => scene >= x.first && scene <= x.last);
+    mid.innerHTML = (playing ? '<span>Beat ' + beat + '</span>' : '') + (s ? '<span class="caps">Section</span><span class="sec">' + s.name + '</span>' : '') + '<span style="color:' + (seq.playing ? 'var(--green)' : 'var(--fg2)') + '">SEQ ' + (seq.playing ? '▶' : '■') + '</span>';
+  }
+
+  // ---------- mixer ----------
+  function buildMixer() {
+    const v = document.getElementById('view-mixer'); v.innerHTML = '';
+    decks.forEach(deck => {
+      const d = document.createElement('div'); d.className = 'mdeck';
+      const head = document.createElement('div'); head.className = 'mhead';
+      const db = document.createElement('button'); db.className = 'deckbtn'; db.textContent = deck.name; db.style.background = deck.color; db.onclick = () => { const on = !deck.tracks.every(t => t.mute); deck.tracks.forEach(t => t.mute = on); db.style.background = on ? deck.color + '59' : deck.color; renderClips(); renderMixer(); };
+      const hpf = document.createElement('div'); hpf.className = 'hpf'; hpf.style.background = deck.color + '38'; hpf.innerHTML = '<i style="background:' + deck.color + ';width:' + (deck.hpf * 100) + '%"></i><span>HPF</span>';
+      dragH(hpf, v => { deck.hpf = v; hpf.firstChild.style.width = (v * 100) + '%'; });
+      head.append(db, hpf); d.appendChild(head);
+      const strips = document.createElement('div'); strips.className = 'strips';
+      deck.tracks.forEach(t => {
+        const s = document.createElement('div'); s.className = 'strip';
+        s.innerHTML = '<div class="nm">' + t.name + '</div>';
+        ['liquid', 'bV', 'U-iV'].forEach((n, i) => { const se = document.createElement('div'); se.className = 'send'; se.style.background = t.color + '2e'; se.innerHTML = '<i style="background:' + t.color + 'cc;height:' + Math.max(8, t.sends[i] * 100) + '%"></i><span>' + n + '</span>'; dragV(se, v => { t.sends[i] = v; se.firstChild.style.height = Math.max(8, v * 100) + '%'; }); s.appendChild(se); });
+        const lpf = document.createElement('div'); lpf.className = 'vf lpf'; lpf.style.background = t.color + '38'; lpf.innerHTML = '<div class="fill" style="background:' + t.color + 'e6;height:' + (t.lpf * 100) + '%"></div><div class="lbl">LPF</div>'; dragV(lpf, v => { t.lpf = v; lpf.firstChild.style.height = (v * 100) + '%'; }); s.appendChild(lpf);
+        const dbl = document.createElement('div'); dbl.className = 'db'; dbl.textContent = dbLabel(t.vol); s.appendChild(dbl);
+        const vol = document.createElement('div'); vol.className = 'vf vol'; vol.style.background = t.color + '38'; vol.innerHTML = '<div class="fill" style="background:' + t.color + ';height:' + (t.vol * 100) + '%"></div><div class="mt" style="height:0"></div><div class="line" style="bottom:' + (t.vol * 100) + '%"></div>';
+        t.mixMeter = vol.children[1]; dragV(vol, v => { t.vol = v; vol.children[0].style.height = (v * 100) + '%'; vol.children[2].style.bottom = (v * 100) + '%'; dbl.textContent = dbLabel(v); }); s.appendChild(vol);
+        const btns = document.createElement('div'); btns.className = 'btns'; btns.innerHTML = '<button class="m' + (t.mute ? ' on' : '') + '">M</button><button class="c' + (t.cue ? ' on' : '') + '">CUE</button>';
+        btns.children[0].onclick = () => { t.mute = !t.mute; renderClips(); renderMixer(); }; btns.children[1].onclick = () => { t.cue = !t.cue; renderClips(); renderMixer(); }; t.mixBtns = btns; s.appendChild(btns);
+        strips.appendChild(s);
+      });
+      d.appendChild(strips); v.appendChild(d);
+    });
+    const m = document.createElement('div'); m.className = 'mastbox'; m.innerHTML = '<span class="caps">Master / Cue</span><div class="pair"><div class="col"><span class="dbx">-0.0</span><div class="vf vol" style="height:300px;background:rgba(125,194,77,.22)"><div class="fill" style="background:var(--green);height:85%"></div><div class="mt" id="mastMt" style="height:0"></div><div class="line" style="bottom:85%"></div></div><span class="caps">Master</span></div><div class="col"><span class="dbx">-0.0</span><div class="vf vol" style="height:300px;width:48px;background:rgba(242,214,61,.22)"><div class="fill" style="background:var(--yellow);height:85%"></div><div class="line" style="bottom:85%"></div></div><span class="caps">Cue</span></div></div>';
+    v.appendChild(m);
+  }
+  function renderMixer() { decks.forEach(d => d.tracks.forEach(t => { if (t.mixBtns) { t.mixBtns.children[0].classList.toggle('on', t.mute); t.mixBtns.children[1].classList.toggle('on', t.cue); } })); }
+  function dragV(el, cb) { let v0, y0; el.onpointerdown = e => { el.setPointerCapture(e.pointerId); y0 = e.clientY; v0 = null; const h = el.getBoundingClientRect().height; const f = el.querySelector('.fill, i'); v0 = parseFloat(f.style.height) / 100; el.onpointermove = ev => { if (!ev.buttons) return; const v = Math.max(0, Math.min(1, v0 + (y0 - ev.clientY) / h * (1180 / ipad.getBoundingClientRect().width))); cb(v); }; }; el.onpointerup = () => el.onpointermove = null; }
+  function dragH(el, cb) { el.onpointerdown = e => { el.setPointerCapture(e.pointerId); const r = el.getBoundingClientRect(); const go = ev => cb(Math.max(0, Math.min(1, (ev.clientX - r.left) / r.width))); go(e); el.onpointermove = ev => { if (ev.buttons) go(ev); }; }; el.onpointerup = () => el.onpointermove = null; }
+
+  // ---------- sequencer ----------
+  const NOTE = n => ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'][n % 12] + (Math.floor(n / 12) - 2);
+  const conds = ['—', 'FILL', '!FILL', '1ST', '!1ST', 'PRE', '!PRE', 'NEI', '!NEI', '1:2', '2:2', '1:3', '2:3', '3:3', '1:4', '2:4', '3:4', '4:4', '1:8', '5:8', '1:6', '3:6', '1:5', '2:5'];
+  const seq = { cur: 0, queued: -1, sel: 0, selStep: null, page: 0, step: -1, playing: false, rec: false, fill: false, panel: 'step', pats: ['A1', 'A2', 'B1'],
+    tracks: [['KICK', '#F28C28', 36, true], ['SNARE', '#F2D33C', 38, true], ['HAT', '#7ED957', 42, true], ['PERC', '#E05A9A', 46, true], ['BASS', '#8FB4DD', 36, false], ['LEAD', '#9A6BFF', 60, false], ['CHORD', '#3CC8E6', 60, false], ['FX', '#B16AF0', 60, false]].map(([name, color, note, drum], i) => ({ name, color, note, drum, ch: drum ? 10 : i - 3, len: 16, speed: '1x', mute: false, solo: false, steps: Array.from({ length: 64 }, () => null) })) };
+  const mk = (note, extra) => Object.assign({ on: true, note, vel: 100, len: 2, micro: 0, prob: 100, cond: '—', retrig: 1, accent: false, slide: false, locks: 0 }, extra || {});
+  const T = seq.tracks; [0, 4, 8, 12].forEach(i => T[0].steps[i] = mk(36)); T[0].steps[14] = mk(36, { cond: 'FILL', retrig: 4 }); [4, 12].forEach(i => T[1].steps[i] = mk(38)); T[1].steps[15] = mk(38, { prob: 50 });
+  for (let i = 0; i < 16; i += 2) T[2].steps[i] = mk(42, { vel: i % 4 ? 70 : 110 }); T[2].steps[7] = mk(42, { cond: '1:2' });
+  [0, 3, 6, 10, 12].forEach((i, k) => T[4].steps[i] = mk([36, 36, 43, 39, 41][k], { accent: k === 0, slide: k === 3, locks: k === 1 ? 1 : 0 }));
+  [0, 8].forEach((i, k) => T[6].steps[i] = mk(60, { chord: k ? 'min7' : 'min', len: 24 }));
+  const tracksEl = document.getElementById('tracks'), stepsEl = document.getElementById('steps'), panelEl = document.getElementById('panel'), patsEl = document.getElementById('pats'), pagesEl = document.getElementById('pages');
+  function buildSeq() { renderTracks(); renderPats(); renderSteps(); renderPanel(); }
+  function renderTracks() {
+    tracksEl.innerHTML = '';
+    T.forEach((t, i) => { const r = document.createElement('div'); r.className = 'trow'; const on = i === seq.sel;
+      r.innerHTML = '<button class="main' + (on ? ' on' : '') + '" style="' + (on ? 'background:' + t.color : '') + '"><i style="background:' + t.color + '"></i><div><b>' + t.name + '</b><small>ch' + t.ch + ' · ' + t.len + '·' + t.speed + '</small></div></button><div class="ms"><button class="m' + (t.mute ? ' on' : '') + '">M</button><button class="s' + (t.solo ? ' on' : '') + '">S</button></div>';
+      r.children[0].onclick = () => { seq.sel = i; seq.selStep = null; renderTracks(); renderSteps(); renderPanel(); };
+      r.children[1].children[0].onclick = () => { t.mute = !t.mute; renderTracks(); }; r.children[1].children[1].onclick = () => { t.solo = !t.solo; renderTracks(); };
+      tracksEl.appendChild(r); });
+  }
+  function renderPats() { patsEl.innerHTML = ''; seq.pats.forEach((p, i) => { const b = document.createElement('button'); b.textContent = p; b.classList.toggle('on', i === seq.cur); b.classList.toggle('q', i === seq.queued); b.onclick = () => { if (seq.playing) { seq.queued = i; toast('Pattern ' + p + ' queued for the next cycle'); } else seq.cur = i; renderPats(); renderMid(); }; patsEl.appendChild(b); }); const add = document.createElement('button'); add.textContent = '+'; add.onclick = () => { seq.pats.push('P' + (seq.pats.length + 1)); renderPats(); }; patsEl.appendChild(add); }
+  function renderSteps() {
+    const t = T[seq.sel]; pagesEl.innerHTML = '';
+    for (let p = 0; p < 4; p++) { const b = document.createElement('button'); b.textContent = (p * 16 + 1) + '-' + (p * 16 + 16); b.classList.toggle('on', p === seq.page); b.style.opacity = p * 16 < t.len ? 1 : .35; b.onclick = () => { if (p * 16 < t.len) { seq.page = p; renderSteps(); } }; pagesEl.appendChild(b); }
+    const info = document.createElement('div'); info.className = 'info'; info.innerHTML = '<b style="color:' + t.color + '">' + t.name + '</b> &nbsp; ' + NOTE(t.note) + ' · ' + t.len + ' steps · swing 50'; pagesEl.appendChild(info);
+    stepsEl.innerHTML = '';
+    for (let i = 0; i < 16; i++) { const idx = seq.page * 16 + i, s = t.steps[idx]; const b = document.createElement('button'); b.className = 'step' + (idx >= t.len ? ' out' : '') + (i % 4 === 0 ? ' beat' : '') + (s ? ' on' : '') + (seq.selStep === idx ? ' sel' : '') + (seq.playing && seq.step === idx ? ' head' : '');
+      if (s) { b.style.background = t.color; const tags = [s.cond !== '—' ? s.cond : null, s.prob < 100 ? s.prob + '%' : null, s.retrig > 1 ? 'x' + s.retrig : null, s.locks ? 'PL' : null, s.slide ? 'SL' : null, s.accent ? 'AC' : null, s.micro ? (s.micro > 0 ? '+' : '') + s.micro : null].filter(Boolean).map(x => '<i>' + x + '</i>').join(''); b.innerHTML = '<span class="n">' + (idx + 1) + '</span><span class="note">' + (s.chord ? NOTE(s.note) + '+' + (s.chord === 'min7' ? 3 : 2) : NOTE(s.note)) + '</span><div class="tags">' + tags + '</div>'; }
+      else b.innerHTML = '<span class="n">' + (idx + 1) + '</span>';
+      b.onclick = () => { if (!s) { t.steps[idx] = mk(t.note); seq.selStep = idx; } else if (seq.selStep === idx) { t.steps[idx] = null; seq.selStep = null; } else seq.selStep = idx; renderSteps(); renderPanel(); };
+      b.stepIndex = idx; stepsEl.appendChild(b); }
+  }
+  function dial(label, val, fmt, onchg) { const d = document.createElement('div'); d.className = 'dial'; d.innerHTML = '<span class="caps">' + label + '</span><div class="box"><button>−</button><span>' + fmt(val) + '</span><button>+</button></div>'; d.style.width = '100px'; const sp = d.querySelector('span:not(.caps)'); d.querySelectorAll('button')[0].onclick = () => { val = onchg(val, -1); sp.textContent = fmt(val); }; d.querySelectorAll('button')[1].onclick = () => { val = onchg(val, 1); sp.textContent = fmt(val); }; return d; }
+  function renderPanel() {
+    const t = T[seq.sel]; panelEl.innerHTML = '';
+    if (seq.panel === 'step') {
+      if (seq.selStep === null || !t.steps[seq.selStep]) { panelEl.innerHTML = '<div class="hint">Tap a step to add it, tap again to edit. Long-press clears.<br>Press PLAY, enable REC and play the KEYS panel to record live.</div>'; return; }
+      const s = t.steps[seq.selStep]; const ph = document.createElement('div'); ph.className = 'ph';
+      const c1 = document.createElement('div'); c1.className = 'col'; c1.innerHTML = '<span class="t">Step ' + (seq.selStep + 1) + ' · ' + t.name + '</span>';
+      const d1 = document.createElement('div'); d1.className = 'dials';
+      d1.append(dial('Note', s.note, NOTE, (v, d) => s.note = Math.max(0, Math.min(127, v + d))), dial('Vel', s.vel, v => v, (v, d) => s.vel = Math.max(1, Math.min(127, v + d))), dial('Len /16', s.len, v => (v / 4).toFixed(2).replace(/\.?0+$/, ''), (v, d) => s.len = Math.max(1, Math.min(64, v + d))), dial('Micro', s.micro, v => (v > 0 ? '+' : '') + v, (v, d) => { s.micro = Math.max(-11, Math.min(11, v + d)); renderSteps(); return s.micro; }), dial('Prob %', s.prob, v => v, (v, d) => { s.prob = Math.max(0, Math.min(100, v + d * 5)); renderSteps(); return s.prob; }));
+      const d2 = document.createElement('div'); d2.className = 'dials';
+      const acc = document.createElement('button'); acc.className = 'tog y' + (s.accent ? ' on' : ''); acc.textContent = 'ACCENT'; acc.onclick = () => { s.accent = !s.accent; renderSteps(); renderPanel(); };
+      const sl = document.createElement('button'); sl.className = 'tog b' + (s.slide ? ' on' : ''); sl.textContent = 'SLIDE'; sl.onclick = () => { s.slide = !s.slide; renderSteps(); renderPanel(); };
+      d2.append(acc, sl, dial('Retrig', s.retrig, v => v === 1 ? 'off' : 'x' + v, (v, d) => { s.retrig = Math.max(1, Math.min(16, v + d)); renderSteps(); return s.retrig; }), dial('Rate', 6, v => ['1/8','1/12','1/16','1/24','1/32','1/48','1/64','1/96','1/128'][v], (v, d) => Math.max(0, Math.min(8, v + d))), dial('Ramp %', 0, v => v, (v, d) => Math.max(-100, Math.min(100, v + d * 10))));
+      c1.append(d1, d2);
+      const c2 = document.createElement('div'); c2.className = 'col'; c2.innerHTML = '<span class="t">Condition</span>'; const cg = document.createElement('div'); cg.className = 'cond';
+      conds.forEach(c => { const b = document.createElement('button'); b.textContent = c; b.classList.toggle('on', s.cond === c); b.onclick = () => { s.cond = c; renderSteps(); renderPanel(); }; cg.appendChild(b); }); c2.appendChild(cg);
+      const c3 = document.createElement('div'); c3.className = 'col'; c3.innerHTML = '<span class="t">Parameter locks</span>' + ['Cutoff (CC74)', 'Reso (CC71)', 'Env (CC73)'].map((n, i) => '<div style="display:flex;gap:6px;align-items:center;font-size:10px;font-weight:700"><span style="width:100px">' + n + '</span><div class="hslide" style="width:140px;height:22px;background:rgba(255,255,255,.08)"><i style="width:' + (s.locks && i === 0 ? 78 : 50) + '%;background:' + (s.locks && i === 0 ? 'var(--accent)' : 'rgba(255,255,255,.25)') + '"></i></div><span style="font-family:var(--mono)">' + (s.locks && i === 0 ? '100' : '—') + '</span></div>').join('');
+      c3.querySelectorAll('.hslide').forEach((h, i) => dragH(h, v => { h.firstChild.style.width = (v * 100) + '%'; h.firstChild.style.background = 'var(--accent)'; h.nextSibling.textContent = Math.round(v * 127); s.locks = 1; renderSteps(); }));
+      ph.append(c1, c2, c3); panelEl.appendChild(ph);
+    } else if (seq.panel === 'track') {
+      const ph = document.createElement('div'); ph.className = 'ph'; const c = document.createElement('div'); c.className = 'col'; c.innerHTML = '<span class="t">Track</span>'; const d = document.createElement('div'); d.className = 'dials';
+      d.append(dial('Channel', t.ch, v => v, (v, dd) => t.ch = Math.max(1, Math.min(16, v + dd))), dial('Length', t.len, v => v, (v, dd) => { t.len = Math.max(1, Math.min(64, v + dd)); renderSteps(); renderTracks(); return t.len; }), dial('Speed', ['2x','3/2x','1x','3/4x','1/2x','1/4x','1/8x'].indexOf(t.speed), v => ['2x','3/2x','1x','3/4x','1/2x','1/4x','1/8x'][v], (v, dd) => { const i = Math.max(0, Math.min(6, v + dd)); t.speed = ['2x','3/2x','1x','3/4x','1/2x','1/4x','1/8x'][i]; renderTracks(); return i; }), dial('Dir', 0, v => ['→','←','↔','?'][v], (v, dd) => Math.max(0, Math.min(3, v + dd))), dial('Def note', t.note, NOTE, (v, dd) => { t.note = Math.max(0, Math.min(127, v + dd)); renderSteps(); return t.note; }), dial('Swing', 50, v => v, (v, dd) => Math.max(50, Math.min(80, v + dd))), dial('Chance %', 100, v => v, (v, dd) => Math.max(0, Math.min(100, v + dd * 5))));
+      c.appendChild(d); const row = document.createElement('div'); row.className = 'dials'; row.innerHTML = '<button class="tog b' + (t.drum ? ' on' : '') + '">DRUM</button><button class="tog b">SCALE LOCK</button><span class="caps" style="align-self:center">MIDI out: Network Session 1 · Key: C minor</span>'; c.appendChild(row); ph.appendChild(c); panelEl.appendChild(ph);
+    } else if (seq.panel === 'mod') {
+      panelEl.innerHTML = '<div class="ph">' + [1, 2].map(i => '<div class="lfo col"><div style="display:flex;gap:8px;align-items:center"><span class="t">LFO ' + i + '</span><button class="tog b' + (i === 1 ? ' on' : '') + '" style="height:26px">' + (i === 1 ? 'ON' : 'OFF') + '</button></div><div class="dials" id="lfo' + i + '"></div></div>').join('') + '<div class="col"><span class="t">CC lanes</span><div style="font-size:11px;color:var(--fg2);line-height:1.8">Cutoff → CC74 · default 64<br>Reso → CC71 · default 64<br>Env → CC73 · default 64</div></div></div>';
+      [1, 2].forEach(i => { const d = document.getElementById('lfo' + i); d.append(dial('Shape', i === 1 ? 0 : 1, v => ['SIN','TRI','SAW','RMP','SQR','RND','EXP'][v], (v, dd) => Math.max(0, Math.min(6, v + dd))), dial('Rate', 3, v => ['8 bars','4 bars','2 bars','1 bar','1/2','1/4','1/8','1/16','1/32'][v], (v, dd) => Math.max(0, Math.min(8, v + dd))), dial('Depth', i === 1 ? 50 : 0, v => v, (v, dd) => Math.max(-100, Math.min(100, v + dd * 5))), dial('Dest', i === 1 ? 1 : 0, v => ['OFF','CC74','CC71','BEND','VEL'][v], (v, dd) => Math.max(0, Math.min(4, v + dd)))); });
+    } else if (seq.panel === 'keys') {
+      const scale = [0, 2, 3, 5, 7, 8, 10]; const k = document.createElement('div'); k.className = 'keys';
+      for (let i = 0; i < 16; i++) { const n = 48 + Math.floor(i / 7) * 12 + scale[i % 7]; const b = document.createElement('div'); b.className = 'key' + (i % 7 === 0 ? ' root' : ''); b.textContent = NOTE(n); b.onpointerdown = () => { b.classList.add('held'); if (seq.rec && seq.playing) { const idx = Math.max(0, seq.step); t.steps[idx] = mk(n); renderSteps(); toast('Recorded ' + NOTE(n) + ' on step ' + (idx + 1)); } }; b.onpointerup = b.onpointerleave = () => b.classList.remove('held'); k.appendChild(b); }
+      panelEl.appendChild(k);
+    } else if (seq.panel === 'pat') {
+      panelEl.innerHTML = '<div class="col"><div class="dials"><div class="seg" style="width:320px"><button class="on">LOOP PATTERN</button><button>CHAIN</button><button>SONG</button></div></div><div class="hint" style="height:auto;justify-content:flex-start;text-align:left">The current pattern loops. Tap another pattern while playing to queue it for the next cycle. CHAIN plays a list in order; SONG plays entries × repeats.</div></div>';
+      panelEl.querySelector('.seg').onclick = e => { const b = e.target.closest('button'); if (b) [...b.parentElement.children].forEach(x => x.classList.toggle('on', x === b)); };
+    } else {
+      panelEl.innerHTML = '<div class="ph"><div class="col"><span class="t">Euclid</span><div class="dials" id="euc"></div></div><div class="col"><span class="t">Random</span><div class="dials" id="rnd"></div></div><div class="col"><span class="t">Track</span><div class="dials"><button class="tog" style="background:rgba(237,84,69,.35)" id="clr">CLEAR</button><button class="tog" style="background:var(--raised)" id="shl">SHIFT ←</button><button class="tog" style="background:var(--raised)" id="shr">SHIFT →</button></div></div></div>';
+      let pulses = 4, rot = 0, dens = 40; const euc = document.getElementById('euc'); euc.append(dial('Pulses', pulses, v => v, (v, d) => pulses = Math.max(0, Math.min(64, v + d))), dial('Rotate', rot, v => v, (v, d) => rot = Math.max(0, Math.min(63, v + d))));
+      const ap = document.createElement('button'); ap.className = 'tog'; ap.style.background = 'var(--accent)'; ap.style.color = '#000'; ap.textContent = 'APPLY'; ap.onclick = () => { const n = t.len; for (let i = 0; i < n; i++) { const hit = ((i + rot) * pulses) % n < pulses; t.steps[i] = hit ? (t.steps[i] || mk(t.note)) : null; } renderSteps(); }; euc.appendChild(ap);
+      const rnd = document.getElementById('rnd'); rnd.append(dial('Density %', dens, v => v, (v, d) => dens = Math.max(0, Math.min(100, v + d * 5)))); const rb = document.createElement('button'); rb.className = 'tog b on'; rb.textContent = 'RANDOMIZE'; rb.onclick = () => { for (let i = 0; i < t.len; i++) t.steps[i] = Math.random() * 100 < dens ? mk(t.drum ? t.note : t.note + [0, 2, 3, 5, 7, 8, 10, 12][Math.floor(Math.random() * 8)], { vel: 70 + Math.floor(Math.random() * 50) }) : null; renderSteps(); }; rnd.appendChild(rb);
+      document.getElementById('clr').onclick = () => { t.steps.fill(null); renderSteps(); }; document.getElementById('shl').onclick = () => { const a = t.steps.slice(0, t.len); a.push(a.shift()); a.forEach((x, i) => t.steps[i] = x); renderSteps(); }; document.getElementById('shr').onclick = () => { const a = t.steps.slice(0, t.len); a.unshift(a.pop()); a.forEach((x, i) => t.steps[i] = x); renderSteps(); };
+    }
+  }
+  document.getElementById('panels').onclick = e => { const b = e.target.closest('button'); if (!b) return; [...e.currentTarget.children].forEach(x => x.classList.toggle('on', x === b)); seq.panel = b.dataset.p; renderPanel(); };
+  const seqPlay = document.getElementById('seqPlay'), seqRec = document.getElementById('seqRec');
+  seqPlay.onclick = () => { seq.playing = !seq.playing; seq.step = -1; seqPlay.textContent = seq.playing ? 'STOP' : 'PLAY'; seqPlay.classList.toggle('on', seq.playing); renderSteps(); renderMid(); };
+  seqRec.onclick = () => { seq.rec = !seq.rec; seqRec.classList.toggle('on', seq.rec); };
+  document.getElementById('sync').onclick = e => { const b = e.target.closest('button'); if (b) [...b.parentElement.children].forEach(x => x.classList.toggle('on', x === b)); };
+  document.getElementById('lmode').onclick = e => { const b = e.target.closest('button'); if (!b) return; [...b.parentElement.children].forEach(x => x.classList.toggle('on', x === b)); const single = b.textContent === 'INDIV.'; [...decksEl.children].forEach((d, i) => d.style.display = single && i > 0 ? 'none' : ''); };
+
+  // ---------- clock: clip progress, meters, sequencer playhead ----------
+  let seqAcc = 0, beatAcc = 0;
+  function tick(now) {
+    const dt = lastT ? (now - lastT) / 1000 : 0; lastT = now; const bps = tempo / 60;
+    if (playing) { beatAcc += dt * bps; if (beatAcc >= 1) { beat += Math.floor(beatAcc); beatAcc %= 1; renderMid(); } }
+    let maxM = 0;
+    decks.forEach(deck => deck.tracks.forEach(t => {
+      const c = t.clips[t.playing];
+      if (c && playing) { t.pos = (t.pos + dt * bps) % c.len; const m = t.mute ? 0 : 0.3 + 0.5 * Math.abs(Math.sin(t.pos * 3)) + Math.random() * 0.15; t.meter = m; maxM = Math.max(maxM, m); } else t.meter = Math.max(0, t.meter - dt * 2);
+      if (t.meterEl) t.meterEl.style.width = (t.meter * 100) + '%'; if (t.mixMeter) t.mixMeter.style.height = (t.meter * 100) + '%';
+    }));
+    document.getElementById('masterMeter').style.width = (maxM * 100) + '%'; const mm = document.getElementById('mastMt'); if (mm) mm.style.height = (maxM * 100) + '%';
+    if (deckUpdate) { decks.forEach(deck => { if (!deck.rowsEl) return; [...deck.rowsEl.querySelectorAll('.clip.playing')].forEach(b => { const c = b.track.clips[b.sceneIndex]; b.querySelector('.prog i').style.width = (b.track.pos / c.len * 100) + '%'; }); }); }
+    if (seq.playing) { seqAcc += dt * bps * 4; if (seqAcc >= 1) { const t = T[seq.sel]; seq.step = (seq.step + Math.floor(seqAcc)) % t.len; seqAcc %= 1; if (seq.step === 0 && seq.queued >= 0) { seq.cur = seq.queued; seq.queued = -1; renderPats(); } [...stepsEl.children].forEach(b => b.classList.toggle('head', b.stepIndex === seq.step)); if (seq.step % 4 === 0) renderMid(); } }
+    requestAnimationFrame(tick);
+  }
+  const deckUpdate = true; requestAnimationFrame(tick);
+})();
+</script>
