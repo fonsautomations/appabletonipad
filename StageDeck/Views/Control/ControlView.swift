@@ -102,8 +102,6 @@ struct ControlPagePanel: View {
             header
             if let page {
                 let rows = ControlLayout.rows(page.widgets)
-                ScrollViewReader { proxy in
-                HStack(spacing: 0) {
                 ScrollView(.vertical, showsIndicators: true) {
                     VStack(spacing: 14) {
                         ForEach(Array(rows.enumerated()), id: \.offset) { (ri, row) in
@@ -128,22 +126,8 @@ struct ControlPagePanel: View {
                         }
                     }
                     .padding(.vertical, 6)
-                    // Free gutters on both sides: drag here (or on any label) to scroll; knobs and faders keep their own drag.
-                    .padding(.horizontal, compact ? 14 : 22)
-                }
-                if rows.count > (compact ? 2 : 3) {
-                    VStack(spacing: 6) {
-                        scrollButton("chevron.up") { withAnimation { proxy.scrollTo(0, anchor: .top) } }
-                        Spacer()
-                        Text("\(rows.count) rows").font(.system(size: 8, design: .rounded)).foregroundColor(Theme.textSecondary)
-                            .rotationEffect(.degrees(-90)).fixedSize()
-                        Spacer()
-                        scrollButton("chevron.down") { withAnimation { proxy.scrollTo(rows.count - 1, anchor: .bottom) } }
-                    }
-                    .frame(width: 30)
-                    .padding(.vertical, 6)
-                }
-                }
+                    // Free gutters on both sides: drag there (or on any label) to scroll; knobs and faders keep their own drag.
+                    .padding(.horizontal, compact ? 18 : 32)
                 }
                 .onAppear { control.prepare(page: page) }
                 .onChange(of: page.widgets) { _ in control.prepare(page: page) }
@@ -208,14 +192,6 @@ struct ControlPagePanel: View {
                 PadButton(title: "ADD", color: Theme.secondary, active: true, height: 28, fontSize: 11) { showAddMenu = true }.frame(width: 56)
             }
         }
-    }
-
-    private func scrollButton(_ symbol: String, action: @escaping () -> Void) -> some View {
-        Button(action: { Haptics.tap(); action() }) {
-            Image(systemName: symbol).font(.system(size: 12, weight: .bold)).foregroundColor(Theme.textPrimary)
-                .frame(width: 28, height: 36).background(Theme.panelRaised).cornerRadius(8)
-        }
-        .buttonStyle(.plain)
     }
 
     private func addPage() {
