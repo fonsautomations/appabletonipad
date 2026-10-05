@@ -15,6 +15,7 @@ struct SettingsView: View {
                 Group {
                     connectionSection
                     TemplatesSection()
+                    SetCheckSection()
                     ChannelNamesSection()
                     midiSection
                 }

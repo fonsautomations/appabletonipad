@@ -19,6 +19,7 @@ final class AppStore: ObservableObject {
     let midi = MIDIService()
     let sequencer: SequencerRuntime
     let control: ControlRuntime
+    let library = TemplateLibrary()
 
     private var saveTimer: Timer?
     private var cancellables: Set<AnyCancellable> = []

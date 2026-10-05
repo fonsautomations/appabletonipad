@@ -238,3 +238,40 @@ final class TemplateTests: XCTestCase {
         XCTAssertTrue(desc.contains("[GROUP] A"))
     }
 }
+
+final class HealthTests: XCTestCase {
+    func testHealthFindsStaleThings() {
+        let song = DemoSet.make()
+        let existingClip = song.tracks.first(where: { $0.name == "KICK" })!.clips.values.first!.name
+        var profile = PerformerProfile()
+        profile.trackAliases = ["KICK": "BOMBO", "GHOST": "X"]
+        profile.clipNotes = ["KICK|\(existingClip)": "ok", "KICK|nope": "stale", "NOPE|x": "stale"]
+        profile.decks = [DeckDefinition(name: "A", trackNames: [], groupTrackName: "A"), DeckDefinition(name: "C", trackNames: ["LO", "ZZZ"], groupTrackName: "C")]
+        profile.launchGroups = [LaunchGroup(label: "K", trackNames: ["KICK", "YYY"])]
+        var w = ControlWidget(name: "Bad", kind: .knob)
+        w.target = .liveParameter(track: "SYN-1", trackIndex: 0, device: "Nope Rack", deviceIndex: 9, parameter: "Macro 1", parameterIndex: 1)
+        var w2 = ControlWidget(name: "BadParam", kind: .knob)
+        w2.target = .liveParameter(track: "SYN-1", trackIndex: 0, device: "SYN-1 Rack", deviceIndex: 1, parameter: "Macro 99", parameterIndex: 99)
+        profile.controlPages = [ControlPage(name: "P", widgets: [w, w2])]
+        let h = ProfileHealth.check(profile: profile, song: song)
+        XCTAssertEqual(h.issues(of: .alias).map { $0.detail }, ["GHOST"])
+        XCTAssertEqual(h.issues(of: .clipNote).count, 2)
+        XCTAssertEqual(h.issues(of: .deckGroup).map { $0.detail }, ["C"])
+        XCTAssertEqual(h.issues(of: .deckTrack).map { $0.detail }, ["ZZZ"])
+        XCTAssertEqual(h.issues(of: .groupTrack).map { $0.detail }, ["YYY"])
+        XCTAssertEqual(h.issues(of: .control).count, 2)
+        XCTAssertFalse(h.isClean)
+        XCTAssertTrue(h.summary.hasPrefix("Not found in this set:"))
+        let removed = ProfileHealth.removeStale(from: &profile, song: song)
+        XCTAssertEqual(removed, 3)
+        XCTAssertEqual(profile.trackAliases, ["KICK": "BOMBO"])
+        XCTAssertEqual(profile.clipNotes.count, 1)
+        XCTAssertTrue(ProfileHealth.check(profile: PerformerProfile(), song: LiveSongState()).summary.hasPrefix("No set"))
+
+        var t = StageDeckTemplate(name: "n")
+        t.clipNotes = ["KICK|\(existingClip)": "ok", "KICK|nope": "x", "ZED|c": "y"]
+        let c = TemplateImporter.check(t, against: song)
+        XCTAssertEqual(c.missingClips, ["KICK|nope"])
+        XCTAssertEqual(c.missingTracks, ["ZED"])
+    }
+}

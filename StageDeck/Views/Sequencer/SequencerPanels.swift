@@ -449,6 +449,11 @@ struct KeyPad: View {
 /// Chain / song arrangement.
 struct ArrangeView: View {
     @EnvironmentObject var sequencer: SequencerRuntime
+    @EnvironmentObject var store: AppStore
+    @EnvironmentObject var live: LiveSession
+    @State private var showLibrary = false
+    @State private var showSaveName = false
+    @State private var saveName = ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -458,6 +463,19 @@ struct ArrangeView: View {
                 Spacer()
                 PadButton(title: "COPY PATTERN", color: Theme.secondary, active: false, height: 30, fontSize: 10) { sequencer.copyPattern() }.frame(width: 120)
                 PadButton(title: "DELETE PATTERN", color: Theme.red, active: false, height: 30, fontSize: 10) { sequencer.deletePattern(sequencer.currentPatternIndex) }.frame(width: 130)
+                PadButton(title: "SAVE PROJECT", color: Theme.green, active: false, height: 30, fontSize: 10) { saveName = sequencer.project.name; showSaveName = true }.frame(width: 110)
+                PadButton(title: "LOAD…", color: Theme.panelRaised, active: false, height: 30, fontSize: 10) { showLibrary = true }.frame(width: 70)
+            }
+            .alert("Save sequencer project", isPresented: $showSaveName) {
+                TextField("Name", text: $saveName)
+                Button("Save") {
+                    sequencer.project.name = saveName
+                    store.library.save(LibrarySnapshots.sequence(name: saveName, profile: store.profile, project: sequencer.project, song: live.song), name: saveName, category: .sequence)
+                }
+                Button("Cancel", role: .cancel) {}
+            }
+            .sheet(isPresented: $showLibrary) {
+                LibraryView(only: .sequence).environmentObject(store).environmentObject(live).environmentObject(store.library)
             }
             switch sequencer.project.arrangeMode {
             case .pattern:

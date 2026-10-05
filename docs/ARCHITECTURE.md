@@ -59,6 +59,15 @@ target de Live se guarda por nombre de pista, dispositivo y parámetro con índi
 (`setDeviceParameter`, con listener de feedback) o por MIDI (`MIDIService.send`), y mantiene los
 valores de los controles MIDI. `ControlLayout.rows` empaqueta los widgets en filas de 8 unidades.
 
+## Plantillas, biblioteca y comprobación
+
+`StageDeckTemplate` (Core) es el formato `.stagedeck`: secciones opcionales, `parse` con errores
+claros, `TemplateImporter.check/apply`, `TemplateExporter.make`, `SetDescriber` (texto del set para
+IA) y `BuiltInTemplates`. `ProfileHealth` cruza el perfil con el set cargado. `TemplateLibrary`
+(servicio) guarda entradas en `Documents/Library/<uuid>.stagedeck` con un `index.json`;
+`LibrarySnapshots` construye los snapshots de setup y de secuenciador. Los archivos abiertos desde
+iOS llegan por `onOpenURL` → `AppStore.openTemplate` → `TemplatePreviewSheet`.
+
 ## Persistencia
 
 Un único JSON (`Documents/stagedeck.json`) con `PerformerProfile` (todo lo configurable, notas de

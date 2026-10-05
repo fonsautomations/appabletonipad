@@ -29,6 +29,9 @@ struct TemplatesSection: View {
         Section("Templates") {
             Text("A template is a .stagedeck file (readable JSON) with control pages, decks, launch groups, channel names, clip notes, layout and sequencer patterns. Share one with a friend, or ask an AI to write one for your set.")
                 .font(.footnote).foregroundColor(.secondary)
+            NavigationLink { LibraryView().environmentObject(store).environmentObject(live).environmentObject(store.library) } label: {
+                HStack { Label("Library (saved setups, sequences, templates)", systemImage: "books.vertical"); Spacer(); Text("\(store.library.entries.count)").foregroundColor(.secondary) }
+            }
             Button("Import from Files / AirDrop…") { showFileImporter = true }
             Button("Paste template JSON…") { showPaste = true }
             ForEach(Array(BuiltInTemplates.all.enumerated()), id: \.offset) { (_, t) in
@@ -119,6 +122,7 @@ struct TemplatePreviewSheet: View {
     @EnvironmentObject var live: LiveSession
     @Environment(\.dismiss) private var dismiss
     @State private var mode: TemplateImportMode = .add
+    @State private var keepInLibrary = false
 
     var body: some View {
         let t = pending.template
@@ -141,6 +145,7 @@ struct TemplatePreviewSheet: View {
                     } else {
                         if !check.missingTracks.isEmpty { Text("Missing tracks: " + check.missingTracks.joined(separator: ", ")).foregroundColor(.orange) }
                         if !check.missingDevices.isEmpty { Text("Missing devices: " + check.missingDevices.joined(separator: ", ")).foregroundColor(.orange) }
+                        if !check.missingClips.isEmpty { Text("Notes for clips not in this set: " + check.missingClips.joined(separator: ", ")).foregroundColor(.orange) }
                         Text("You can import anyway and re-assign those controls, or rename your tracks to match.").font(.footnote).foregroundColor(.secondary)
                     }
                 }
@@ -150,6 +155,9 @@ struct TemplatePreviewSheet: View {
                         Text("Replace those sections").tag(TemplateImportMode.replace)
                     }
                     Text("Connection settings are never changed by a template.").font(.footnote).foregroundColor(.secondary)
+                    if !pending.source.hasPrefix("Library") {
+                        Toggle("Also keep a copy in my library", isOn: $keepInLibrary)
+                    }
                 }
             }
             .navigationTitle("Import template")
@@ -159,6 +167,7 @@ struct TemplatePreviewSheet: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Import") {
                         store.importTemplate(t, mode: mode)
+                        if keepInLibrary { store.library.save(t, name: t.name, category: t.patterns != nil && t.controlPages == nil ? .sequence : .template) }
                         dismiss()
                     }
                 }
@@ -169,8 +178,10 @@ struct TemplatePreviewSheet: View {
 
 /// Picks sections, names the template and shares the .stagedeck file (or copies the JSON).
 struct ExportTemplateSheet: View {
+    var saveToLibrary: Bool = false
     @EnvironmentObject var store: AppStore
     @EnvironmentObject var live: LiveSession
+    @EnvironmentObject var library: TemplateLibrary
     @Environment(\.dismiss) private var dismiss
     @State private var name = "My setup"
     @State private var author = ""
@@ -197,6 +208,14 @@ struct ExportTemplateSheet: View {
                     Toggle("Sequencer patterns", isOn: $sections.patterns)
                     Toggle("Sequencer settings (tempo, scale, chain, song)", isOn: $sections.sequencerSettings)
                 }
+                if saveToLibrary {
+                    Section("Library") {
+                        Button("Save to library") {
+                            library.save(store.makeTemplate(name: name, author: author, description: notes, sections: sections), name: name, category: .template)
+                            dismiss()
+                        }
+                    }
+                }
                 Section("Share") {
                     if let url = fileURL {
                         ShareLink(item: url) { Label("Share \(url.lastPathComponent)", systemImage: "square.and.arrow.up") }
@@ -209,7 +228,7 @@ struct ExportTemplateSheet: View {
                     }
                 }
             }
-            .navigationTitle("Export template")
+            .navigationTitle(saveToLibrary ? "Save template" : "Export template")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
             .onChange(of: sections) { _ in fileURL = nil }
@@ -275,4 +294,51 @@ struct RenameTrackSheet: View {
 struct RenameRequest: Identifiable {
     let id = UUID()
     let liveName: String
+}
+
+/// Settings section: everything in the profile that no longer matches the loaded set.
+struct SetCheckSection: View {
+    @EnvironmentObject var store: AppStore
+    @EnvironmentObject var live: LiveSession
+    @State private var lastRemoved: Int? = nil
+
+    var body: some View {
+        let health = ProfileHealth.check(profile: store.profile, song: live.song)
+        Section("Set check") {
+            HStack {
+                Image(systemName: !health.setLoaded ? "questionmark.circle" : (health.isClean ? "checkmark.circle.fill" : "exclamationmark.triangle.fill"))
+                    .foregroundColor(!health.setLoaded ? .secondary : (health.isClean ? .green : .orange))
+                Text(health.summary)
+            }
+            ForEach(health.issues) { issue in
+                HStack {
+                    Text(label(for: issue.kind)).font(.footnote).foregroundColor(.secondary).frame(width: 110, alignment: .leading)
+                    Text(issue.subject).lineLimit(1)
+                    Spacer()
+                    Text(issue.detail).font(.footnote).foregroundColor(.orange).lineLimit(1)
+                }
+            }
+            if !health.issues(of: .alias).isEmpty || !health.issues(of: .clipNote).isEmpty {
+                Button("Remove stale channel names and clip notes", role: .destructive) {
+                    var p = store.profile
+                    lastRemoved = ProfileHealth.removeStale(from: &p, song: live.song)
+                    store.profile = p
+                }
+            }
+            if let n = lastRemoved { Text("Removed \(n) stale item\(n == 1 ? "" : "s").").font(.footnote).foregroundColor(.secondary) }
+            Text("Decks, launch groups and controls that point at missing tracks are kept so you can re-assign them (Settings → Decks / Launch groups, or EDIT in CTRL).")
+                .font(.footnote).foregroundColor(.secondary)
+        }
+    }
+
+    private func label(for kind: ProfileHealth.Issue.Kind) -> String {
+        switch kind {
+        case .deckTrack: return "Deck track"
+        case .deckGroup: return "Deck group"
+        case .groupTrack: return "Group track"
+        case .alias: return "Channel name"
+        case .clipNote: return "Clip note"
+        case .control: return "Control"
+        }
+    }
 }

@@ -17,6 +17,12 @@ páginas de control, decks, grupos, nombres, notas, layout y patrones: se import
 AirDrop o pegando el texto, con vista previa de lo que falta en tu set, y se exporta desde Ajustes.
 Formato y cómo pedirle una a una IA: [`docs/TEMPLATE_FORMAT.md`](docs/TEMPLATE_FORMAT.md).
 
+**Biblioteca y comprobación.** Ajustes → Library guarda dentro de la app setups completos,
+proyectos del secuenciador (también desde SEQ → PATTERNS → SAVE PROJECT / LOAD) y plantillas, con
+cargar, sobrescribir, renombrar, compartir y borrar. Ajustes → Set check compara tu configuración
+con el set cargado y lista nombres de canal, notas de clip, decks, grupos y controles que apuntan a
+pistas, clips o dispositivos que ya no existen, con un botón para limpiar lo obsoleto.
+
 Todo es configurable desde Ajustes: tamaño y tipografía de los clips, qué filas mostrar, decks y
 grupos de lanzamiento, modo "texto grande", bloqueo de actuación, confirmaciones, háptica, etc.
 Hay un **modo demo** para probar todas las pantallas sin Live.

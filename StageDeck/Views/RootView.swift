@@ -20,11 +20,13 @@ struct RootView: View {
                 .environmentObject(store.live)
                 .environmentObject(store.sequencer)
                 .environmentObject(store.midi)
+                .environmentObject(store.library)
         }
         .sheet(item: $store.pendingTemplate) { pending in
             TemplatePreviewSheet(pending: pending)
                 .environmentObject(store)
                 .environmentObject(store.live)
+                .environmentObject(store.library)
         }
         .onOpenURL { url in _ = store.openTemplate(url: url) }
         .onAppear { Haptics.enabled = store.profile.hapticsEnabled }

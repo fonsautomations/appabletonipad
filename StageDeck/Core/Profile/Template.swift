@@ -176,9 +176,11 @@ public enum TemplateImportMode: String, CaseIterable, Identifiable {
 public struct TemplateCheck: Equatable {
     public var missingTracks: [String] = []
     public var missingDevices: [String] = []
+    /// Clip notes whose clip (or track) does not exist: "track|clip".
+    public var missingClips: [String] = []
     public var setLoaded: Bool = false
 
-    public var isClean: Bool { missingTracks.isEmpty && missingDevices.isEmpty }
+    public var isClean: Bool { missingTracks.isEmpty && missingDevices.isEmpty && missingClips.isEmpty }
 }
 
 public enum TemplateImporter {
@@ -194,6 +196,15 @@ public enum TemplateImporter {
             if !track.devices.contains(where: { $0.name.caseInsensitiveCompare(ref.device) == .orderedSame }) {
                 c.missingDevices.append("\(ref.track) / \(ref.device)")
             }
+        }
+        for key in (t.clipNotes ?? [:]).keys.sorted() {
+            let parts = key.split(separator: "|", maxSplits: 1).map(String.init)
+            guard parts.count == 2 else { continue }
+            guard let track = song.tracks.first(where: { $0.name.caseInsensitiveCompare(parts[0]) == .orderedSame }) else {
+                if !c.missingTracks.contains(where: { $0.caseInsensitiveCompare(parts[0]) == .orderedSame }) { c.missingTracks.append(parts[0]) }
+                continue
+            }
+            if !track.clips.values.contains(where: { $0.name == parts[1] }) { c.missingClips.append(key) }
         }
         return c
     }
