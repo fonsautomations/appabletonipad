@@ -22,6 +22,7 @@ public struct StageDeckTemplate: Codable, Equatable {
     /// Display names per Live track name ("KICK" → "BOMBO").
     public var trackAliases: [String: String]? = nil
     public var clipNotes: [String: String]? = nil
+    public var mixerBuses: [MixerBus]? = nil
     public var layout: LayoutSettings? = nil
     public var patterns: [Pattern]? = nil
     public var sequencer: SequencerSettings? = nil
@@ -49,6 +50,9 @@ public struct StageDeckTemplate: Codable, Equatable {
         public var showSends: Bool? = nil
         public var showPan: Bool? = nil
         public var filterParameterName: String? = nil
+        public var showGroupStrips: Bool? = nil
+        public var showMasterFilter: Bool? = nil
+        public var visibleSends: [String]? = nil
         public init() {}
     }
 
@@ -114,7 +118,7 @@ public struct StageDeckTemplate: Codable, Equatable {
 
     public var isEmpty: Bool {
         (controlPages ?? []).isEmpty && (decks ?? []).isEmpty && (launchGroups ?? []).isEmpty && (trackAliases ?? [:]).isEmpty
-            && (clipNotes ?? [:]).isEmpty && layout == nil && (patterns ?? []).isEmpty && sequencer == nil
+            && (clipNotes ?? [:]).isEmpty && (mixerBuses ?? []).isEmpty && layout == nil && (patterns ?? []).isEmpty && sequencer == nil
     }
 
     /// Human summary of what the template contains.
@@ -125,6 +129,7 @@ public struct StageDeckTemplate: Codable, Equatable {
         if let g = launchGroups, !g.isEmpty { out.append("\(g.count) launch group\(g.count == 1 ? "" : "s") (\(g.map { $0.label }.joined(separator: ", ")))") }
         if let a = trackAliases, !a.isEmpty { out.append("\(a.count) channel name\(a.count == 1 ? "" : "s")") }
         if let n = clipNotes, !n.isEmpty { out.append("\(n.count) clip note\(n.count == 1 ? "" : "s")") }
+        if let b = mixerBuses, !b.isEmpty { out.append("\(b.count) mixer bus\(b.count == 1 ? "" : "es") (\(b.map { $0.displayName }.joined(separator: ", ")))") }
         if layout != nil { out.append("launcher / mixer layout settings") }
         if let p = patterns, !p.isEmpty { out.append("\(p.count) sequencer pattern\(p.count == 1 ? "" : "s") (\(p.map { $0.name }.joined(separator: ", ")))") }
         if sequencer != nil { out.append("sequencer settings") }
@@ -138,6 +143,7 @@ public struct StageDeckTemplate: Codable, Equatable {
         for d in decks ?? [] { d.trackNames.forEach(add); if let g = d.groupTrackName { add(g) } }
         for g in launchGroups ?? [] { g.trackNames.forEach(add) }
         for (k, _) in trackAliases ?? [:] { add(k) }
+        for b in mixerBuses ?? [] where b.kind == .group || b.kind == .track { add(b.name) }
         for p in controlPages ?? [] {
             for w in p.widgets {
                 for t in [w.target, w.targetY] { if case .liveParameter(let track, _, _, _, _, _) = t { add(track) } }
@@ -191,6 +197,9 @@ public enum TemplateImporter {
         for name in t.referencedTracks where !song.tracks.contains(where: { $0.name.caseInsensitiveCompare(name) == .orderedSame }) {
             c.missingTracks.append(name)
         }
+        for b in t.mixerBuses ?? [] where b.kind == .returnTrack {
+            if !song.returnTrackNames.contains(where: { $0.caseInsensitiveCompare(b.name) == .orderedSame }) { c.missingTracks.append(b.name + " (return)") }
+        }
         for ref in t.referencedDevices {
             guard let track = song.tracks.first(where: { $0.name.caseInsensitiveCompare(ref.track) == .orderedSame }) else { continue }
             if !track.devices.contains(where: { $0.name.caseInsensitiveCompare(ref.device) == .orderedSame }) {
@@ -231,6 +240,10 @@ public enum TemplateImporter {
         if let notes = t.clipNotes, !notes.isEmpty {
             if mode == .replace { profile.clipNotes = notes } else { profile.clipNotes.merge(notes) { _, new in new } }
         }
+        if let buses = t.mixerBuses, !buses.isEmpty {
+            let fresh = buses.map { var b = $0; b.id = UUID(); return b }
+            profile.mixerBuses = mode == .replace ? fresh : profile.mixerBuses + fresh
+        }
         if let l = t.layout {
             if let v = l.clipHeight { profile.clipHeight = v }
             if let v = l.clipFontSize { profile.clipFontSize = v }
@@ -247,6 +260,9 @@ public enum TemplateImporter {
             if let v = l.showSends { profile.showSends = v }
             if let v = l.showPan { profile.showPan = v }
             if let v = l.filterParameterName { profile.filterParameterName = v }
+            if let v = l.showGroupStrips { profile.showGroupStrips = v }
+            if let v = l.showMasterFilter { profile.showMasterFilter = v }
+            if let v = l.visibleSends { profile.visibleSends = v }
         }
         if let patterns = t.patterns, !patterns.isEmpty {
             let fresh = patterns.map { p -> Pattern in
@@ -276,6 +292,7 @@ public struct TemplateSections: Equatable {
     public var launchGroups = true
     public var trackAliases = true
     public var clipNotes = false
+    public var mixerBuses = true
     public var layout = true
     public var patterns = false
     public var sequencerSettings = false
@@ -296,6 +313,7 @@ public enum TemplateExporter {
         if sections.launchGroups { t.launchGroups = profile.launchGroups }
         if sections.trackAliases { t.trackAliases = profile.trackAliases }
         if sections.clipNotes { t.clipNotes = profile.clipNotes }
+        if sections.mixerBuses, !profile.mixerBuses.isEmpty { t.mixerBuses = profile.mixerBuses }
         if sections.layout {
             var l = StageDeckTemplate.LayoutSettings()
             l.clipHeight = profile.clipHeight; l.clipFontSize = profile.clipFontSize
@@ -305,6 +323,7 @@ public enum TemplateExporter {
             l.showSections = profile.showSections; l.bigTextMode = profile.bigTextMode
             l.dimStoppedClips = profile.dimStoppedClips; l.hideEmptyScenes = profile.hideEmptyScenes
             l.showSends = profile.showSends; l.showPan = profile.showPan; l.filterParameterName = profile.filterParameterName
+            l.showGroupStrips = profile.showGroupStrips; l.showMasterFilter = profile.showMasterFilter; l.visibleSends = profile.visibleSends
             t.layout = l
         }
         if sections.patterns { t.patterns = project.patterns }

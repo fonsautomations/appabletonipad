@@ -2,6 +2,10 @@ import Foundation
 
 /// A believable demo set so every screen can be tried without Live.
 public enum DemoSet {
+    static let autoFilterParameters = [LiveDeviceParameter(index: 0, name: "Device On", value: 1, min: 0, max: 1),
+                                       LiveDeviceParameter(index: 1, name: "Frequency", value: 1, min: 0, max: 1),
+                                       LiveDeviceParameter(index: 2, name: "Resonance", value: 0.2, min: 0, max: 1)]
+
     public static func make() -> LiveSongState {
         var song = LiveSongState()
         let sectionNames = ["BASIL", "PERPEN", "BERLIN", "lasP"]
@@ -18,6 +22,9 @@ public enum DemoSet {
         for deck in ["A", "B"] {
             var group = LiveTrack(index: tracks.count, name: deck, color: LiveColor(rgb: deck == "A" ? 0xF28C28 : 0x8FB4DD))
             group.isGroup = true
+            group.canBeArmed = false
+            group.sends = [0, 0, 0]
+            group.devices = [LiveDevice(trackIndex: group.index, index: 0, name: "Auto Filter", className: "AutoFilter", parameters: autoFilterParameters)]
             let groupIndex = group.index
             tracks.append(group)
             for (name, rgb) in stems {
@@ -33,10 +40,7 @@ public enum DemoSet {
                     let base = scene.name.lowercased().replacingOccurrences(of: "_", with: "ar_")
                     t.clips[scene.index] = LiveClip(trackIndex: t.index, sceneIndex: scene.index, name: "\(base)-\(name)", color: LiveColor(rgb: rgb), length: Double([4, 8, 16, 32][seed % 4]))
                 }
-                t.devices = [LiveDevice(trackIndex: t.index, index: 0, name: "Auto Filter", className: "AutoFilter",
-                                        parameters: [LiveDeviceParameter(index: 0, name: "Device On", value: 1, min: 0, max: 1),
-                                                     LiveDeviceParameter(index: 1, name: "Frequency", value: 1, min: 0, max: 1),
-                                                     LiveDeviceParameter(index: 2, name: "Resonance", value: 0.2, min: 0, max: 1)]),
+                t.devices = [LiveDevice(trackIndex: t.index, index: 0, name: "Auto Filter", className: "AutoFilter", parameters: autoFilterParameters),
                              LiveDevice(trackIndex: t.index, index: 1, name: "\(name) Rack", className: "AudioEffectGroupDevice",
                                         parameters: [LiveDeviceParameter(index: 0, name: "Device On", value: 1, min: 0, max: 1)] +
                                             (1...8).map { LiveDeviceParameter(index: $0, name: "Macro \($0)", value: Double($0) / 9.0, min: 0, max: 1) })]
@@ -45,6 +49,17 @@ public enum DemoSet {
         }
         song.tracks = tracks
         song.returnTrackNames = ["liquid", "bV", "U-iV"]
+        for i in song.returnTracks.indices {
+            song.returnTracks[i].color = LiveColor(rgb: [0x3CC8E6, 0x9A6BFF, 0xE05A9A][i % 3])
+            song.returnTracks[i].volume = 0.8
+            song.returnTracks[i].sends = [0, 0, 0]
+            song.returnTracks[i].devices = [LiveDevice(trackIndex: LiveSongState.trackIndex(forReturn: i), index: 0, name: "Auto Filter", className: "AutoFilter",
+                                                       parameters: autoFilterParameters)]
+        }
+        song.masterDevices = [LiveDevice(trackIndex: LiveSongState.masterTrackIndex, index: 0, name: "Auto Filter", className: "AutoFilter", parameters: autoFilterParameters),
+                              LiveDevice(trackIndex: LiveSongState.masterTrackIndex, index: 1, name: "Master Rack", className: "AudioEffectGroupDevice",
+                                         parameters: [LiveDeviceParameter(index: 0, name: "Device On", value: 1, min: 0, max: 1)] +
+                                            (1...8).map { LiveDeviceParameter(index: $0, name: "Macro \($0)", value: 0.5, min: 0, max: 1) })]
         song.tempo = 133
         song.liveVersion = "demo"
         return song

@@ -171,11 +171,13 @@ struct SettingsView: View {
         Section("Mixer") {
             Toggle("Show sends", isOn: $store.profile.showSends)
             Toggle("Show pan", isOn: $store.profile.showPan)
+            Toggle("Group strips (each deck's group as a full strip)", isOn: $store.profile.showGroupStrips)
+            Toggle("Master filter (Auto Filter on the master)", isOn: $store.profile.showMasterFilter)
             HStack {
                 Text("Filter parameter name"); Spacer()
                 TextField("Frequency", text: $store.profile.filterParameterName).multilineTextAlignment(.trailing).frame(width: 140)
             }
-            Text("Put an Auto Filter on each track (and on each group track for the deck HPF). StageDeck finds it by class name and drives its Frequency parameter.")
+            Text("Put an Auto Filter on any channel you want to filter: tracks, group tracks, returns or the master. StageDeck finds it by class name and drives its Frequency parameter. Which sends are shown, and extra bus strips (groups, returns, master, single tracks), are edited in the mixer with EDIT.")
                 .font(.footnote).foregroundColor(.secondary)
         }
     }

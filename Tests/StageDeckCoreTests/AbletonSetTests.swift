@@ -61,7 +61,7 @@ final class AbletonSetTests: XCTestCase {
           </MidiTrack>
           <ReturnTrack Id="2"><Name><EffectiveName Value="A-A · CINTA" /></Name><Color Value="13" /><TrackGroupId Value="-1" /><DeviceChain><DeviceChain><Devices /></DeviceChain></DeviceChain></ReturnTrack>
         </Tracks>
-        <MainTrack><DeviceChain><Mixer><Tempo><LomId Value="0" /><Manual Value="128.5" /></Tempo></Mixer></DeviceChain></MainTrack>
+        <MainTrack><DeviceChain><Mixer><Tempo><LomId Value="0" /><Manual Value="128.5" /></Tempo></Mixer><DeviceChain><Devices><AutoFilter Id="20"><UserName Value="" /></AutoFilter><AudioEffectGroupDevice Id="21"><UserName Value="MASTER FX" /><MacroDisplayNames.0 Value="Aire" /></AudioEffectGroupDevice></Devices></DeviceChain></DeviceChain></MainTrack>
         <Scenes>
           <Scene Id="0"><FollowAction /><Name Value="Océano" /></Scene>
           <Scene Id="1"><Name Value="Pulso" /></Scene>
@@ -96,6 +96,13 @@ final class AbletonSetTests: XCTestCase {
         XCTAssertEqual(song.tracks[1].groupTrackIndex, 0)
         XCTAssertTrue(song.tracks[2].hasMIDIInput)
         XCTAssertEqual(song.returnTrackNames, ["A-A · CINTA"])
+        XCTAssertEqual(song.returnTracks.count, 1)
+        XCTAssertEqual(song.returnTracks[0].sends, [0])
+        XCTAssertEqual(snap.masterDevices.map { $0.displayName }, ["Auto Filter", "MASTER FX"])
+        XCTAssertEqual(song.masterDevices.map { $0.name }, ["Auto Filter", "MASTER FX"])
+        XCTAssertEqual(song.masterDevices[0].trackIndex, LiveSongState.masterTrackIndex)
+        XCTAssertEqual(song.masterDevices[1].parameters.map { $0.name }, ["Device On", "Aire"])
+        XCTAssertNotNil(song.masterAutoFilter)
         XCTAssertEqual(song.tracks[1].devices[1].className, "AutoFilter")
         XCTAssertNotNil(song.tracks[1].autoFilter?.parameterIndex(named: "Frequency"))
         XCTAssertEqual(song.tracks[0].devices[0].parameters.map { $0.name }, ["Device On", "Energía", "Soltar", "Macro 3"])

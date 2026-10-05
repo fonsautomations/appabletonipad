@@ -273,6 +273,19 @@ final class LiveSession: ObservableObject {
         send(LiveCommand.returnTrackNames())
         send(LiveCommand.masterGet("volume"))
         send(LiveCommand.masterGet("cue_volume"))
+        send(LiveCommand.trackDeviceNames(track: LiveSongState.masterTrackIndex))
+        send(LiveCommand.trackDeviceClassNames(track: LiveSongState.masterTrackIndex))
+    }
+
+    /// Mixer state, sends, devices and listeners of one return track (StageDeck extension).
+    private func requestReturnDetails(_ r: Int) {
+        let pseudo = LiveSongState.trackIndex(forReturn: r)
+        send(LiveCommand.returnGet("panning", index: r))
+        send(LiveCommand.returnListen("volume", index: r, start: true))
+        send(LiveCommand.returnListen("mute", index: r, start: true))
+        for s in 0..<song.numSends { send(LiveCommand.returnGetSend(index: r, send: s)) }
+        send(LiveCommand.trackDeviceNames(track: pseudo))
+        send(LiveCommand.trackDeviceClassNames(track: pseudo))
     }
 
     private func requestTrackData() {
@@ -311,7 +324,7 @@ final class LiveSession: ObservableObject {
             send(LiveCommand.trackListen("name", track: t.index, start: true))
             send(LiveCommand.trackListen("color", track: t.index, start: true))
             if t.canBeArmed { send(LiveCommand.trackListen("arm", track: t.index, start: true)) }
-            if meterRefreshEnabled && !t.isGroup {
+            if meterRefreshEnabled {
                 send(LiveCommand.trackListen("output_meter_level", track: t.index, start: true))
             }
         }
@@ -387,9 +400,20 @@ final class LiveSession: ObservableObject {
             }
         case .returnTrackNames(let names):
             song.returnTrackNames = names
-            for t in song.tracks where !t.isGroup {
+            for t in song.tracks {
                 for s in 0..<names.count { send(LiveCommand.getSend(track: t.index, send: s)) }
             }
+            if state == .connected { for r in 0..<names.count { requestReturnDetails(r) } }
+        case .returnVolume(let r, let v): updateReturn(r) { $0.volume = v }
+        case .returnMute(let r, let v): updateReturn(r) { $0.mute = v }
+        case .returnPanning(let r, let v): updateReturn(r) { $0.panning = v }
+        case .returnSend(let r, let s, let v):
+            updateReturn(r) { rt in
+                while rt.sends.count <= s { rt.sends.append(0) }
+                rt.sends[s] = v
+            }
+        case .masterPanning:
+            break
         case .trackName(let t, let v): update(t) { $0.name = v }
         case .trackColor(let t, let v): update(t) { $0.color = v }
         case .trackMute(let t, let v): update(t) { $0.mute = v }
@@ -434,23 +458,23 @@ final class LiveSession: ObservableObject {
                 }
             }
         case .trackDeviceNames(let t, let names):
-            update(t) { tr in
+            updateDevices(t) { existing in
                 var devices: [LiveDevice] = []
                 for (i, n) in names.enumerated() {
-                    var d = LiveDevice(trackIndex: t, index: i, name: n, className: i < tr.devices.count ? tr.devices[i].className : "")
-                    if i < tr.devices.count { d.parameters = tr.devices[i].parameters }
+                    var d = LiveDevice(trackIndex: t, index: i, name: n, className: i < existing.count ? existing[i].className : "")
+                    if i < existing.count { d.parameters = existing[i].parameters }
                     devices.append(d)
                 }
-                tr.devices = devices
+                existing = devices
             }
         case .trackDeviceClassNames(let t, let names):
-            update(t) { tr in
+            updateDevices(t) { devices in
                 for (i, n) in names.enumerated() {
-                    if i < tr.devices.count { tr.devices[i].className = n }
-                    else { tr.devices.append(LiveDevice(trackIndex: t, index: i, name: n, className: n)) }
+                    if i < devices.count { devices[i].className = n }
+                    else { devices.append(LiveDevice(trackIndex: t, index: i, name: n, className: n)) }
                 }
             }
-            if let track = song.track(t), let filter = track.autoFilter {
+            if let filter = song.devices(ofTrack: t).first(where: { $0.isAutoFilter }) {
                 requestDeviceParameters(track: t, device: filter.index)
             }
         case .clipPlayingPosition(let t, let s, let pos):
@@ -464,36 +488,36 @@ final class LiveSession: ObservableObject {
         case .sceneTriggered(let s, let v):
             if s < song.scenes.count { song.scenes[s].isTriggered = v }
         case .deviceParameterNames(let t, let d, let names):
-            update(t) { tr in
-                guard d < tr.devices.count else { return }
-                var params = tr.devices[d].parameters
+            updateDevices(t) { devices in
+                guard d < devices.count else { return }
+                var params = devices[d].parameters
                 for (i, n) in names.enumerated() {
                     if i < params.count { params[i].name = n } else { params.append(LiveDeviceParameter(index: i, name: n, value: 0, min: 0, max: 1)) }
                 }
-                tr.devices[d].parameters = params
+                devices[d].parameters = params
             }
-            if let track = song.track(t), d < track.devices.count, let f = track.devices[d].parameterIndex(named: "Frequency") {
+            if let dev = song.devices(ofTrack: t)[safe: d], let f = dev.parameterIndex(named: "Frequency") {
                 send(LiveCommand.deviceParameterListen(track: t, device: d, parameter: f, start: true))
             }
         case .deviceParameterValues(let t, let d, let values):
-            update(t) { tr in
-                guard d < tr.devices.count else { return }
-                for (i, v) in values.enumerated() where i < tr.devices[d].parameters.count { tr.devices[d].parameters[i].value = v }
+            updateDevices(t) { devices in
+                guard d < devices.count else { return }
+                for (i, v) in values.enumerated() where i < devices[d].parameters.count { devices[d].parameters[i].value = v }
             }
         case .deviceParameterMins(let t, let d, let values):
-            update(t) { tr in
-                guard d < tr.devices.count else { return }
-                for (i, v) in values.enumerated() where i < tr.devices[d].parameters.count { tr.devices[d].parameters[i].min = v }
+            updateDevices(t) { devices in
+                guard d < devices.count else { return }
+                for (i, v) in values.enumerated() where i < devices[d].parameters.count { devices[d].parameters[i].min = v }
             }
         case .deviceParameterMaxes(let t, let d, let values):
-            update(t) { tr in
-                guard d < tr.devices.count else { return }
-                for (i, v) in values.enumerated() where i < tr.devices[d].parameters.count { tr.devices[d].parameters[i].max = v }
+            updateDevices(t) { devices in
+                guard d < devices.count else { return }
+                for (i, v) in values.enumerated() where i < devices[d].parameters.count { devices[d].parameters[i].max = v }
             }
         case .deviceParameterValue(let t, let d, let p, let v):
-            update(t) { tr in
-                guard d < tr.devices.count, p < tr.devices[d].parameters.count else { return }
-                tr.devices[d].parameters[p].value = v
+            updateDevices(t) { devices in
+                guard d < devices.count, p < devices[d].parameters.count else { return }
+                devices[d].parameters[p].value = v
             }
         case .selectedDevice(let t, let d):
             selectedDeviceInLive = SelectedDevice(track: t, device: d)
@@ -503,8 +527,6 @@ final class LiveSession: ObservableObject {
         case .masterVolume(let v): song.masterVolume = v
         case .masterMeter(let v): pendingMaster = v
         case .cueVolume(let v): song.cueVolume = v
-        case .returnVolume, .returnMute:
-            break
         case .unknown:
             break
         }
@@ -513,6 +535,18 @@ final class LiveSession: ObservableObject {
     private func update(_ index: Int, _ body: (inout LiveTrack) -> Void) {
         guard index >= 0, index < song.tracks.count else { return }
         body(&song.tracks[index])
+    }
+
+    private func updateReturn(_ index: Int, _ body: (inout LiveReturnTrack) -> Void) {
+        guard index >= 0, index < song.returnTracks.count else { return }
+        body(&song.returnTracks[index])
+    }
+
+    /// Devices of a track, the master (`masterTrackIndex`) or a return (pseudo index).
+    private func updateDevices(_ index: Int, _ body: (inout [LiveDevice]) -> Void) {
+        if index == LiveSongState.masterTrackIndex { body(&song.masterDevices); return }
+        if let r = LiveSongState.returnIndex(fromTrackIndex: index) { updateReturn(r) { body(&$0.devices) }; return }
+        update(index) { body(&$0.devices) }
     }
 
     private func applyTrackData(_ values: [OSCValue]) {
@@ -687,16 +721,41 @@ final class LiveSession: ObservableObject {
         sendThrottled(key: "cue", LiveCommand.masterSet("cue_volume", value: value))
     }
 
-    /// Sets a device parameter by normalized value 0...1.
+    /// Sets a device parameter by normalized value 0...1. Works for tracks, the master and returns (pseudo indices).
     func setDeviceParameter(track: Int, device: Int, parameter: Int, normalized: Double) {
-        update(track) { tr in
-            guard device < tr.devices.count, parameter < tr.devices[device].parameters.count else { return }
-            var p = tr.devices[device].parameters[parameter]
+        updateDevices(track) { devices in
+            guard device < devices.count, parameter < devices[device].parameters.count else { return }
+            var p = devices[device].parameters[parameter]
             p.value = p.min + (p.max - p.min) * max(0, min(1, normalized))
-            tr.devices[device].parameters[parameter] = p
+            devices[device].parameters[parameter] = p
         }
-        guard let p = song.track(track)?.devices[safe: device]?.parameters[safe: parameter] else { return }
+        guard let p = song.devices(ofTrack: track)[safe: device]?.parameters[safe: parameter] else { return }
         sendThrottled(key: "dev\(track):\(device):\(parameter)", LiveCommand.setDeviceParameter(track: track, device: device, parameter: parameter, value: p.value))
+    }
+
+    // MARK: - Return tracks (StageDeck extension)
+
+    func setReturnVolume(_ r: Int, value: Double) {
+        updateReturn(r) { $0.volume = value }
+        sendThrottled(key: "ret\(r)", LiveCommand.returnSet("volume", index: r, value: .float(Float(max(0, min(1, value))))))
+    }
+
+    func setReturnMute(_ r: Int, on: Bool) {
+        updateReturn(r) { $0.mute = on }
+        send(LiveCommand.returnSet("mute", index: r, value: .int32(on ? 1 : 0)))
+    }
+
+    func setReturnPanning(_ r: Int, value: Double) {
+        updateReturn(r) { $0.panning = value }
+        sendThrottled(key: "retpan\(r)", LiveCommand.returnSet("panning", index: r, value: .float(Float(max(-1, min(1, value))))))
+    }
+
+    func setReturnSend(_ r: Int, send s: Int, value: Double) {
+        updateReturn(r) { rt in
+            while rt.sends.count <= s { rt.sends.append(0) }
+            rt.sends[s] = value
+        }
+        sendThrottled(key: "retsend\(r):\(s)", LiveCommand.returnSetSend(index: r, send: s, value: value))
     }
 
     /// Mutes/unmutes every track in a list (deck cut).
@@ -823,9 +882,4 @@ final class LiveSession: ObservableObject {
     }
 }
 
-extension Array {
-    subscript(safe index: Int) -> Element? {
-        (index >= 0 && index < count) ? self[index] : nil
-    }
-}
 

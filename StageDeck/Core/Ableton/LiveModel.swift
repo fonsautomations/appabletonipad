@@ -181,11 +181,49 @@ public enum LiveQuantization: Int, CaseIterable, Codable, Identifiable {
     }
 }
 
+/// A return track (Live's "A", "B"… busses). Has volume, mute, pan and sends to the other returns, no clips.
+public struct LiveReturnTrack: Equatable, Hashable, Identifiable {
+    public var index: Int
+    public var name: String
+    public var color: LiveColor = .gray
+    public var volume: Double = 0.85
+    public var mute: Bool = false
+    public var panning: Double = 0
+    public var sends: [Double] = []
+    public var devices: [LiveDevice] = []
+
+    public var id: Int { index }
+
+    public init(index: Int, name: String) { self.index = index; self.name = name }
+
+    public var autoFilter: LiveDevice? { devices.first(where: { $0.isAutoFilter }) }
+}
+
 /// Whole-session snapshot of the Live set as the app knows it.
 public struct LiveSongState: Equatable {
+    /// Pseudo track index used for the master track's devices (Live keeps master out of `song.tracks`).
+    public static let masterTrackIndex = -1
+    /// Pseudo track index base for return tracks' devices: return r → `returnTrackIndexBase - r`.
+    public static let returnTrackIndexBase = -100
+
     public var tracks: [LiveTrack] = []
     public var scenes: [LiveScene] = []
-    public var returnTrackNames: [String] = []
+    public var returnTracks: [LiveReturnTrack] = []
+    /// Devices on the master track (Auto Filter, racks…). Their `trackIndex` is `masterTrackIndex`.
+    public var masterDevices: [LiveDevice] = []
+    /// Return track names. Setting them keeps the state of returns that already exist.
+    public var returnTrackNames: [String] {
+        get { returnTracks.map { $0.name } }
+        set {
+            var fresh: [LiveReturnTrack] = []
+            for (i, n) in newValue.enumerated() {
+                var r = i < returnTracks.count ? returnTracks[i] : LiveReturnTrack(index: i, name: n)
+                r.index = i; r.name = n
+                fresh.append(r)
+            }
+            returnTracks = fresh
+        }
+    }
     public var tempo: Double = 120
     public var isPlaying: Bool = false
     public var beat: Int = 0
@@ -226,6 +264,24 @@ public struct LiveSongState: Equatable {
     }
 
     public var groupTracks: [LiveTrack] { tracks.filter { $0.isGroup } }
+
+    public var masterAutoFilter: LiveDevice? { masterDevices.first(where: { $0.isAutoFilter }) }
+
+    /// Devices of any channel addressed by a (possibly pseudo) track index.
+    public func devices(ofTrack index: Int) -> [LiveDevice] {
+        if index == LiveSongState.masterTrackIndex { return masterDevices }
+        if let r = LiveSongState.returnIndex(fromTrackIndex: index) { return returnTracks[safe: r]?.devices ?? [] }
+        return track(index)?.devices ?? []
+    }
+
+    public static func trackIndex(forReturn r: Int) -> Int { returnTrackIndexBase - r }
+    public static func returnIndex(fromTrackIndex i: Int) -> Int? { i <= returnTrackIndexBase ? returnTrackIndexBase - i : nil }
+}
+
+extension Array {
+    public subscript(safe index: Int) -> Element? {
+        (index >= 0 && index < count) ? self[index] : nil
+    }
 }
 
 /// Live's fader (0...1) ↔ dB mapping.

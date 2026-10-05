@@ -40,6 +40,14 @@ public struct PerformerProfile: Equatable, Codable {
     public var showPan: Bool = false
     public var filterParameterName: String = "Frequency"
     public var macroNames: [String] = ["LPF"]
+    /// Every deck shows its group track as a full strip (sends, filter, fader) in front of its stems.
+    public var showGroupStrips: Bool = false
+    /// Master strip shows the master track's Auto Filter next to the fader.
+    public var showMasterFilter: Bool = true
+    /// Return names whose send is shown on strips. nil = the first four returns.
+    public var visibleSends: [String]? = nil
+    /// Extra strips (groups, returns, master, any track) shown between the decks and the master.
+    public var mixerBuses: [MixerBus] = []
 
     // Per-clip notes (lyrics, cues, reminders). Key: "<track name>|<clip name>".
     public var clipNotes: [String: String] = [:]
@@ -104,6 +112,10 @@ public struct PerformerProfile: Equatable, Codable {
         showPan = get(.showPan, d.showPan)
         filterParameterName = get(.filterParameterName, d.filterParameterName)
         macroNames = get(.macroNames, d.macroNames)
+        showGroupStrips = get(.showGroupStrips, d.showGroupStrips)
+        showMasterFilter = get(.showMasterFilter, d.showMasterFilter)
+        visibleSends = get(.visibleSends, d.visibleSends)
+        mixerBuses = get(.mixerBuses, d.mixerBuses)
         clipNotes = get(.clipNotes, d.clipNotes)
         sceneNotes = get(.sceneNotes, d.sceneNotes)
         trackAliases = get(.trackAliases, d.trackAliases)
@@ -121,6 +133,13 @@ public struct PerformerProfile: Equatable, Codable {
     }
 
     public static func clipNoteKey(track: String, clip: String) -> String { "\(track)|\(clip)" }
+
+    /// Indices of the sends shown on every strip, in return order.
+    public func sendIndices(in song: LiveSongState) -> [Int] {
+        let names = song.returnTrackNames
+        guard let visible = visibleSends else { return Array(0..<min(4, names.count)) }
+        return names.indices.filter { i in visible.contains(where: { $0.caseInsensitiveCompare(names[i]) == .orderedSame }) }
+    }
 
     public func clipNote(track: String, clip: String) -> String? {
         let v = clipNotes[PerformerProfile.clipNoteKey(track: track, clip: clip)]
@@ -153,5 +172,51 @@ public struct AppDocument: Equatable, Codable {
 
     public static func decodeJSON(_ data: Data) throws -> AppDocument {
         try JSONDecoder().decode(AppDocument.self, from: data)
+    }
+}
+
+/// An extra mixer strip: a group, a return, the master or any single track, with its own options.
+/// Channels are referenced by Live name so a profile or template survives track reordering.
+public struct MixerBus: Codable, Equatable, Hashable, Identifiable {
+    public enum Kind: String, Codable, CaseIterable {
+        case group, track, returnTrack, master
+        public var label: String {
+            switch self {
+            case .group: return "Group"
+            case .track: return "Track"
+            case .returnTrack: return "Return"
+            case .master: return "Master"
+            }
+        }
+    }
+    public var id: UUID = UUID()
+    public var kind: Kind
+    /// Live name of the group / track / return. Ignored for the master.
+    public var name: String = ""
+    /// Optional label shown instead of the Live name.
+    public var label: String? = nil
+    public var showSends: Bool = true
+    public var showFilter: Bool = true
+    public var showPan: Bool = false
+
+    public init(kind: Kind, name: String = "", label: String? = nil, showSends: Bool = true, showFilter: Bool = true, showPan: Bool = false) {
+        self.kind = kind; self.name = name; self.label = label; self.showSends = showSends; self.showFilter = showFilter; self.showPan = showPan
+    }
+
+    public var displayName: String {
+        if let l = label, !l.isEmpty { return l }
+        return kind == .master ? "MASTER" : name
+    }
+
+    enum CodingKeys: String, CodingKey { case id, kind, name, label, showSends, showFilter, showPan }
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = (try? c.decodeIfPresent(UUID.self, forKey: .id)) ?? UUID()
+        kind = (try? c.decodeIfPresent(Kind.self, forKey: .kind)) ?? .track
+        name = (try? c.decodeIfPresent(String.self, forKey: .name)) ?? ""
+        label = try? c.decodeIfPresent(String.self, forKey: .label)
+        showSends = (try? c.decodeIfPresent(Bool.self, forKey: .showSends)) ?? true
+        showFilter = (try? c.decodeIfPresent(Bool.self, forKey: .showFilter)) ?? true
+        showPan = (try? c.decodeIfPresent(Bool.self, forKey: .showPan)) ?? false
     }
 }

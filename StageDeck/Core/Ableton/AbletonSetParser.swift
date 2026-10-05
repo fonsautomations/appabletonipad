@@ -40,6 +40,8 @@ public struct AbletonSetSnapshot: Equatable {
     public var tempo: Double = 120
     public var tracks: [Track] = []
     public var scenes: [String] = []
+    /// Devices on the master (main) track.
+    public var masterDevices: [Device] = []
 
     public var sessionTracks: [Track] { tracks.filter { $0.kind != .return } }
     public var returnTracks: [Track] { tracks.filter { $0.kind == .return } }
@@ -91,22 +93,32 @@ public struct AbletonSetSnapshot: Equatable {
             lt.hasMIDIInput = t.kind == .midi
             lt.canBeArmed = t.kind != .group
             lt.sends = returnTracks.map { _ in 0.0 }
-            lt.devices = t.devices.enumerated().map { (di, d) in
-                var params: [LiveDeviceParameter] = [LiveDeviceParameter(index: 0, name: "Device On", value: 1, min: 0, max: 1)]
-                if d.isRack {
-                    for (mi, m) in d.macroNames.enumerated() { params.append(LiveDeviceParameter(index: mi + 1, name: m, value: 0.5, min: 0, max: 1)) }
-                } else if d.className == "AutoFilter" {
-                    params.append(LiveDeviceParameter(index: 1, name: "Frequency", value: 1, min: 0, max: 1))
-                }
-                return LiveDevice(trackIndex: i, index: di, name: d.displayName, className: d.className, parameters: params)
-            }
+            lt.devices = AbletonSetSnapshot.liveDevices(t.devices, trackIndex: i)
             for c in t.clips {
                 lt.clips[c.sceneIndex] = LiveClip(trackIndex: i, sceneIndex: c.sceneIndex, name: c.name, color: AbletonSetSnapshot.color(c.colorIndex), length: c.length, isMIDI: c.isMIDI)
             }
             song.tracks.append(lt)
         }
         song.returnTrackNames = returnTracks.map { $0.name }
+        for (r, t) in returnTracks.enumerated() {
+            song.returnTracks[r].color = AbletonSetSnapshot.color(t.colorIndex)
+            song.returnTracks[r].sends = returnTracks.map { _ in 0.0 }
+            song.returnTracks[r].devices = AbletonSetSnapshot.liveDevices(t.devices, trackIndex: LiveSongState.trackIndex(forReturn: r))
+        }
+        song.masterDevices = AbletonSetSnapshot.liveDevices(masterDevices, trackIndex: LiveSongState.masterTrackIndex)
         return song
+    }
+
+    static func liveDevices(_ devices: [Device], trackIndex: Int) -> [LiveDevice] {
+        devices.enumerated().map { (di, d) in
+            var params: [LiveDeviceParameter] = [LiveDeviceParameter(index: 0, name: "Device On", value: 1, min: 0, max: 1)]
+            if d.isRack {
+                for (mi, m) in d.macroNames.enumerated() { params.append(LiveDeviceParameter(index: mi + 1, name: m, value: 0.5, min: 0, max: 1)) }
+            } else if d.className == "AutoFilter" {
+                params.append(LiveDeviceParameter(index: 1, name: "Frequency", value: 1, min: 0, max: 1))
+            }
+            return LiveDevice(trackIndex: trackIndex, index: di, name: d.displayName, className: d.className, parameters: params)
+        }
     }
 
     /// Builds a StageDeck template from the set structure.
@@ -322,11 +334,13 @@ public final class AbletonSetParser {
         }
         guard p.sawLiveSet else { throw ParseError.notALiveSet }
         p.snapshot.tracks = p.tracks
+        p.snapshot.masterDevices = p.masterDevices
         return p.snapshot
     }
 
     private var snapshot = AbletonSetSnapshot()
     private var tracks: [AbletonSetSnapshot.Track] = []
+    private var masterDevices: [AbletonSetSnapshot.Device] = []
     private var path: [String] = []
     private var sawLiveSet = false
     private var currentTrack: AbletonSetSnapshot.Track?
@@ -359,9 +373,20 @@ public final class AbletonSetParser {
             trackDepth = depth
             return
         }
+        if currentDevice != nil {
+            let drel = depth - deviceDepth
+            if drel == 1, elementName == "UserName", let v = attributeDict["Value"] { currentDevice?.userName = v }
+            if drel == 1, elementName.hasPrefix("MacroDisplayNames."), let v = attributeDict["Value"] { currentDevice?.macroNames.append(v) }
+            return
+        }
         guard let _ = currentTrack else {
             if inScenes, elementName == "Name", depth == 5, path[3] == "Scene", let v = attributeDict["Value"] { snapshot.scenes.append(v) }
             if inMasterTrack, elementName == "Manual", depth >= 5, path[depth - 2] == "Tempo", let v = attributeDict["Value"], let d = Double(v) { snapshot.tempo = d }
+            // Master devices: MainTrack/DeviceChain/DeviceChain/Devices/<Device>
+            if inMasterTrack, depth == 7, path[5] == "Devices", path[4] == "DeviceChain", path[3] == "DeviceChain" {
+                currentDevice = AbletonSetSnapshot.Device(className: elementName, userName: "", macroNames: [])
+                deviceDepth = depth
+            }
             return
         }
         let rel = depth - trackDepth // 1 = direct child of the track element
@@ -373,12 +398,6 @@ public final class AbletonSetParser {
         if currentDevice == nil, rel == 4, path[depth - 2] == "Devices", path[depth - 3] == "DeviceChain", path[depth - 4] == "DeviceChain" {
             currentDevice = AbletonSetSnapshot.Device(className: elementName, userName: "", macroNames: [])
             deviceDepth = depth
-            return
-        }
-        if currentDevice != nil {
-            let drel = depth - deviceDepth
-            if drel == 1, elementName == "UserName", let v = attributeDict["Value"] { currentDevice?.userName = v }
-            if drel == 1, elementName.hasPrefix("MacroDisplayNames."), let v = attributeDict["Value"] { currentDevice?.macroNames.append(v) }
             return
         }
         // Clip slots: Track/DeviceChain/MainSequencer/ClipSlotList/ClipSlot(Id)/ClipSlot/Value/<AudioClip|MidiClip>
@@ -413,7 +432,9 @@ public final class AbletonSetParser {
             if c.sceneIndex >= 0 { currentTrack?.clips.append(c) }
             currentClip = nil
         } else if currentDevice != nil, depth == deviceDepth {
-            if let d = currentDevice { currentTrack?.devices.append(d) }
+            if let d = currentDevice {
+                if currentTrack != nil { currentTrack?.devices.append(d) } else { masterDevices.append(d) }
+            }
             currentDevice = nil
         } else if currentTrack != nil, depth == trackDepth {
             if let t = currentTrack { tracks.append(t) }

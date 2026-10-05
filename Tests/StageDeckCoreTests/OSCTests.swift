@@ -275,3 +275,88 @@ final class HealthTests: XCTestCase {
         XCTAssertEqual(c.missingTracks, ["ZED"])
     }
 }
+
+
+final class MixerBusTests: XCTestCase {
+    func testReturnNamesKeepState() {
+        var song = LiveSongState()
+        song.returnTrackNames = ["A", "B"]
+        song.returnTracks[1].volume = 0.3
+        song.returnTrackNames = ["A-Reverb", "B-Delay", "C"]
+        XCTAssertEqual(song.returnTracks.map { $0.name }, ["A-Reverb", "B-Delay", "C"])
+        XCTAssertEqual(song.returnTracks[1].volume, 0.3)
+        XCTAssertEqual(song.returnTracks[2].index, 2)
+        XCTAssertEqual(song.numSends, 3)
+    }
+
+    func testPseudoTrackIndices() {
+        XCTAssertEqual(LiveSongState.returnIndex(fromTrackIndex: LiveSongState.trackIndex(forReturn: 2)), 2)
+        XCTAssertNil(LiveSongState.returnIndex(fromTrackIndex: 0))
+        XCTAssertNil(LiveSongState.returnIndex(fromTrackIndex: LiveSongState.masterTrackIndex))
+        let m = LiveCommand.deviceParameterNames(track: LiveSongState.masterTrackIndex, device: 1)
+        XCTAssertEqual(m.address, "/live/master/device/get/parameters/name")
+        XCTAssertEqual(m.arguments, [.int32(1)])
+        let r = LiveCommand.setDeviceParameter(track: LiveSongState.trackIndex(forReturn: 1), device: 0, parameter: 1, value: 0.5)
+        XCTAssertEqual(r.address, "/live/return/device/set/parameter/value")
+        XCTAssertEqual(r.arguments, [.int32(1), .int32(0), .int32(1), .float(0.5)])
+        let t = LiveCommand.deviceParameterListen(track: 3, device: 0, parameter: 1, start: true)
+        XCTAssertEqual(t.address, "/live/device/start_listen/parameter/value")
+        XCTAssertEqual(t.arguments, [.int32(3), .int32(0), .int32(1)])
+        XCTAssertEqual(LiveCommand.trackDeviceNames(track: LiveSongState.masterTrackIndex).address, "/live/master/get/devices/name")
+    }
+
+    func testDecodesMasterAndReturnEvents() {
+        if case .deviceParameterNames(let t, let d, let names) = LiveEventDecoder.decode(OSCMessage("/live/master/device/get/parameters/name", [.int32(0), .string("Device On"), .string("Frequency")])) {
+            XCTAssertEqual(t, LiveSongState.masterTrackIndex); XCTAssertEqual(d, 0); XCTAssertEqual(names, ["Device On", "Frequency"])
+        } else { XCTFail() }
+        if case .deviceParameterValue(let t, let d, let p, let v) = LiveEventDecoder.decode(OSCMessage("/live/return/device/get/parameter/value", [.int32(1), .int32(0), .int32(1), .float(0.25)])) {
+            XCTAssertEqual(t, LiveSongState.trackIndex(forReturn: 1)); XCTAssertEqual(d, 0); XCTAssertEqual(p, 1); XCTAssertEqual(v, 0.25, accuracy: 0.0001)
+        } else { XCTFail() }
+        if case .returnSend(let r, let s, let v) = LiveEventDecoder.decode(OSCMessage("/live/return/get/send", [.int32(0), .int32(1), .float(0.7)])) {
+            XCTAssertEqual(r, 0); XCTAssertEqual(s, 1); XCTAssertEqual(v, 0.7, accuracy: 0.0001)
+        } else { XCTFail() }
+        if case .trackDeviceClassNames(let t, let names) = LiveEventDecoder.decode(OSCMessage("/live/master/get/devices/class_name", [.string("AutoFilter")])) {
+            XCTAssertEqual(t, LiveSongState.masterTrackIndex); XCTAssertEqual(names, ["AutoFilter"])
+        } else { XCTFail() }
+    }
+
+    func testBusesRoundTripAndTemplate() throws {
+        var profile = PerformerProfile()
+        profile.mixerBuses = [MixerBus(kind: .group, name: "A"), MixerBus(kind: .returnTrack, name: "liquid", showFilter: false), MixerBus(kind: .master)]
+        profile.visibleSends = ["liquid", "bV"]
+        profile.showGroupStrips = true
+        let data = try JSONEncoder().encode(profile)
+        let back = try JSONDecoder().decode(PerformerProfile.self, from: data)
+        XCTAssertEqual(back.mixerBuses.map { $0.kind }, [.group, .returnTrack, .master])
+        XCTAssertEqual(back.mixerBuses[1].showFilter, false)
+        XCTAssertEqual(back.mixerBuses[2].displayName, "MASTER")
+        XCTAssertEqual(back.visibleSends, ["liquid", "bV"])
+        XCTAssertTrue(back.showGroupStrips)
+        let song = DemoSet.make()
+        XCTAssertEqual(profile.sendIndices(in: song), [0, 1])
+        XCTAssertEqual(PerformerProfile().sendIndices(in: song), [0, 1, 2])
+
+        let t = TemplateExporter.make(name: "buses", author: nil, description: nil, sections: TemplateSections(), profile: profile, project: SeqProject(), song: song)
+        XCTAssertEqual(t.mixerBuses?.count, 3)
+        XCTAssertEqual(t.layout?.visibleSends, ["liquid", "bV"])
+        XCTAssertTrue(t.referencedTracks.contains("A"))
+        XCTAssertTrue(TemplateImporter.check(t, against: song).isClean)
+        var missing = t; missing.mixerBuses?[1].name = "nope"
+        XCTAssertEqual(TemplateImporter.check(missing, against: song).missingTracks, ["nope (return)"])
+        var fresh = PerformerProfile(); var proj = SeqProject()
+        TemplateImporter.apply(t, mode: .replace, to: &fresh, project: &proj)
+        XCTAssertEqual(fresh.mixerBuses.count, 3)
+        XCTAssertTrue(fresh.showGroupStrips)
+        XCTAssertTrue(t.contents.contains(where: { $0.contains("mixer bus") }))
+    }
+
+    func testDemoSetHasBusChannels() {
+        let song = DemoSet.make()
+        XCTAssertNotNil(song.masterAutoFilter)
+        XCTAssertEqual(song.returnTracks.count, 3)
+        XCTAssertNotNil(song.returnTracks[0].autoFilter)
+        XCTAssertNotNil(song.groupTracks.first?.autoFilter)
+        XCTAssertEqual(song.devices(ofTrack: LiveSongState.trackIndex(forReturn: 1)).count, 1)
+        XCTAssertEqual(song.devices(ofTrack: LiveSongState.masterTrackIndex).count, 2)
+    }
+}

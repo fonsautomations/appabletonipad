@@ -19,6 +19,20 @@ song.master_track / song.return_tracks. This handler follows the same convention
     /live/return/get|set/mute <index> [<value>]
     /live/return/get|set/panning <index> [<value>]
     /live/return/start_listen|stop_listen/<volume|mute|panning|output_meter_level> <index>
+    /live/return/get|set/send <index> <send> [<value>]    -> index, send, value
+    /live/return/start_listen|stop_listen/send <index> <send>
+
+Devices on the master and on return tracks (upstream only covers song.tracks):
+
+    /live/master/get/num_devices                    -> count
+    /live/master/get/devices/name                   -> name, name, ...
+    /live/master/get/devices/class_name             -> class, class, ...
+    /live/master/device/get/parameters/name|value|min|max <device>      -> device, ...
+    /live/master/device/get/parameter/value <device> <param>            -> device, param, value
+    /live/master/device/set/parameter/value <device> <param> <value>
+    /live/master/device/start_listen|stop_listen/parameter/value <device> <param>
+    /live/return/get/num_devices <index>, /live/return/get/devices/name|class_name <index>
+    /live/return/device/... <index> <device> ...     (same as master, with the return index first)
 """
 from typing import Tuple, Any, Optional
 from .handler import AbletonOSCHandler
@@ -108,6 +122,123 @@ class MasterHandler(AbletonOSCHandler):
         for prop in ["volume", "panning", "mute", "output_meter_level"]:
             self.osc_server.add_handler("/live/return/start_listen/%s" % prop, return_listen(prop, True))
             self.osc_server.add_handler("/live/return/stop_listen/%s" % prop, return_listen(prop, False))
+
+        # --- Return sends (a return can feed the other returns) -----------------------------
+        def return_get_send(track, index, params):
+            s = int(params[0])
+            return (s, track.mixer_device.sends[s].value)
+
+        def return_set_send(track, index, params):
+            track.mixer_device.sends[int(params[0])].value = params[1]
+
+        self.osc_server.add_handler("/live/return/get/send", make_return_callback(return_get_send))
+        self.osc_server.add_handler("/live/return/set/send", make_return_callback(return_set_send))
+
+        def return_send_listen(start):
+            def callback(params: Tuple[Any]):
+                index = int(params[0])
+                s = int(params[1])
+                parameter_object = self.song.return_tracks[index].mixer_device.sends[s]
+                listener_key = ("send", index, s)
+                if listener_key in self.listener_functions:
+                    try:
+                        parameter_object.remove_value_listener(self.listener_functions[listener_key])
+                    except Exception:
+                        pass
+                    del self.listener_functions[listener_key]
+                    self.listener_objects.pop(listener_key, None)
+                if start:
+                    def changed():
+                        self.osc_server.send("/live/return/get/send", (index, s, parameter_object.value))
+                    parameter_object.add_value_listener(changed)
+                    self.listener_functions[listener_key] = changed
+                    self.listener_objects[listener_key] = parameter_object
+                    changed()
+            return callback
+
+        self.osc_server.add_handler("/live/return/start_listen/send", return_send_listen(True))
+        self.osc_server.add_handler("/live/return/stop_listen/send", return_send_listen(False))
+
+        # --- Devices on the master and on returns -------------------------------------------
+        self.osc_server.add_handler("/live/master/get/num_devices", lambda _: (len(master.devices),))
+        self.osc_server.add_handler("/live/master/get/devices/name", lambda _: tuple(d.name for d in master.devices))
+        self.osc_server.add_handler("/live/master/get/devices/class_name", lambda _: tuple(d.class_name for d in master.devices))
+        self.osc_server.add_handler("/live/return/get/num_devices", make_return_callback(lambda t, i, p: (len(t.devices),)))
+        self.osc_server.add_handler("/live/return/get/devices/name", make_return_callback(lambda t, i, p: tuple(d.name for d in t.devices)))
+        self.osc_server.add_handler("/live/return/get/devices/class_name", make_return_callback(lambda t, i, p: tuple(d.class_name for d in t.devices)))
+
+        self._install_device_api("/live/master/device", lambda params: (master, (), tuple(params)))
+        self._install_device_api("/live/return/device",
+                                 lambda params: (self.song.return_tracks[int(params[0])], (int(params[0]),), tuple(params[1:])))
+
+    # ------------------------------------------------------------------------------------
+    # Device API shared by master and returns (mirrors upstream /live/device/…)
+    # ------------------------------------------------------------------------------------
+    def _install_device_api(self, prefix, resolve):
+        """resolve(params) -> (track, ids, rest). ids are echoed first in every reply;
+        rest[0] is the device index, rest[1:] the remaining arguments."""
+        def handler(func):
+            def callback(params: Tuple[Any]):
+                track, ids, rest = resolve(params)
+                device_index = int(rest[0])
+                device = track.devices[device_index]
+                rv = func(device, ids + (device_index,), tuple(rest[1:]))
+                if rv is not None:
+                    return (*ids, device_index, *rv)
+            return callback
+
+        def get_names(device, ids, p):
+            return tuple(x.name for x in device.parameters)
+
+        def get_values(device, ids, p):
+            return tuple(x.value for x in device.parameters)
+
+        def get_mins(device, ids, p):
+            return tuple(x.min for x in device.parameters)
+
+        def get_maxes(device, ids, p):
+            return tuple(x.max for x in device.parameters)
+
+        def get_value(device, ids, p):
+            i = int(p[0])
+            return (i, device.parameters[i].value)
+
+        def set_value(device, ids, p):
+            device.parameters[int(p[0])].value = p[1]
+
+        def stop_listen(device, ids, p):
+            i = int(p[0])
+            key = ("device_parameter_value", prefix, ids, i)
+            fn = self.listener_functions.pop(key, None)
+            obj = self.listener_objects.pop(key, None)
+            if fn is not None and obj is not None:
+                try:
+                    obj.remove_value_listener(fn)
+                except Exception:
+                    pass
+
+        def start_listen(device, ids, p):
+            i = int(p[0])
+            stop_listen(device, ids, p)
+            parameter_object = device.parameters[i]
+            key = ("device_parameter_value", prefix, ids, i)
+
+            def changed():
+                self.osc_server.send(prefix + "/get/parameter/value", (*ids, i, parameter_object.value))
+
+            parameter_object.add_value_listener(changed)
+            self.listener_functions[key] = changed
+            self.listener_objects[key] = parameter_object
+            changed()
+
+        self.osc_server.add_handler(prefix + "/get/parameters/name", handler(get_names))
+        self.osc_server.add_handler(prefix + "/get/parameters/value", handler(get_values))
+        self.osc_server.add_handler(prefix + "/get/parameters/min", handler(get_mins))
+        self.osc_server.add_handler(prefix + "/get/parameters/max", handler(get_maxes))
+        self.osc_server.add_handler(prefix + "/get/parameter/value", handler(get_value))
+        self.osc_server.add_handler(prefix + "/set/parameter/value", handler(set_value))
+        self.osc_server.add_handler(prefix + "/start_listen/parameter/value", handler(start_listen))
+        self.osc_server.add_handler(prefix + "/stop_listen/parameter/value", handler(stop_listen))
 
     # ------------------------------------------------------------------------------------
     # Helpers

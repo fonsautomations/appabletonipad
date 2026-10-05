@@ -52,8 +52,6 @@ public enum LiveCommand {
     public static func trackClipNames(track: Int) -> OSCMessage { trackGet("clips/name", track: track) }
     public static func trackClipColors(track: Int) -> OSCMessage { trackGet("clips/color", track: track) }
     public static func trackClipLengths(track: Int) -> OSCMessage { trackGet("clips/length", track: track) }
-    public static func trackDeviceNames(track: Int) -> OSCMessage { trackGet("devices/name", track: track) }
-    public static func trackDeviceClassNames(track: Int) -> OSCMessage { trackGet("devices/class_name", track: track) }
     public static func trackStopAllClips(track: Int) -> OSCMessage {
         OSCMessage("/live/track/stop_all_clips", [.int32(Int32(track))])
     }
@@ -114,24 +112,48 @@ public enum LiveCommand {
     public static func selectedDevice() -> OSCMessage { OSCMessage("/live/view/get/selected_device") }
 
     // MARK: Devices
+    // Track index >= 0 → AbletonOSC's /live/device/… (track, device, …).
+    // Track index LiveSongState.masterTrackIndex → StageDeck extension /live/master/device/… (device, …).
+    // Track index for a return (see LiveSongState.trackIndex(forReturn:)) → /live/return/device/… (return, device, …).
+
+    static func deviceAddress(_ suffix: String, track: Int) -> (String, [OSCValue]) {
+        if track == LiveSongState.masterTrackIndex { return ("/live/master/device/\(suffix)", []) }
+        if let r = LiveSongState.returnIndex(fromTrackIndex: track) { return ("/live/return/device/\(suffix)", [.int32(Int32(r))]) }
+        return ("/live/device/\(suffix)", [.int32(Int32(track))])
+    }
+    static func deviceMessage(_ suffix: String, track: Int, _ rest: [OSCValue]) -> OSCMessage {
+        let (address, prefix) = deviceAddress(suffix, track: track)
+        return OSCMessage(address, prefix + rest)
+    }
 
     public static func deviceParameterNames(track: Int, device: Int) -> OSCMessage {
-        OSCMessage("/live/device/get/parameters/name", [.int32(Int32(track)), .int32(Int32(device))])
+        deviceMessage("get/parameters/name", track: track, [.int32(Int32(device))])
     }
     public static func deviceParameterValues(track: Int, device: Int) -> OSCMessage {
-        OSCMessage("/live/device/get/parameters/value", [.int32(Int32(track)), .int32(Int32(device))])
+        deviceMessage("get/parameters/value", track: track, [.int32(Int32(device))])
     }
     public static func deviceParameterMins(track: Int, device: Int) -> OSCMessage {
-        OSCMessage("/live/device/get/parameters/min", [.int32(Int32(track)), .int32(Int32(device))])
+        deviceMessage("get/parameters/min", track: track, [.int32(Int32(device))])
     }
     public static func deviceParameterMaxes(track: Int, device: Int) -> OSCMessage {
-        OSCMessage("/live/device/get/parameters/max", [.int32(Int32(track)), .int32(Int32(device))])
+        deviceMessage("get/parameters/max", track: track, [.int32(Int32(device))])
     }
     public static func setDeviceParameter(track: Int, device: Int, parameter: Int, value: Double) -> OSCMessage {
-        OSCMessage("/live/device/set/parameter/value", [.int32(Int32(track)), .int32(Int32(device)), .int32(Int32(parameter)), .float(Float(value))])
+        deviceMessage("set/parameter/value", track: track, [.int32(Int32(device)), .int32(Int32(parameter)), .float(Float(value))])
     }
     public static func deviceParameterListen(track: Int, device: Int, parameter: Int, start: Bool) -> OSCMessage {
-        OSCMessage("/live/device/\(start ? "start_listen" : "stop_listen")/parameter/value", [.int32(Int32(track)), .int32(Int32(device)), .int32(Int32(parameter))])
+        deviceMessage("\(start ? "start_listen" : "stop_listen")/parameter/value", track: track, [.int32(Int32(device)), .int32(Int32(parameter))])
+    }
+    /// Device names / class names of a track, the master (`masterTrackIndex`) or a return (`trackIndex(forReturn:)`).
+    public static func trackDeviceNames(track: Int) -> OSCMessage {
+        if track == LiveSongState.masterTrackIndex { return OSCMessage("/live/master/get/devices/name") }
+        if let r = LiveSongState.returnIndex(fromTrackIndex: track) { return OSCMessage("/live/return/get/devices/name", [.int32(Int32(r))]) }
+        return OSCMessage("/live/track/get/devices/name", [.int32(Int32(track))])
+    }
+    public static func trackDeviceClassNames(track: Int) -> OSCMessage {
+        if track == LiveSongState.masterTrackIndex { return OSCMessage("/live/master/get/devices/class_name") }
+        if let r = LiveSongState.returnIndex(fromTrackIndex: track) { return OSCMessage("/live/return/get/devices/class_name", [.int32(Int32(r))]) }
+        return OSCMessage("/live/track/get/devices/class_name", [.int32(Int32(track))])
     }
 
     // MARK: StageDeck extension (master track / returns), see ableton/AbletonOSC/abletonosc/master.py
@@ -150,6 +172,15 @@ public enum LiveCommand {
     }
     public static func returnGet(_ property: String, index: Int) -> OSCMessage {
         OSCMessage("/live/return/get/\(property)", [.int32(Int32(index))])
+    }
+    public static func returnListen(_ property: String, index: Int, start: Bool) -> OSCMessage {
+        OSCMessage("/live/return/\(start ? "start_listen" : "stop_listen")/\(property)", [.int32(Int32(index))])
+    }
+    public static func returnGetSend(index: Int, send: Int) -> OSCMessage {
+        OSCMessage("/live/return/get/send", [.int32(Int32(index)), .int32(Int32(send))])
+    }
+    public static func returnSetSend(index: Int, send: Int, value: Double) -> OSCMessage {
+        OSCMessage("/live/return/set/send", [.int32(Int32(index)), .int32(Int32(send)), .float(Float(max(0, min(1, value))))])
     }
 }
 
@@ -206,6 +237,9 @@ public enum LiveEvent: Equatable {
     case returnTrackNames([String])
     case returnVolume(index: Int, Double)
     case returnMute(index: Int, Bool)
+    case returnPanning(index: Int, Double)
+    case returnSend(index: Int, send: Int, Double)
+    case masterPanning(Double)
     case unknown(OSCMessage)
 }
 
@@ -329,6 +363,41 @@ public enum LiveEventDecoder {
             if let r = i(0), let v = d(1) { return .returnVolume(index: r, v) }
         case "/live/return/get/mute":
             if let r = i(0), let v = b(1) { return .returnMute(index: r, v) }
+        case "/live/return/get/panning":
+            if let r = i(0), let v = d(1) { return .returnPanning(index: r, v) }
+        case "/live/return/get/send":
+            if let r = i(0), let sendIndex = i(1), let v = d(2) { return .returnSend(index: r, send: sendIndex, v) }
+        case "/live/master/get/panning":
+            if let v = d(0) { return .masterPanning(v) }
+        // Master / return devices (StageDeck extension): same events as track devices with a pseudo track index.
+        case "/live/master/get/devices/name":
+            return .trackDeviceNames(track: LiveSongState.masterTrackIndex, strings(from: 0))
+        case "/live/master/get/devices/class_name":
+            return .trackDeviceClassNames(track: LiveSongState.masterTrackIndex, strings(from: 0))
+        case "/live/master/device/get/parameters/name":
+            if let dv = i(0) { return .deviceParameterNames(track: LiveSongState.masterTrackIndex, device: dv, strings(from: 1)) }
+        case "/live/master/device/get/parameters/value":
+            if let dv = i(0) { return .deviceParameterValues(track: LiveSongState.masterTrackIndex, device: dv, doubles(from: 1)) }
+        case "/live/master/device/get/parameters/min":
+            if let dv = i(0) { return .deviceParameterMins(track: LiveSongState.masterTrackIndex, device: dv, doubles(from: 1)) }
+        case "/live/master/device/get/parameters/max":
+            if let dv = i(0) { return .deviceParameterMaxes(track: LiveSongState.masterTrackIndex, device: dv, doubles(from: 1)) }
+        case "/live/master/device/get/parameter/value":
+            if let dv = i(0), let p = i(1), let v = d(2) { return .deviceParameterValue(track: LiveSongState.masterTrackIndex, device: dv, parameter: p, v) }
+        case "/live/return/get/devices/name":
+            if let r = i(0) { return .trackDeviceNames(track: LiveSongState.trackIndex(forReturn: r), strings(from: 1)) }
+        case "/live/return/get/devices/class_name":
+            if let r = i(0) { return .trackDeviceClassNames(track: LiveSongState.trackIndex(forReturn: r), strings(from: 1)) }
+        case "/live/return/device/get/parameters/name":
+            if let r = i(0), let dv = i(1) { return .deviceParameterNames(track: LiveSongState.trackIndex(forReturn: r), device: dv, strings(from: 2)) }
+        case "/live/return/device/get/parameters/value":
+            if let r = i(0), let dv = i(1) { return .deviceParameterValues(track: LiveSongState.trackIndex(forReturn: r), device: dv, doubles(from: 2)) }
+        case "/live/return/device/get/parameters/min":
+            if let r = i(0), let dv = i(1) { return .deviceParameterMins(track: LiveSongState.trackIndex(forReturn: r), device: dv, doubles(from: 2)) }
+        case "/live/return/device/get/parameters/max":
+            if let r = i(0), let dv = i(1) { return .deviceParameterMaxes(track: LiveSongState.trackIndex(forReturn: r), device: dv, doubles(from: 2)) }
+        case "/live/return/device/get/parameter/value":
+            if let r = i(0), let dv = i(1), let p = i(2), let v = d(3) { return .deviceParameterValue(track: LiveSongState.trackIndex(forReturn: r), device: dv, parameter: p, v) }
         default:
             break
         }
