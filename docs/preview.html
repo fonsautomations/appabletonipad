@@ -217,7 +217,7 @@ button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 1px; }
 .ceditor details { font-size: 12px; } .ceditor summary { cursor: pointer; font-weight: 800; padding: 4px 0; }
 .ceditor .pl { display: flex; align-items: center; gap: 8px; font-size: 12px; padding: 3px 0 3px 14px; justify-content: flex-start; color: var(--fg); }
 .ceditor .pl input { width: auto; }
-.cgrid { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 4px 2px; }
+.cgrid { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding: 6px 22px; }
 .crow { display: flex; gap: 10px; align-items: flex-start; }
 .widget { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
 .widget .area { width: 100%; position: relative; border-radius: 10px; }
@@ -602,6 +602,7 @@ button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 1px; }
       chip('GROUP STRIPS', mix.groupStrips, '#8FB4DD', () => { mix.groupStrips = !mix.groupStrips; buildMixer(); });
       chip('MASTER FILTER', mix.masterFilter, '#7DC24D', () => { mix.masterFilter = !mix.masterFilter; buildMixer(); });
       chip('+ BUS', true, 'var(--accent)', () => { mix.addOpen = true; buildMixer(); });
+      chip(mix.fit === false ? 'SCROLL' : 'FIT', true, 'rgba(255,255,255,.85)', () => { mix.fit = mix.fit === false; buildMixer(); }, 70);
     } else {
       const seg = document.createElement('div'); seg.className = 'seg'; seg.style.width = (sections.length + 1) * 86 + 'px';
       [{ i: -1, name: 'ALL' }].concat(sections.map((sct, i) => ({ i, name: sct.name }))).forEach(o => { const b = document.createElement('button'); b.textContent = o.name; b.classList.toggle('on', mix.focus === o.i); b.onclick = () => { mix.focus = o.i; buildMixer(); }; seg.appendChild(b); });
@@ -612,7 +613,9 @@ button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 1px; }
     chip(mix.editing ? 'DONE' : 'EDIT', mix.editing, 'var(--yellow)', () => { mix.editing = !mix.editing; mix.addOpen = false; buildMixer(); }, 70);
     // rows
     const W = (mrows.clientWidth || 964) - 8, H = mrows.clientHeight || 636;
-    const plan = planLayout(W, H, sections.map(x => x.count), visibleSends().length, mix.focus >= 0 ? mix.focus : null);
+    let plan;
+    if (mix.fit === false && mix.focus < 0) { const m = planLayout(W, H, [1], visibleSends().length, 0).m; m.sw = 64; const strips = sections.reduce((a, x) => a + x.count, 0); plan = { rows: [sections.map((x, i) => i)], rowH: H, m, over: rowWidth(strips, sections.length, 64) > W ? sections.map((x, i) => i) : [] }; }
+    else plan = planLayout(W, H, sections.map(x => x.count), visibleSends().length, mix.focus >= 0 ? mix.focus : null);
     mrows.innerHTML = '';
     plan.rows.forEach(row => {
       const r = document.createElement('div'); r.className = 'mrow' + (row.some(i => plan.over.includes(i)) ? ' over' : ''); r.style.height = plan.rowH + 'px';
