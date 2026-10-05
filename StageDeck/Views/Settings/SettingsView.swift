@@ -82,6 +82,7 @@ struct SettingsView: View {
 
     private var midiSection: some View {
         Section("MIDI (sequencer output, clock)") {
+            Group {
             Toggle("Network MIDI session (Wi‑Fi / Ethernet to the Mac)", isOn: $midi.networkSessionEnabled)
             HStack {
                 Button("Bluetooth MIDI devices…") { showBluetooth = true }
@@ -116,6 +117,8 @@ struct SettingsView: View {
                 }
             }
             Text("Negative offset sends earlier to compensate a slow link (Bluetooth MIDI is typically 10–20 ms late).").font(.footnote).foregroundColor(.secondary)
+            }
+            Group {
             if !midi.sources.isEmpty {
                 Text("Clock input (sync the sequencer to external MIDI clock)").font(.footnote).foregroundColor(.secondary)
                 ForEach(midi.sources) { s in
@@ -133,6 +136,7 @@ struct SettingsView: View {
                 ForEach(midi.destinations) { d in Text(d.name).tag(MIDIPortID(String(d.id))) }
             }
             Button("MIDI panic (all notes off)", role: .destructive) { sequencer.panic() }
+            }
         }
     }
 
