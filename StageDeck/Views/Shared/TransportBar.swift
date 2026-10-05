@@ -70,7 +70,7 @@ struct TransportBar: View {
 
     private func nudgeTempo(_ delta: Double) {
         Haptics.tap()
-        if live.state == .connected || live.state == .demo {
+        if live.state == .connected || live.state.isSimulated {
             live.setTempo(live.song.tempo + delta)
         } else {
             sequencer.setTempo(sequencer.tempo + delta)
@@ -182,7 +182,7 @@ struct TransportBar: View {
                 CapsLabel("Section", size: 8)
                 Text(name).font(.system(size: 13, weight: .bold, design: .rounded)).foregroundColor(Theme.textPrimary)
             }
-            if live.state == .connected || live.state == .demo {
+            if live.state == .connected || live.state.isSimulated {
                 let seqText = sequencer.isRunning ? "SEQ ▶" : "SEQ ■"
                 Text(seqText).font(.system(size: 11, weight: .bold, design: .rounded)).foregroundColor(sequencer.isRunning ? Theme.green : Theme.textSecondary)
             }

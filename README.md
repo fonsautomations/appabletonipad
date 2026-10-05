@@ -17,6 +17,12 @@ páginas de control, decks, grupos, nombres, notas, layout y patrones: se import
 AirDrop o pegando el texto, con vista previa de lo que falta en tu set, y se exporta desde Ajustes.
 Formato y cómo pedirle una a una IA: [`docs/TEMPLATE_FORMAT.md`](docs/TEMPLATE_FORMAT.md).
 
+**Importar un proyecto de Live (.als).** Ajustes → Templates → Import an Ableton Live Set: la app
+lee el archivo (sin Live abierto) y saca pistas, grupos, colores, escenas, retornos, clips y los
+racks con el nombre de sus macros. Con eso puedes navegar el set en modo offline, crear los decks a
+partir de los grupos y generar páginas CTRL con las macros de cada rack (una página por grupo).
+Como todo va por nombre, al conectar con Live esos controles mueven los racks reales.
+
 **Biblioteca y comprobación.** Ajustes → Library guarda dentro de la app setups completos,
 proyectos del secuenciador (también desde SEQ → PATTERNS → SAVE PROJECT / LOAD) y plantillas, con
 cargar, sobrescribir, renombrar, compartir y borrar. Ajustes → Set check compara tu configuración

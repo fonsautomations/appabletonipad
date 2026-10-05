@@ -552,7 +552,7 @@ struct ToolsView: View {
         VStack(alignment: .leading, spacing: 6) {
             CapsLabel("Send pattern to a Live MIDI clip (conditions, probability, retrigs, swing and micro-timing get baked in)", size: 10, color: Theme.textPrimary)
             if live.midiTracks.isEmpty {
-                Text(live.state == .connected || live.state == .demo ? "No MIDI tracks in the set. Add a MIDI track in Live (with an instrument) and reload." : "Connect to Live to send patterns as clips.")
+                Text(live.state == .connected || live.state.isSimulated ? "No MIDI tracks in the set. Add a MIDI track in Live (with an instrument) and reload." : "Connect to Live to send patterns as clips.")
                     .font(.system(size: 12, design: .rounded)).foregroundColor(Theme.textSecondary)
             } else {
                 HStack(spacing: 8) {

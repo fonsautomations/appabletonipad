@@ -13,6 +13,8 @@ final class AppStore: ObservableObject {
     @Published var selectedDeckIndex: Int = 0
     @Published var showSettings = false
     @Published var pendingTemplate: PendingTemplate? = nil
+    @Published var pendingAbletonSet: PendingAbletonSet? = nil
+    @Published var importBusy: String = ""
     @Published var lastImportSummary: String = ""
 
     let live = LiveSession()
@@ -153,9 +155,36 @@ final class AppStore: ObservableObject {
 
     // MARK: Templates
 
+    /// Reads an Ableton Live Set in the background and presents the import sheet.
+    func openAbletonSet(url: URL) {
+        importBusy = "Reading \(url.lastPathComponent)…"
+        Task.detached(priority: .userInitiated) { [weak self] in
+            #if canImport(Darwin)
+            let scoped = url.startAccessingSecurityScopedResource()
+            defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+            #endif
+            let result: Result<AbletonSetSnapshot, Error> = Result { try AbletonSetImport.load(url: url) }
+            await MainActor.run { [weak self] in
+                guard let self else { return }
+                self.importBusy = ""
+                switch result {
+                case .success(let snap):
+                    self.pendingAbletonSet = PendingAbletonSet(snapshot: snap, fileName: url.lastPathComponent)
+                    self.showSettings = false
+                case .failure(let e):
+                    self.lastImportSummary = "Live Set: \((e as? CustomStringConvertible)?.description ?? e.localizedDescription)"
+                }
+            }
+        }
+    }
+
     /// Reads a .stagedeck / .json file (Files, AirDrop, share sheet). Returns an error message or nil.
     @discardableResult
     func openTemplate(url: URL) -> String? {
+        if url.pathExtension.lowercased() == "als" {
+            openAbletonSet(url: url)
+            return nil
+        }
         #if canImport(Darwin)
         let scoped = url.startAccessingSecurityScopedResource()
         defer { if scoped { url.stopAccessingSecurityScopedResource() } }

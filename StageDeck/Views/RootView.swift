@@ -28,6 +28,11 @@ struct RootView: View {
                 .environmentObject(store.live)
                 .environmentObject(store.library)
         }
+        .sheet(item: $store.pendingAbletonSet) { pending in
+            AbletonSetImportSheet(pending: pending)
+                .environmentObject(store)
+                .environmentObject(store.live)
+        }
         .onOpenURL { url in _ = store.openTemplate(url: url) }
         .onAppear { Haptics.enabled = store.profile.hapticsEnabled }
         .onChange(of: store.profile.hapticsEnabled) { Haptics.enabled = $0 }
@@ -89,6 +94,8 @@ struct TopBar: View {
                     .foregroundColor(Theme.red)
                     .lineLimit(1)
                     .frame(maxWidth: 220)
+            } else if !store.importBusy.isEmpty {
+                Text(store.importBusy).font(.system(size: 10)).foregroundColor(Theme.yellow).lineLimit(1)
             } else if !store.lastImportSummary.isEmpty {
                 Text(store.lastImportSummary)
                     .font(.system(size: 10))
@@ -113,7 +120,7 @@ struct TopBar: View {
     private var statusColor: Color {
         switch live.state {
         case .connected: return Theme.green
-        case .demo: return Theme.secondary
+        case .demo, .offline: return Theme.secondary
         case .searching, .connecting: return Theme.yellow
         case .disconnected: return Theme.red
         }

@@ -13,6 +13,16 @@ extension UTType {
     static var stageDeckTemplate: UTType {
         UTType(exportedAs: "com.fonsautomations.stagedeck.template", conformingTo: .json)
     }
+    static var abletonLiveSet: UTType {
+        UTType(importedAs: "com.fonsautomations.stagedeck.ableton-live-set", conformingTo: .data)
+    }
+}
+
+/// An Ableton Live Set parsed from a file, waiting for the user's choices.
+struct PendingAbletonSet: Identifiable {
+    let id = UUID()
+    let snapshot: AbletonSetSnapshot
+    let fileName: String
 }
 
 /// Settings section: import (file / paste / built-in), export, set description for AI prompts.
@@ -33,6 +43,9 @@ struct TemplatesSection: View {
                 HStack { Label("Library (saved setups, sequences, templates)", systemImage: "books.vertical"); Spacer(); Text("\(store.library.entries.count)").foregroundColor(.secondary) }
             }
             Button("Import from Files / AirDrop…") { showFileImporter = true }
+            Button("Import an Ableton Live Set (.als)…") { showFileImporter = true }
+            Text("An .als gives you your real tracks, groups, scenes and rack macros without Live running: browse the set offline, and build decks and control pages from it.")
+                .font(.footnote).foregroundColor(.secondary)
             Button("Paste template JSON…") { showPaste = true }
             ForEach(Array(BuiltInTemplates.all.enumerated()), id: \.offset) { (_, t) in
                 Button {
@@ -56,7 +69,7 @@ struct TemplatesSection: View {
             .disabled(live.song.tracks.isEmpty)
             if let e = importError { Text(e).font(.footnote).foregroundColor(.red) }
         }
-        .fileImporter(isPresented: $showFileImporter, allowedContentTypes: [.stageDeckTemplate, .json, .plainText]) { result in
+        .fileImporter(isPresented: $showFileImporter, allowedContentTypes: [.stageDeckTemplate, .abletonLiveSet, .json, .plainText, .data]) { result in
             switch result {
             case .success(let url):
                 if let message = store.openTemplate(url: url) { importError = message } else { importError = nil }
@@ -339,6 +352,74 @@ struct SetCheckSection: View {
         case .alias: return "Channel name"
         case .clipNote: return "Clip note"
         case .control: return "Control"
+        }
+    }
+}
+
+/// Choices after parsing an .als: browse offline, build decks, build control pages.
+struct AbletonSetImportSheet: View {
+    let pending: PendingAbletonSet
+    @EnvironmentObject var store: AppStore
+    @EnvironmentObject var live: LiveSession
+    @Environment(\.dismiss) private var dismiss
+    @State private var loadOffline = true
+    @State private var decks = true
+    @State private var pages = true
+    @State private var macrosPerTrack = 4
+    @State private var mode: TemplateImportMode = .replace
+
+    var body: some View {
+        let snap = pending.snapshot
+        let groups = snap.topLevelGroups
+        let racks = snap.sessionTracks.flatMap { $0.devices }.filter { $0.isRack && !$0.namedMacros.isEmpty }
+        NavigationStack {
+            Form {
+                Section(snap.name.isEmpty ? pending.fileName : snap.name) {
+                    Text("\(snap.creator) · \(Int(snap.tempo.rounded())) BPM")
+                    Text("\(snap.sessionTracks.filter { $0.kind != .group }.count) tracks in \(groups.count) groups, \(snap.scenes.count) scenes, \(snap.returnTracks.count) returns")
+                    if !groups.isEmpty { Text("Groups: " + groups.map { $0.name }.joined(separator: ", ")).foregroundColor(.secondary) }
+                    if !snap.scenes.isEmpty { Text("Scenes: " + snap.scenes.joined(separator: ", ")).foregroundColor(.secondary) }
+                    Text("\(racks.count) racks with named macros, \(snap.sessionTracks.reduce(0) { $0 + $1.clips.count }) clips in the session grid").foregroundColor(.secondary)
+                }
+                Section("Use it for") {
+                    Toggle("Browse this set offline (launcher, mixer and controls show it without Live)", isOn: $loadOffline)
+                    Toggle("Decks from the top-level groups", isOn: $decks)
+                    Toggle("Control pages from rack macros (one page per group)", isOn: $pages)
+                    if pages {
+                        Stepper("Macros per member track: \(macrosPerTrack)", value: $macrosPerTrack, in: 1...16)
+                    }
+                    if decks || pages {
+                        Picker("Decks / pages", selection: $mode) {
+                            Text("Replace mine").tag(TemplateImportMode.replace)
+                            Text("Add to mine").tag(TemplateImportMode.add)
+                        }
+                    }
+                }
+                Section {
+                    Text("When you later connect to Live with this set open, everything maps by name, so controls built here drive the real racks.")
+                        .font(.footnote).foregroundColor(.secondary)
+                }
+            }
+            .navigationTitle("Ableton Live Set")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Import") {
+                        if loadOffline { live.enterOffline(song: snap.toSong()) }
+                        if decks || pages {
+                            var options = AbletonSetSnapshot.TemplateOptions()
+                            options.decksFromGroups = decks
+                            options.controlPagesFromRacks = pages
+                            options.maxMacrosPerTrack = macrosPerTrack
+                            store.importTemplate(snap.makeTemplate(options: options), mode: mode)
+                        }
+                        store.lastImportSummary = "Live Set \"\(snap.name)\": " + [loadOffline ? "loaded offline" : nil, decks ? "\(groups.count) decks" : nil, pages ? "control pages" : nil].compactMap { $0 }.joined(separator: ", ")
+                        dismiss()
+                    }
+                    .disabled(!loadOffline && !decks && !pages)
+                }
+            }
         }
     }
 }

@@ -8,6 +8,8 @@ enum LiveConnectionState: Equatable {
     case connecting
     case connected
     case demo
+    /// A real set loaded from an .als file, browsed without Live running.
+    case offline
 
     var label: String {
         switch self {
@@ -16,8 +18,12 @@ enum LiveConnectionState: Equatable {
         case .connecting: return "Connecting…"
         case .connected: return "Live"
         case .demo: return "Demo"
+        case .offline: return "Offline set"
         }
     }
+
+    /// Demo and offline sets simulate Live locally; nothing is sent over the network.
+    var isSimulated: Bool { self == .demo || self == .offline }
 }
 
 /// High-rate values (meters, clip positions) published at most 20×/s so the grid stays cheap.
@@ -193,7 +199,7 @@ final class LiveSession: ObservableObject {
 
     private func heartbeatTick() {
         switch state {
-        case .demo, .disconnected:
+        case .demo, .offline, .disconnected:
             return
         case .searching:
             client.broadcastDiscovery()
@@ -227,7 +233,7 @@ final class LiveSession: ObservableObject {
     // MARK: - Sending
 
     func send(_ message: OSCMessage) {
-        guard state != .demo else { return }
+        guard !state.isSimulated else { return }
         client.send(message)
     }
 
@@ -559,7 +565,7 @@ final class LiveSession: ObservableObject {
 
     /// Asks Live which device is selected; the callback runs when the answer arrives.
     func requestSelectedDevice(_ completion: @escaping (Int, Int) -> Void) {
-        if state == .demo {
+        if state.isSimulated {
             completion(1, 0)
             return
         }
@@ -580,17 +586,17 @@ final class LiveSession: ObservableObject {
     // MARK: - Performer actions
 
     func fireClip(track: Int, scene: Int) {
-        if state == .demo { demoFire(track: track, scene: scene); return }
+        if state.isSimulated { demoFire(track: track, scene: scene); return }
         send(LiveCommand.fireClip(track: track, scene: scene))
     }
 
     func stopTrack(_ track: Int) {
-        if state == .demo { update(track) { $0.playingSlotIndex = -1; $0.firedSlotIndex = -1 }; return }
+        if state.isSimulated { update(track) { $0.playingSlotIndex = -1; $0.firedSlotIndex = -1 }; return }
         send(LiveCommand.trackStopAllClips(track: track))
     }
 
     func fireScene(_ scene: Int) {
-        if state == .demo {
+        if state.isSimulated {
             for t in song.tracks where !t.isGroup && t.clips[scene] != nil { demoFire(track: t.index, scene: scene) }
             return
         }
@@ -606,7 +612,7 @@ final class LiveSession: ObservableObject {
     }
 
     func stopAll() {
-        if state == .demo {
+        if state.isSimulated {
             for i in song.tracks.indices { song.tracks[i].playingSlotIndex = -1; song.tracks[i].firedSlotIndex = -1 }
             meters.clipPositions.removeAll()
             return
@@ -615,19 +621,19 @@ final class LiveSession: ObservableObject {
     }
 
     func play() {
-        if state == .demo { song.isPlaying = true; onTransport?(true); return }
+        if state.isSimulated { song.isPlaying = true; onTransport?(true); return }
         send(LiveCommand.startPlaying())
     }
 
     func stop() {
-        if state == .demo { song.isPlaying = false; onTransport?(false); return }
+        if state.isSimulated { song.isPlaying = false; onTransport?(false); return }
         send(LiveCommand.stopPlaying())
     }
 
     func setTempo(_ bpm: Double) {
         let v = max(20, min(999, bpm))
         song.tempo = v
-        if state == .demo { onTempo?(v); return }
+        if state.isSimulated { onTempo?(v); return }
         sendThrottled(key: "tempo", LiveCommand.setTempo(v))
     }
 
@@ -707,7 +713,7 @@ final class LiveSession: ObservableObject {
         guard let t = song.track(track) else { return "Track \(track + 1) not found" }
         guard !t.isGroup else { return "\(t.name) is a group track" }
         guard t.hasMIDIInput else { return "\(t.name) is not a MIDI track" }
-        if state == .demo {
+        if state.isSimulated {
             update(track) { tr in
                 tr.clips[scene] = LiveClip(trackIndex: track, sceneIndex: scene, name: name, color: tr.color, length: lengthBeats, isMIDI: true)
             }
@@ -754,6 +760,18 @@ final class LiveSession: ObservableObject {
         demoTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in self?.demoTick() }
         }
+        onSessionLoaded?()
+        onTempo?(song.tempo)
+    }
+
+    /// Loads a set parsed from an .als file so every screen shows the real tracks without Live.
+    func enterOffline(song offlineSong: LiveSongState) {
+        disconnect()
+        state = .offline
+        song = offlineSong
+        sections = SetLayout.sections(from: song.scenes)
+        meters.trackMeters.removeAll()
+        meters.clipPositions.removeAll()
         onSessionLoaded?()
         onTempo?(song.tempo)
     }

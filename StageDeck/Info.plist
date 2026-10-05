@@ -18,6 +18,18 @@
 		</dict>
 		<dict>
 			<key>CFBundleTypeName</key>
+			<string>Ableton Live Set</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>com.fonsautomations.stagedeck.ableton-live-set</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeName</key>
 			<string>JSON</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
@@ -27,6 +39,26 @@
 			<array>
 				<string>public.json</string>
 			</array>
+		</dict>
+	</array>
+	<key>UTImportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>com.fonsautomations.stagedeck.ableton-live-set</string>
+			<key>UTTypeDescription</key>
+			<string>Ableton Live Set</string>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+			</array>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>als</string>
+				</array>
+			</dict>
 		</dict>
 	</array>
 	<key>UTExportedTypeDeclarations</key>
