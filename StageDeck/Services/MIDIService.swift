@@ -277,7 +277,12 @@ final class MIDIService: ObservableObject, @unchecked Sendable {
         var count = 0
         for packet in eventList.unsafeSequence() {
             let timestamp = packet.pointee.timeStamp
-            for word in packet.pointee.words() {
+            let wordCount = Int(packet.pointee.wordCount)
+            // `words` is a fixed 64-element tuple; read the first `wordCount` entries.
+            let words: [UInt32] = withUnsafeBytes(of: packet.pointee.words) { raw in
+                Array(raw.bindMemory(to: UInt32.self).prefix(min(64, wordCount)))
+            }
+            for word in words {
                 let type = (word >> 28) & 0xF
                 guard type == 1 || type == 2 else { continue }
                 let status = UInt8((word >> 16) & 0xFF)
