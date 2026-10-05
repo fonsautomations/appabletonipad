@@ -56,6 +56,7 @@ struct DeckPanel: View {
     @EnvironmentObject var live: LiveSession
     @State private var noteEditorClip: LiveClip? = nil
     @State private var sceneToConfirm: Int? = nil
+    @State private var renameRequest: RenameRequest? = nil
 
     private var tracks: [LiveTrack] { store.tracks(forDeck: deckIndex) }
     private var deckColor: Color { store.accentColor(forDeck: deckIndex) }
@@ -77,7 +78,7 @@ struct DeckPanel: View {
                                         sceneColumn: store.profile.showSceneButtons, profile: store.profile, compact: compact)
                 ScrollView(.horizontal, showsIndicators: false) {
                     VStack(spacing: 3) {
-                        HeaderRow(tracks: tracks, layout: layout, deckColor: deckColor)
+                        HeaderRow(tracks: tracks, layout: layout, deckColor: deckColor, onRename: { renameRequest = RenameRequest(liveName: $0) })
                         ScrollViewReader { proxy in
                             ScrollView(.vertical, showsIndicators: true) {
                                 LazyVStack(spacing: 3) {
@@ -105,6 +106,9 @@ struct DeckPanel: View {
                     .frame(minWidth: geo.size.width, alignment: .leading)
                 }
             }
+        }
+        .sheet(item: $renameRequest) { r in
+            RenameTrackSheet(liveName: r.liveName).environmentObject(store)
         }
         .sheet(item: $noteEditorClip) { clip in
             ClipNoteEditor(clip: clip, trackName: live.song.track(clip.trackIndex)?.name ?? "")
@@ -196,6 +200,7 @@ struct HeaderRow: View {
     let tracks: [LiveTrack]
     let layout: GridLayout
     let deckColor: Color
+    let onRename: (String) -> Void
     @EnvironmentObject var store: AppStore
     @EnvironmentObject var live: LiveSession
 
@@ -208,7 +213,7 @@ struct HeaderRow: View {
                 CapsLabel(g.label, size: 9, color: Color(hex: g.colorHex)).frame(width: layout.groupWidth)
             }
             ForEach(tracks) { track in
-                TrackHeaderCell(track: track, width: layout.clipWidth, showMeter: store.profile.showTrackMeters)
+                TrackHeaderCell(track: track, width: layout.clipWidth, showMeter: store.profile.showTrackMeters, onRename: onRename)
             }
         }
         .frame(height: 30)
@@ -219,6 +224,7 @@ struct TrackHeaderCell: View {
     let track: LiveTrack
     let width: CGFloat
     let showMeter: Bool
+    let onRename: (String) -> Void
     @EnvironmentObject var store: AppStore
     @EnvironmentObject var live: LiveSession
 
@@ -239,6 +245,10 @@ struct TrackHeaderCell: View {
         .onTapGesture {
             Haptics.tap()
             live.setMute(track: track.index, on: !track.mute)
+        }
+        .onLongPressGesture(minimumDuration: 0.5) {
+            Haptics.heavy()
+            onRename(track.name)
         }
     }
 }

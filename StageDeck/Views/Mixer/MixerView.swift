@@ -87,6 +87,7 @@ struct ChannelStrip: View {
     let deckColor: Color
     @EnvironmentObject var store: AppStore
     @EnvironmentObject var live: LiveSession
+    @State private var renameRequest: RenameRequest? = nil
 
     private var color: Color { Color(track.color) }
 
@@ -100,6 +101,8 @@ struct ChannelStrip: View {
                 .frame(width: 64, height: 22)
                 .background(Theme.panelRaised)
                 .cornerRadius(6)
+                .onLongPressGesture(minimumDuration: 0.5) { Haptics.heavy(); renameRequest = RenameRequest(liveName: track.name) }
+                .sheet(item: $renameRequest) { r in RenameTrackSheet(liveName: r.liveName).environmentObject(store) }
 
             if store.profile.showSends {
                 ForEach(0..<min(4, live.song.numSends), id: \.self) { s in

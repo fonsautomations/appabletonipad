@@ -12,16 +12,24 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
-                connectionSection
-                midiSection
-                launcherSection
-                sizesSection
-                mixerSection
-                decksSection
-                groupsSection
-                safetySection
-                sequencerSection
-                aboutSection
+                Group {
+                    connectionSection
+                    TemplatesSection()
+                    ChannelNamesSection()
+                    midiSection
+                }
+                Group {
+                    launcherSection
+                    sizesSection
+                    mixerSection
+                    decksSection
+                    groupsSection
+                }
+                Group {
+                    safetySection
+                    sequencerSection
+                    aboutSection
+                }
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)

@@ -257,6 +257,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = StageDeck/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = StageDeck;
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "StageDeck connects to Bluetooth MIDI devices (your Mac, WIDI adapters, synths).";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "StageDeck talks to Ableton Live on your computer over the local network (OSC and Network MIDI).";
@@ -290,6 +291,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = StageDeck/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = StageDeck;
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "StageDeck connects to Bluetooth MIDI devices (your Mac, WIDI adapters, synths).";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "StageDeck talks to Ableton Live on your computer over the local network (OSC and Network MIDI).";

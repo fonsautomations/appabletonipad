@@ -12,6 +12,8 @@ final class AppStore: ObservableObject {
     @Published var launcherMode: LauncherMode = .dual
     @Published var selectedDeckIndex: Int = 0
     @Published var showSettings = false
+    @Published var pendingTemplate: PendingTemplate? = nil
+    @Published var lastImportSummary: String = ""
 
     let live = LiveSession()
     let midi = MIDIService()
@@ -113,6 +115,67 @@ final class AppStore: ObservableObject {
             try data.write(to: fileURL, options: .atomic)
         } catch {
             // Saving is best-effort; the UI keeps working from memory.
+        }
+    }
+
+    // MARK: Channel names
+
+    func setAlias(_ alias: String, forTrack liveName: String) {
+        let trimmed = alias.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty || trimmed == liveName { profile.trackAliases.removeValue(forKey: liveName) } else { profile.trackAliases[liveName] = trimmed }
+    }
+
+    // MARK: Templates
+
+    /// Reads a .stagedeck / .json file (Files, AirDrop, share sheet). Returns an error message or nil.
+    @discardableResult
+    func openTemplate(url: URL) -> String? {
+        #if canImport(Darwin)
+        let scoped = url.startAccessingSecurityScopedResource()
+        defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+        #endif
+        do {
+            let data = try Data(contentsOf: url)
+            let t = try StageDeckTemplate.parse(data)
+            pendingTemplate = PendingTemplate(template: t, source: url.lastPathComponent)
+            showSettings = false
+            return nil
+        } catch let e as StageDeckTemplate.ParseError {
+            return e.description
+        } catch {
+            return "Could not read \(url.lastPathComponent): \(error.localizedDescription)"
+        }
+    }
+
+    func importTemplate(_ t: StageDeckTemplate, mode: TemplateImportMode) {
+        var p = profile
+        var project = sequencer.project
+        TemplateImporter.apply(t, mode: mode, to: &p, project: &project)
+        profile = p
+        if project != sequencer.project { sequencer.project = project }
+        control.seed(from: profile.controlPages)
+        if selectedDeckIndex >= decks.count { selectedDeckIndex = 0 }
+        lastImportSummary = "Imported \"\(t.name)\": " + t.contents.joined(separator: "; ")
+        saveNow()
+    }
+
+    func makeTemplate(name: String, author: String, description: String, sections: TemplateSections) -> StageDeckTemplate {
+        TemplateExporter.make(name: name.isEmpty ? "StageDeck template" : name, author: author.isEmpty ? nil : author,
+                              description: description.isEmpty ? nil : description, sections: sections,
+                              profile: profile, project: sequencer.project, song: live.song)
+    }
+
+    /// Writes the template to a temporary .stagedeck file for the share sheet.
+    func exportTemplateFile(name: String, author: String, description: String, sections: TemplateSections) -> URL? {
+        let t = makeTemplate(name: name, author: author, description: description, sections: sections)
+        guard let data = try? t.encodeJSON() else { return nil }
+        let safe = t.name.replacingOccurrences(of: "/", with: "-").replacingOccurrences(of: ":", with: "-")
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("\(safe).\(StageDeckTemplate.fileExtension)")
+        do {
+            try data.write(to: url, options: .atomic)
+            return url
+        } catch {
+            return nil
         }
     }
 

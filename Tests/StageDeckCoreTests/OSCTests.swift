@@ -161,3 +161,80 @@ final class ControlPageTests: XCTestCase {
         XCTAssertEqual(LiveEventDecoder.decode(OSCMessage("/live/view/get/selected_device", [.int32(2), .int32(1)])), .selectedDevice(track: 2, device: 1))
     }
 }
+
+final class TemplateTests: XCTestCase {
+    func testBuiltInsRoundTripAndParse() throws {
+        for t in BuiltInTemplates.all {
+            let data = try t.encodeJSON()
+            let back = try StageDeckTemplate.parse(data)
+            XCTAssertEqual(back, t)
+            XCTAssertFalse(back.contents.isEmpty)
+        }
+    }
+
+    func testParseErrors() {
+        XCTAssertThrowsError(try StageDeckTemplate.parse(text: "{ not json")) { e in
+            if case StageDeckTemplate.ParseError.notJSON = e {} else { XCTFail("\(e)") }
+        }
+        XCTAssertThrowsError(try StageDeckTemplate.parse(text: #"{"format":"other","name":"x","decks":[]}"#)) { e in
+            XCTAssertEqual(e as? StageDeckTemplate.ParseError, .wrongFormat)
+        }
+        XCTAssertThrowsError(try StageDeckTemplate.parse(text: #"{"format":"stagedeck-template","version":99,"name":"x","decks":[]}"#)) { e in
+            XCTAssertEqual(e as? StageDeckTemplate.ParseError, .newerVersion(99))
+        }
+        XCTAssertThrowsError(try StageDeckTemplate.parse(text: #"{"format":"stagedeck-template","name":"x"}"#)) { e in
+            XCTAssertEqual(e as? StageDeckTemplate.ParseError, .empty)
+        }
+        // Minimal hand-written (AI-style) template with only names
+        let t = try? StageDeckTemplate.parse(text: #"{"format":"stagedeck-template","name":"Names","trackAliases":{"KICK":"BOMBO"}}"#)
+        XCTAssertEqual(t?.trackAliases?["KICK"], "BOMBO")
+    }
+
+    func testCheckAndApply() throws {
+        var song = DemoSet.make()
+        _ = song
+        song.tracks = song.tracks.filter { $0.name != "ATMOS" }
+        let t = BuiltInTemplates.stemsAB
+        let check = TemplateImporter.check(t, against: song)
+        XCTAssertTrue(check.setLoaded)
+        XCTAssertEqual(check.missingTracks, ["ATMOS"])
+        XCTAssertTrue(TemplateImporter.check(t, against: LiveSongState()).isClean)
+
+        var profile = PerformerProfile()
+        var project = SeqProject()
+        profile.controlPages = []
+        TemplateImporter.apply(t, mode: .add, to: &profile, project: &project)
+        XCTAssertEqual(profile.decks.map { $0.name }, ["A", "B"])
+        XCTAssertEqual(profile.displayName(forTrack: "KICK"), "BOMBO")
+        XCTAssertEqual(profile.launchGroups.count, 2)
+        TemplateImporter.apply(t, mode: .add, to: &profile, project: &project)
+        XCTAssertEqual(profile.decks.count, 4)
+        TemplateImporter.apply(t, mode: .replace, to: &profile, project: &project)
+        XCTAssertEqual(profile.decks.count, 2)
+
+        let drums = BuiltInTemplates.drumSeq909
+        TemplateImporter.apply(drums, mode: .add, to: &profile, project: &project)
+        XCTAssertEqual(project.patterns.count, 3)
+        XCTAssertEqual(project.tempo, 128)
+        XCTAssertEqual(project.chain, [0, 0, 0, 1])
+        TemplateImporter.apply(drums, mode: .replace, to: &profile, project: &project)
+        XCTAssertEqual(project.patterns.count, 2)
+        XCTAssertEqual(Set(project.patterns.map { $0.id }).count, 2)
+    }
+
+    func testExportAndDescribe() throws {
+        let profile = PerformerProfile()
+        let project = SeqProject()
+        let song = DemoSet.make()
+        let t = TemplateExporter.make(name: "Mine", author: "me", description: nil, sections: .everything, profile: profile, project: project, song: song)
+        XCTAssertEqual(t.controlPages?.count, 1)
+        XCTAssertEqual(t.patterns?.count, 1)
+        XCTAssertNotNil(t.layout)
+        let json = String(decoding: try t.encodeJSON(), as: UTF8.self)
+        XCTAssertTrue(json.contains("\"format\" : \"stagedeck-template\""))
+        let desc = SetDescriber.describe(song, profile: profile)
+        XCTAssertTrue(desc.contains("SYN-1 Rack"))
+        XCTAssertTrue(desc.contains("Macro 8"))
+        XCTAssertTrue(desc.contains("[GROUP] A"))
+    }
+}

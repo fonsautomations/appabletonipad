@@ -21,6 +21,12 @@ struct RootView: View {
                 .environmentObject(store.sequencer)
                 .environmentObject(store.midi)
         }
+        .sheet(item: $store.pendingTemplate) { pending in
+            TemplatePreviewSheet(pending: pending)
+                .environmentObject(store)
+                .environmentObject(store.live)
+        }
+        .onOpenURL { url in _ = store.openTemplate(url: url) }
         .onAppear { Haptics.enabled = store.profile.hapticsEnabled }
         .onChange(of: store.profile.hapticsEnabled) { Haptics.enabled = $0 }
     }
@@ -81,6 +87,12 @@ struct TopBar: View {
                     .foregroundColor(Theme.red)
                     .lineLimit(1)
                     .frame(maxWidth: 220)
+            } else if !store.lastImportSummary.isEmpty {
+                Text(store.lastImportSummary)
+                    .font(.system(size: 10))
+                    .foregroundColor(Theme.green)
+                    .lineLimit(1)
+                    .frame(maxWidth: 300)
             }
 
             Button(action: { store.showSettings = true }) {

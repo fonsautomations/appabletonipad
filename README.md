@@ -10,6 +10,13 @@ sin mirar el portátil, en la línea de BWX Launcher pero con más cosas:
 | **CTRL** | Controlador editable: páginas de knobs, faders, botones, toggles y pads XY que tú colocas. Cada control se asigna a un parámetro de Live (pista → dispositivo → parámetro, por ejemplo las Macro 1‑8 de un rack) por OSC con feedback, o a un CC / nota MIDI para mapearlo en Live con MIDI Map o mandarlo a hardware. |
 | **SEQ** | Secuenciador por pasos tipo Elektron / Oxi One: 16 pistas, hasta 64 pasos, p-locks (CC por paso), condiciones de trig (1:2, 2:4, FILL, PRE, NEI, 1ST…), probabilidad, retrig/ratchet con rampa, micro-timing, swing, acento y **slide** (estilo TB-303), acordes por paso, longitud y velocidad por pista (polimetría, 2x…1/8x), dirección (←, →, ping-pong, random), 2 LFOs por pista (CC, pitch bend o velocidad), lanes de CC, escalas y *scale lock*, euclídeo, random, botón FILL, cadenas de patrones y modo canción, grabación en vivo desde el teclado de pantalla. Sale por MIDI a Ableton o a hardware, con MIDI clock, o se esclaviza a clock externo. |
 
+**Nombres editables y plantillas.** Cada canal se puede renombrar (mantén pulsado el nombre en el
+launcher o en el mixer, o en Ajustes → Channel names); el nombre vale para launcher, mixer y
+controles y viaja dentro de las plantillas. Una plantilla es un archivo `.stagedeck` (JSON) con
+páginas de control, decks, grupos, nombres, notas, layout y patrones: se importa desde Archivos,
+AirDrop o pegando el texto, con vista previa de lo que falta en tu set, y se exporta desde Ajustes.
+Formato y cómo pedirle una a una IA: [`docs/TEMPLATE_FORMAT.md`](docs/TEMPLATE_FORMAT.md).
+
 Todo es configurable desde Ajustes: tamaño y tipografía de los clips, qué filas mostrar, decks y
 grupos de lanzamiento, modo "texto grande", bloqueo de actuación, confirmaciones, háptica, etc.
 Hay un **modo demo** para probar todas las pantallas sin Live.

@@ -208,6 +208,9 @@ button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 1px; }
 .ceditor .t { font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--fg); margin-top: 6px; }
 .ceditor .row { display: flex; gap: 6px; }
 .ceditor .note { font-size: 11px; color: var(--fg2); line-height: 1.5; }
+.ceditor textarea { font: 11px var(--mono); background: var(--raised); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; width: 100%; min-height: 150px; resize: vertical; }
+.ceditor .ok { color: var(--green); } .ceditor .warn { color: var(--yellow); } .ceditor .err { color: var(--red); }
+.ceditor .list { font-size: 11px; line-height: 1.6; }
 
 /* sequencer */
 .seqv { padding: 8px; flex-direction: row !important; gap: 8px; }
@@ -279,7 +282,7 @@ button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 1px; }
 <div class="wrap">
   <div class="intro">
     <span><b>StageDeck</b> &nbsp;·&nbsp; previsualización web interactiva de la app de iPad (set de demo, sin Live)</span>
-    <span class="hint">Pulsa <b>Demo mode</b>. Toca clips, escenas, K/R, faders y pasos. En CTRL pulsa EDIT para añadir y asignar controles.</span>
+    <span class="hint">Pulsa <b>Demo mode</b>. Toca clips, escenas, K/R, faders y pasos. En CTRL: EDIT para añadir controles, TEMPLATE para importar una plantilla pegada.</span>
   </div>
   <div class="fit"><div class="ipad" id="ipad">
     <div class="screen">
@@ -303,7 +306,8 @@ button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 1px; }
         </div>
         <div class="view mixer" id="view-mixer"></div>
         <div class="view ctrlv" id="view-ctrl">
-          <div class="chead"><div class="cpages" id="cpages"></div><span class="caps" id="lastSent"></span><button class="tog y" id="cedit">EDIT</button></div>
+          <div class="chead"><div class="cpages" id="cpages"></div><span class="caps" id="lastSent"></span><button class="tog b" id="ctpl">TEMPLATE</button><button class="tog y" id="cedit">EDIT</button></div>
+          <div class="ceditor tpl" id="ctplpanel" hidden></div>
           <div class="cgrid" id="cgrid"></div>
           <div class="ceditor" id="ceditor" hidden></div>
         </div>
@@ -475,7 +479,7 @@ button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 1px; }
       const strips = document.createElement('div'); strips.className = 'strips';
       deck.tracks.forEach(t => {
         const s = document.createElement('div'); s.className = 'strip';
-        s.innerHTML = '<div class="nm">' + t.name + '</div>';
+        s.innerHTML = '<div class="nm">' + (t.alias || t.name) + '</div>';
         ['liquid', 'bV', 'U-iV'].forEach((n, i) => { const se = document.createElement('div'); se.className = 'send'; se.style.background = t.color + '2e'; se.innerHTML = '<i style="background:' + t.color + 'cc;height:' + Math.max(8, t.sends[i] * 100) + '%"></i><span>' + n + '</span>'; dragV(se, v => { t.sends[i] = v; se.firstChild.style.height = Math.max(8, v * 100) + '%'; }); s.appendChild(se); });
         const lpf = document.createElement('div'); lpf.className = 'vf lpf'; lpf.style.background = t.color + '38'; lpf.innerHTML = '<div class="fill" style="background:' + t.color + 'e6;height:' + (t.lpf * 100) + '%"></div><div class="lbl">LPF</div>'; dragV(lpf, v => { t.lpf = v; lpf.firstChild.style.height = (v * 100) + '%'; }); s.appendChild(lpf);
         const dbl = document.createElement('div'); dbl.className = 'db'; dbl.textContent = dbLabel(t.vol); s.appendChild(dbl);
@@ -624,6 +628,31 @@ button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 1px; }
     document.getElementById('wdone').onclick = () => { ctrl.sel = null; renderCtrl(); };
   }
   document.getElementById('cedit').onclick = () => { ctrl.editing = !ctrl.editing; if (!ctrl.editing) ctrl.sel = null; renderCtrl(); };
+  // ---- templates (.stagedeck JSON): paste → check → import, same rules as the app
+  const tplPanel = document.getElementById('ctplpanel');
+  const sampleTpl = JSON.stringify({ format: 'stagedeck-template', version: 1, name: 'Drop (ejemplo IA)', author: 'ChatGPT / Claude', description: 'Página con las macros del rack de SYN-2 y nombres en castellano.', trackAliases: { 'KICK': 'BOMBO', 'LO': 'BAJO', 'HI PERC': 'PERC AGUDA' }, controlPages: [{ name: 'Drop IA', widgets: [{ name: 'Filtro lead', kind: 'knob', color: '#9A6BFF', w: 1, target: { type: 'live', track: 'SYN-2', device: 'SYN-2 Rack', param: 'Macro 1' }, value: .5 }, { name: 'Riser', kind: 'fader', color: '#F2D33C', w: 1, target: { type: 'cc', ch: 1, cc: 21 }, value: 0 }, { name: 'Delay XY', kind: 'xy', color: '#E05A9A', w: 2, target: { type: 'live', track: 'FX', device: 'FX Rack', param: 'Macro 2' }, targetY: { type: 'live', track: 'FX', device: 'FX Rack', param: 'Macro 3' }, value: .5, valueY: .5 }, { name: 'Stutter', kind: 'button', color: '#F28C28', w: 1, target: { type: 'note', ch: 1, note: 36 }, value: 0 }, { name: 'Coro', kind: 'knob', color: '#3CC8E6', w: 1, target: { type: 'live', track: 'VOX', device: 'Vocal Rack', param: 'Macro 1' }, value: .3 }] }] }, null, 2);
+  function renderTpl(state) {
+    state = state || {};
+    tplPanel.innerHTML = '<h3>Import template</h3><div class="note">Pega aquí un JSON .stagedeck (de un amigo o generado por una IA con la descripción de tu set). La app lo valida, enseña qué contiene y qué pistas o dispositivos faltan, y deja elegir añadir o sustituir.</div><textarea id="tplText" placeholder="{ \"format\": \"stagedeck-template\", ... }"></textarea><div class="row"><button class="tog" style="background:var(--raised)" id="tplSample">PEGAR EJEMPLO</button><button class="tog b on" id="tplCheck">CHECK</button><button class="tog" style="background:var(--raised)" id="tplClose">CLOSE</button></div><div id="tplResult" class="list"></div>';
+    document.getElementById('tplText').value = state.text || '';
+    document.getElementById('tplSample').onclick = () => { document.getElementById('tplText').value = sampleTpl; };
+    document.getElementById('tplClose').onclick = () => { tplPanel.hidden = true; };
+    document.getElementById('tplCheck').onclick = () => {
+      const res = document.getElementById('tplResult'); let t;
+      try { t = JSON.parse(document.getElementById('tplText').value); } catch (e) { res.innerHTML = '<span class="err">This is not valid JSON: ' + e.message + '</span>'; return; }
+      if (t.format !== 'stagedeck-template') { res.innerHTML = '<span class="err">This JSON is not a StageDeck template (missing "format": "stagedeck-template").</span>'; return; }
+      const pages = t.controlPages || [], aliases = t.trackAliases || {};
+      if (!pages.length && !Object.keys(aliases).length) { res.innerHTML = '<span class="err">The template has no sections to import.</span>'; return; }
+      const refTracks = new Set(Object.keys(aliases)); const refDevices = [];
+      pages.forEach(p => p.widgets.forEach(w => [w.target, w.targetY].forEach(x => { if (x && x.type === 'live') { refTracks.add(x.track); refDevices.push([x.track, x.device]); } })));
+      const missingT = [...refTracks].filter(n => !demoTracks.some(d => d.toLowerCase() === n.toLowerCase()));
+      const missingD = refDevices.filter(([tr, d]) => demoTracks.some(x => x.toLowerCase() === tr.toLowerCase()) && !demoDevices(demoTracks.find(x => x.toLowerCase() === tr.toLowerCase())).some(x => x.toLowerCase() === d.toLowerCase())).map(x => x.join(' / '));
+      res.innerHTML = '<div><b>' + t.name + '</b>' + (t.author ? ' · by ' + t.author : '') + '</div>' + (t.description ? '<div class="note">' + t.description + '</div>' : '') + '<div style="margin-top:6px"><b>Contains:</b> ' + [pages.length ? pages.length + ' control page(s) (' + pages.map(p => p.name).join(', ') + ')' : null, Object.keys(aliases).length ? Object.keys(aliases).length + ' channel name(s)' : null].filter(Boolean).join('; ') + '</div>' + (missingT.length || missingD.length ? '<div class="warn" style="margin-top:6px">Missing in this set → ' + (missingT.length ? 'tracks: ' + missingT.join(', ') + '. ' : '') + (missingD.length ? 'devices: ' + missingD.join(', ') + '.' : '') + ' Those controls import unassigned (yellow).</div>' : '<div class="ok" style="margin-top:6px">All referenced tracks and devices exist in the current set.</div>') + '<div class="row" style="margin-top:8px"><button class="tog y on" id="tplAdd">ADD</button><button class="tog" style="background:rgba(237,84,69,.35)" id="tplReplace">REPLACE</button></div>';
+      const doImport = replace => { const fresh = pages.map(p => ({ name: p.name, widgets: p.widgets.map((w, i) => Object.assign({ id: 'i' + Date.now() + i, w: 1, value: 0, valueY: 0, targetY: { type: 'none' } }, w, { target: w.target || { type: 'none' } })) })); ctrl.pages = replace ? fresh : ctrl.pages.concat(fresh); ctrl.cur = replace ? 0 : ctrl.pages.length - fresh.length; Object.entries(aliases).forEach(([k, v]) => { decks.forEach(d => d.tracks.forEach(tr => { if (tr.name.toLowerCase() === k.toLowerCase()) { tr.alias = v; if (tr.headEl) tr.headEl.querySelector('b').textContent = v; } })); }); buildMixer(); tplPanel.hidden = true; renderCtrl(); toast('Imported "' + t.name + '" (' + (replace ? 'replace' : 'add') + ')'); };
+      document.getElementById('tplAdd').onclick = () => doImport(false); document.getElementById('tplReplace').onclick = () => doImport(true);
+    };
+  }
+  document.getElementById('ctpl').onclick = () => { tplPanel.hidden = !tplPanel.hidden; if (!tplPanel.hidden) renderTpl(); };
   renderCtrl();
 
   // ---------- clock: clip progress, meters, sequencer playhead ----------
