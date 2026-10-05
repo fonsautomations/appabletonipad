@@ -106,7 +106,8 @@ public struct MixerLayoutPlan: Equatable {
             let fixed = nameH + Double(sends) * sendH + filterH + (db ? dbH : 0) + buttonsH + panH
             return stripArea - fixed - Double(parts) * gap
         }
-        let fullFader = fader(sendH: 34, filterH: 110, db: true, parts: 5 + sends)
+        // Full strips may also show pan and an ARM row (MIDI tracks): reserve both so nothing overlaps.
+        let fullFader = fader(sendH: 34, filterH: 110, db: true, parts: 7 + sends) - 24 - (showPan ? 0 : 18)
         if fullFader >= 120 {
             return Metrics(stripWidth: stripWidth, sendHeight: 34, filterHeight: 110, faderHeight: min(260, fullFader), density: .full)
         }

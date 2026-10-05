@@ -525,7 +525,9 @@ struct BusStrip: View {
 
     var body: some View {
         let w = CGFloat(metrics.stripWidth)
-        VStack(spacing: 4) {
+        var m = metrics
+        if editing { m.faderHeight = max(60, m.faderHeight - 28) } // room for the EDIT / × toolbar
+        return VStack(spacing: 4) {
             if editing {
                 HStack(spacing: 3) {
                     PadButton(title: "EDIT", color: Theme.yellow, active: true, height: 24, fontSize: 9) { onEdit() }
@@ -538,7 +540,7 @@ struct BusStrip: View {
                           options: StripOptions(sendIndices: bus.showSends && store.profile.showSends ? store.profile.sendIndices(in: live.song) : [],
                                                 showFilter: bus.showFilter, showPan: bus.showPan,
                                                 nameBackground: nameBackground(model.color)),
-                          metrics: metrics,
+                          metrics: m,
                           meters: live.meters,
                           onNameLongPress: { Haptics.heavy(); onEdit() })
             } else {

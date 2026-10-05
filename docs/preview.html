@@ -526,7 +526,7 @@ button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 1px; }
     const rowH = Math.max(0, (H - (rows.length - 1) * ML.rowGap) / rows.length);
     const area = rowH - ML.headerH, nameH = 22, dbH = 16, btnH = 28;
     const fader = (sh, fh, db, parts, gap) => area - (nameH + sends * sh + fh + (db ? dbH : 0) + btnH) - parts * gap;
-    let m; const full = fader(34, 110, true, 5 + sends, 5);
+    let m; const full = fader(34, 110, true, 7 + sends, 5) - 24 - 18;
     if (full >= 120) m = { sw, sh: 34, fh: 110, vh: Math.min(260, full), density: 'full' };
     else { const med = fader(18, 52, false, 4 + sends, 4); if (med >= 80) m = { sw, sh: 18, fh: 52, vh: med, density: 'medium' }; else m = { sw, sh: 0, fh: 0, vh: Math.max(60, area - nameH - btnH - 10), density: 'compact' }; }
     return { rows, rowH, m, over };
