@@ -409,3 +409,19 @@ final class ResolverIndexTests: XCTestCase {
         XCTAssertNotEqual(song.deviceSignature, LiveSongState().deviceSignature)
     }
 }
+
+final class FilterLocatorTests: XCTestCase {
+    func testPrefersAutoFilterThenMacroNames() {
+        let rack = LiveDevice(trackIndex: 0, index: 0, name: "MODULAR MIXER CHAIN", className: "AudioEffectGroupDevice",
+                              parameters: [LiveDeviceParameter(index: 0, name: "Device On", value: 1, min: 0, max: 1),
+                                           LiveDeviceParameter(index: 1, name: "ROAR AMOUNT", value: 0, min: 0, max: 1),
+                                           LiveDeviceParameter(index: 2, name: "FILTER", value: 0.5, min: 0, max: 1)])
+        XCTAssertEqual(FilterLocator.find(in: [rack]), FilterBinding(device: 0, parameter: 2, label: "FILTER"))
+        let af = LiveDevice(trackIndex: 0, index: 1, name: "Auto Filter", className: "AutoFilter", parameters: DemoSet.autoFilterParameters)
+        XCTAssertEqual(FilterLocator.find(in: [rack, af])?.device, 1)
+        XCTAssertEqual(FilterLocator.find(in: [rack], customName: "ROAR AMOUNT")?.parameter, 1)
+        let eq = LiveDevice(trackIndex: 0, index: 0, name: "EQ Eight", className: "Eq8", parameters: [LiveDeviceParameter(index: 0, name: "Device On", value: 1, min: 0, max: 1)])
+        XCTAssertNil(FilterLocator.find(in: [eq]))
+        XCTAssertNil(FilterLocator.find(in: []))
+    }
+}

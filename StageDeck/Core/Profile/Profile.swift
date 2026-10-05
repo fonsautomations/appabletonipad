@@ -38,7 +38,7 @@ public struct PerformerProfile: Equatable, Codable {
     // Mixer
     public var showSends: Bool = true
     public var showPan: Bool = false
-    public var filterParameterName: String = "Frequency"
+    public var filterParameterName: String = ""
     public var macroNames: [String] = ["LPF"]
     /// Every deck shows its group track as a full strip (sends, filter, fader) in front of its stems.
     public var showGroupStrips: Bool = false

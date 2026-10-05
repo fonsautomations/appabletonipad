@@ -23,7 +23,7 @@ struct ControlView: View {
                 CapsLabel("PAGES", size: 9, color: Theme.textSecondary)
                 Segmented(options: [(1, "1"), (2, "2"), (3, "3"), (4, "4")], selection: $store.controlPanels, height: 30).frame(width: 150)
                 Spacer()
-                if !control.lastSent.isEmpty {
+                if editing, !control.lastSent.isEmpty {
                     Text(control.lastSent).font(.system(size: 10, design: .monospaced)).foregroundColor(Theme.textSecondary).lineLimit(1)
                 }
                 if !control.unresolved.isEmpty {
@@ -169,32 +169,24 @@ struct ControlPagePanel: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 4) {
                     ForEach(Array(pages.enumerated()), id: \.element.id) { (i, p) in
-                        PadButton(title: p.name, color: Theme.accent, active: i == pageIndex, height: 28, fontSize: compact ? 10 : 11) { pageIndex = i }
-                            .frame(width: compact ? 84 : 104)
-                    }
-                    if editing {
-                        PadButton(title: "+ PAGE", color: Theme.panelRaised, active: false, height: 28, fontSize: 10) { addPage() }.frame(width: 64)
+                        PadButton(title: p.name, color: Theme.accent, active: i == pageIndex, height: 30, fontSize: compact ? 10 : 11) { pageIndex = i }
+                            .frame(width: compact ? 84 : 110)
                     }
                 }
             }
-            if editing && compact {
-                PadButton(title: "+ SET", color: Theme.green, active: true, height: 28, fontSize: 10) { showAddFromSet = true }.frame(width: 56)
-                PadButton(title: "ADD", color: Theme.secondary, active: true, height: 28, fontSize: 11) { showAddMenu = true }.frame(width: 50)
+            if editing {
+                PadButton(title: compact ? "+ CTRL" : "+ CONTROL", color: Theme.secondary, active: true, height: 30, fontSize: 10) { showAddMenu = true }
+                    .frame(width: compact ? 66 : 96)
+                PadButton(title: compact ? "+ SET" : "+ FROM SET", color: Theme.green, active: true, height: 30, fontSize: 10) { showAddFromSet = true }
+                    .frame(width: compact ? 60 : 96)
                 Menu {
                     Button("Rename page") { pageName = page?.name ?? ""; renamingPage = true }
+                    Button("New page") { addPage() }
                     Button("Delete page", role: .destructive) { deletePage() }
                 } label: {
                     Image(systemName: "ellipsis").font(.system(size: 14, weight: .bold)).foregroundColor(Theme.textPrimary)
-                        .frame(width: 32, height: 28).background(Theme.panelRaised).cornerRadius(8)
+                        .frame(width: 36, height: 30).background(Theme.panelRaised).cornerRadius(8)
                 }
-            } else if editing {
-                PadButton(title: "RENAME", color: Theme.panelRaised, active: false, height: 28, fontSize: 10) {
-                    pageName = page?.name ?? ""
-                    renamingPage = true
-                }.frame(width: 70)
-                PadButton(title: "DELETE", color: Theme.red, active: false, height: 28, fontSize: 10) { deletePage() }.frame(width: 66)
-                PadButton(title: "ADD FROM SET", color: Theme.green, active: true, height: 28, fontSize: 10) { showAddFromSet = true }.frame(width: 110)
-                PadButton(title: "ADD", color: Theme.secondary, active: true, height: 28, fontSize: 11) { showAddMenu = true }.frame(width: 56)
             }
         }
     }

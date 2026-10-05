@@ -602,6 +602,14 @@ final class LiveSession: ObservableObject {
         send(LiveCommand.selectedDevice())
     }
 
+    /// Loads the parameters of every device of a channel that has not been loaded yet (idempotent).
+    func loadDevices(ofTrack track: Int) {
+        guard state == .connected else { return }
+        for d in song.devices(ofTrack: track) where d.parameters.count <= 1 {
+            requestDeviceParameters(track: track, device: d.index)
+        }
+    }
+
     func requestDeviceParameters(track: Int, device: Int) {
         guard device >= 0 else { return }
         let key = "\(track):\(device)"

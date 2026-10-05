@@ -320,7 +320,7 @@ button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 1px; }
 <div class="wrap">
   <div class="intro">
     <span><b>StageDeck</b> &nbsp;·&nbsp; previsualización web interactiva de la app de iPad (set de demo, sin Live)</span>
-    <span class="hint">Pulsa <b>Demo mode</b>. Toca clips, escenas, K/R, faders y pasos. En MIXER todo cabe en pantalla (ALL) o toca un deck para verlo a lo grande; EDIT → + BUS para añadir grupos, retornos o el master como canal propio. En CTRL: PAGES 1-4 para ver hasta cuatro páginas a la vez, EDIT → ADD FROM SET para añadir macros de cualquier pista, TEMPLATE para importar una plantilla pegada.</span>
+    <span class="hint">Pulsa <b>Demo mode</b>. Toca clips, escenas, K/R, faders y pasos. En MIXER todo cabe en pantalla (ALL) o toca un deck para verlo a lo grande; SETUP para envíos, strips de grupo y buses. En CTRL: PAGES 1-4 para ver hasta cuatro páginas a la vez, EDIT → ADD FROM SET para añadir macros de cualquier pista, TEMPLATE para importar una plantilla pegada.</span>
   </div>
   <div class="fit"><div class="ipad" id="ipad">
     <div class="screen">
@@ -538,8 +538,7 @@ button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 1px; }
     const nm = document.createElement('div'); nm.className = 'nm' + (opts.grp ? ' grp' : ''); nm.textContent = ch.alias || ch.name; if (opts.nameBg) nm.style.background = opts.nameBg; if (m.sw < 56) nm.style.fontSize = '9px'; s.appendChild(nm);
     if (m.density !== 'compact' && opts.showSends !== false && ch.sends) visibleSends().forEach(i => { const se = document.createElement('div'); se.className = 'send'; se.style.background = ch.color + '2e'; se.innerHTML = '<i style="background:' + ch.color + 'cc;height:' + Math.max(8, ch.sends[i] * 100) + '%"></i><span>' + RETURNS[i].name + '</span>'; dragV(se, v => { ch.sends[i] = v; se.firstChild.style.height = Math.max(8, v * 100) + '%'; }); s.appendChild(se); });
     if (m.density !== 'compact' && opts.showFilter !== false) {
-      if (ch.hasFilter === false) { const nf = document.createElement('div'); nf.className = 'vf lpf'; nf.style.background = 'var(--panel)'; nf.innerHTML = '<div class="lbl" style="color:var(--fg2);bottom:40%">no filter</div>'; s.appendChild(nf); }
-      else { const lpf = document.createElement('div'); lpf.className = 'vf lpf'; lpf.style.background = ch.color + '38'; lpf.innerHTML = '<div class="fill" style="background:' + ch.color + 'e6;height:' + (ch.lpf * 100) + '%"></div><div class="lbl">LPF</div>'; dragV(lpf, v => { ch.lpf = v; lpf.firstChild.style.height = (v * 100) + '%'; }); s.appendChild(lpf); }
+      if (ch.hasFilter !== false) { const lpf = document.createElement('div'); lpf.className = 'vf lpf'; lpf.style.background = ch.color + '38'; lpf.innerHTML = '<div class="fill" style="background:' + ch.color + 'e6;height:' + (ch.lpf * 100) + '%"></div><div class="lbl">LPF</div>'; dragV(lpf, v => { ch.lpf = v; lpf.firstChild.style.height = (v * 100) + '%'; }); s.appendChild(lpf); }
     }
     let dbl = null; if (m.density === 'full') { dbl = document.createElement('div'); dbl.className = 'db'; dbl.textContent = dbLabel(ch.vol); s.appendChild(dbl); }
     const vol = document.createElement('div'); vol.className = 'vf vol'; vol.style.background = ch.color + '38'; vol.innerHTML = '<div class="fill" style="background:' + ch.color + ';height:' + (ch.vol * 100) + '%"></div><div class="mt" style="height:0"></div><div class="line" style="bottom:' + (ch.vol * 100) + '%"></div>' + (dbl ? '' : '<div class="lbl db">' + dbLabel(ch.vol) + '</div>');
@@ -573,9 +572,8 @@ button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 1px; }
   }
   function busSection(m) {
     const box = document.createElement('div'); box.className = 'busbox';
-    const bh = document.createElement('div'); bh.className = 'bhead'; bh.innerHTML = '<span class="caps">BUSES</span>'; if (mix.editing) { const ab = document.createElement('button'); ab.className = 'chip on'; ab.textContent = '+ BUS'; ab.style.background = 'var(--accent)'; ab.onclick = () => { mix.addOpen = true; buildMixer(); }; bh.appendChild(ab); } box.appendChild(bh);
+    const bh = document.createElement('div'); bh.className = 'bhead'; bh.innerHTML = '<span class="caps">BUSES</span>'; box.appendChild(bh);
     const strips = document.createElement('div'); strips.className = 'strips';
-    if (!mix.buses.length) strips.innerHTML = '<div class="hint" style="width:120px;height:auto;font-size:10px">Add a group, a return, the master or any track as its own strip.</div>';
     mix.buses.forEach((b, bi) => {
       const ch = busChannel(b); let s;
       if (ch) {
@@ -583,34 +581,22 @@ button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 1px; }
         s = stripEl(Object.assign(Object.create(ch), { alias: b.label || ch.alias || ch.name }), m, { grp: b.kind === 'group', nameBg, showSends: b.showSends !== false && b.kind !== 'master', showFilter: b.showFilter !== false, buttons: b.kind !== 'master', meter: false });
         if (b.kind === 'master') { s.querySelectorAll('.vf.vol').forEach(v => dragV(v, val => { mix.master.vol = val; buildMixer(); })); }
       } else { s = document.createElement('div'); s.className = 'strip'; s.style.setProperty('--sw', m.sw + 'px'); s.innerHTML = '<div class="nm" style="color:var(--yellow)">' + (b.label || b.name) + '</div><div class="missing">' + b.kind + ' not in this set</div>'; }
-      if (mix.editing) { const tools = document.createElement('div'); tools.className = 'bustools'; tools.innerHTML = '<button>' + (b.showSends === false ? 'SENDS OFF' : 'SENDS ON') + '</button><button class="x">×</button>'; tools.children[0].onclick = () => { b.showSends = b.showSends === false; buildMixer(); }; tools.children[1].onclick = () => { mix.buses.splice(bi, 1); buildMixer(); }; s.prepend(tools); }
       strips.appendChild(s);
     });
     box.appendChild(strips); return box;
   }
   function buildMixer() {
     const sections = decks.map((d, i) => ({ kind: 'deck', i, name: d.name, count: d.tracks.length + (mix.groupStrips ? 1 : 0) }));
-    if (mix.buses.length || mix.editing) sections.push({ kind: 'buses', name: 'BUSES', count: Math.max(1, mix.buses.length) });
+    if (mix.buses.length) sections.push({ kind: 'buses', name: 'BUSES', count: mix.buses.length });
     if (mix.focus >= sections.length) mix.focus = -1;
     // header
     mhdr.innerHTML = '';
     const chip = (txt, on, color, fn, w) => { const b = document.createElement('button'); b.className = 'chip' + (on ? ' on' : ''); b.textContent = txt; b.style.background = on ? color : color + '59'; if (w) b.style.width = w + 'px'; b.onclick = fn; mhdr.appendChild(b); return b; };
-    if (mix.editing) {
-      const cap = document.createElement('span'); cap.className = 'caps'; cap.textContent = 'SENDS'; mhdr.appendChild(cap);
-      RETURNS.forEach((r, i) => chip(r.name, mix.sendsOn[i], r.color, () => { mix.sendsOn[i] = !mix.sendsOn[i]; buildMixer(); }, 76));
-      const sp = document.createElement('div'); sp.style.flex = 1; mhdr.appendChild(sp);
-      chip('GROUP STRIPS', mix.groupStrips, '#8FB4DD', () => { mix.groupStrips = !mix.groupStrips; buildMixer(); });
-      chip('MASTER FILTER', mix.masterFilter, '#7DC24D', () => { mix.masterFilter = !mix.masterFilter; buildMixer(); });
-      chip('+ BUS', true, 'var(--accent)', () => { mix.addOpen = true; buildMixer(); });
-      chip(mix.fit === false ? 'SCROLL' : 'FIT', true, 'rgba(255,255,255,.85)', () => { mix.fit = mix.fit === false; buildMixer(); }, 70);
-    } else {
-      const seg = document.createElement('div'); seg.className = 'seg'; seg.style.width = (sections.length + 1) * 86 + 'px';
-      [{ i: -1, name: 'ALL' }].concat(sections.map((sct, i) => ({ i, name: sct.name }))).forEach(o => { const b = document.createElement('button'); b.textContent = o.name; b.classList.toggle('on', mix.focus === o.i); b.onclick = () => { mix.focus = o.i; buildMixer(); }; seg.appendChild(b); });
-      mhdr.appendChild(seg);
-      const sp = document.createElement('div'); sp.style.flex = 1; mhdr.appendChild(sp);
-      const sum = document.createElement('span'); sum.className = 'sum'; sum.textContent = visibleSends().length + ' sends' + (mix.buses.length ? ' · ' + mix.buses.length + ' bus' + (mix.buses.length === 1 ? '' : 'es') : '') + (mix.groupStrips ? ' · group strips' : ''); mhdr.appendChild(sum);
-    }
-    chip(mix.editing ? 'DONE' : 'EDIT', mix.editing, 'var(--yellow)', () => { mix.editing = !mix.editing; mix.addOpen = false; buildMixer(); }, 70);
+    const seg = document.createElement('div'); seg.className = 'seg'; seg.style.width = Math.min((sections.length + 1) * 92, 640) + 'px';
+    [{ i: -1, name: 'ALL' }].concat(sections.map((sct, i) => ({ i, name: sct.name }))).forEach(o => { const b = document.createElement('button'); b.textContent = o.name; b.classList.toggle('on', mix.focus === o.i); b.onclick = () => { mix.focus = o.i; buildMixer(); }; seg.appendChild(b); });
+    mhdr.appendChild(seg);
+    const sp = document.createElement('div'); sp.style.flex = 1; mhdr.appendChild(sp);
+    chip('SETUP', false, 'rgba(255,255,255,.9)', () => { mix.setupOpen = !mix.setupOpen; buildMixer(); }, 84);
     // rows
     const W = (mrows.clientWidth || 964) - 8, H = mrows.clientHeight || 636;
     let plan;
@@ -629,17 +615,21 @@ button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 1px; }
     renderAddBus();
   }
   function renderAddBus() {
-    mbus.hidden = !(mix.editing && mix.addOpen); if (mbus.hidden) return;
+    mbus.hidden = !mix.setupOpen; if (mbus.hidden) return;
     const has = (kind, name) => mix.buses.some(b => b.kind === kind && (kind === 'master' || b.name === name));
+    const tog = (label, on, fn) => '<label class="pl" style="padding-left:0;justify-content:space-between"><span>' + label + '</span><input type="checkbox" data-tog="' + fn + '"' + (on ? ' checked' : '') + '></label>';
     const row = (kind, name, title, sub, color) => '<label class="pl" style="padding-left:0"><input type="checkbox" data-bus="' + kind + '|' + name + '"' + (has(kind, name) ? ' checked' : '') + '><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:' + color + '"></span><span><b>' + title + '</b><br><span class="note">' + sub + '</span></span></label>';
-    mbus.innerHTML = '<h3>Add bus</h3><div class="note">A bus is its own strip: fader, sends, filter and mute, for a whole group, a return, the master or any track. Tick to add, untick to remove.</div>' +
-      '<div class="t">Master</div>' + row('master', '', 'Master', 'fader + Auto Filter on the master (Live\'s master has no sends)', '#7DC24D') +
-      '<div class="t">Groups</div>' + decks.map(d => row('group', d.name, 'Deck ' + d.name, d.tracks.length + ' tracks · sends + filter + fader', d.color)).join('') +
-      '<div class="t">Return tracks</div>' + RETURNS.map(r => row('return', r.name, r.name, 'return · volume, sends to other returns, filter', r.color)).join('') +
-      '<div class="t">Other tracks</div>' + decks[0].tracks.slice(0, 4).map(t => row('track', t.name, t.alias || t.name, 'already in a deck', t.color)).join('') +
+    mbus.innerHTML = '<h3>Mixer setup</h3><div class="t">Layout</div>' + tog('Fit everything on screen', mix.fit !== false, 'fit') + tog('Group strips', mix.groupStrips, 'groupStrips') + tog('Master filter', mix.masterFilter, 'masterFilter') +
+      '<div class="t">Sends on strips</div>' + RETURNS.map((r, i) => tog('<span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:' + r.color + ';margin-right:6px"></span>' + r.name, mix.sendsOn[i], 'send' + i)).join('') +
+      '<div class="t">Filter control</div><div class="note">Each strip\'s FILTER drives the channel\'s Auto Filter if it has one, otherwise a rack macro called FILTER, LPF, HPF or Cutoff. Channels with none show no filter.</div>' +
+      '<div class="t">Buses</div><div class="note">A bus is its own strip for a group, a return, the master or any track. Tick to add.</div>' + row('master', '', 'Master', 'fader + filter (Live\'s master has no sends)', '#7DC24D') +
+      decks.map(d => row('group', d.name, 'Deck ' + d.name, d.tracks.length + ' tracks · sends + filter + fader', d.color)).join('') +
+      RETURNS.map(r => row('return', r.name, r.name, 'return · volume, sends, filter', r.color)).join('') +
+      decks[0].tracks.slice(0, 3).map(t => row('track', t.name, t.alias || t.name, 'single track', t.color)).join('') +
       '<div class="row" style="margin-top:8px"><button class="tog y on" id="busDone">DONE</button></div>';
+    mbus.querySelectorAll('[data-tog]').forEach(cb => cb.onchange = () => { const k = cb.dataset.tog; if (k === 'fit') mix.fit = cb.checked; else if (k.startsWith('send')) mix.sendsOn[parseInt(k.slice(4), 10)] = cb.checked; else mix[k] = cb.checked; buildMixer(); });
     mbus.querySelectorAll('[data-bus]').forEach(cb => cb.onchange = () => { const [kind, name] = cb.dataset.bus.split('|'); if (cb.checked) mix.buses.push({ kind, name }); else mix.buses = mix.buses.filter(b => !(b.kind === kind && (kind === 'master' || b.name === name))); buildMixer(); });
-    mbus.querySelector('#busDone').onclick = () => { mix.addOpen = false; buildMixer(); };
+    mbus.querySelector('#busDone').onclick = () => { mix.setupOpen = false; buildMixer(); };
   }
   function renderMixer() { decks.forEach(d => { if (d.mixBtns) d.mixBtns.children[0].classList.toggle('on', d.mute); d.tracks.forEach(t => { if (t.mixBtns) { t.mixBtns.children[0].classList.toggle('on', t.mute); t.mixBtns.children[1].classList.toggle('on', t.cue); } }); }); }
   function dragV(el, cb) { let v0, y0; el.onpointerdown = e => { el.setPointerCapture(e.pointerId); y0 = e.clientY; v0 = null; const h = el.getBoundingClientRect().height; const f = el.querySelector('.fill, i'); v0 = parseFloat(f.style.height) / 100; el.onpointermove = ev => { if (!ev.buttons) return; const v = Math.max(0, Math.min(1, v0 + (y0 - ev.clientY) / h * (1180 / ipad.getBoundingClientRect().width))); cb(v); }; }; el.onpointerup = () => el.onpointermove = null; }

@@ -183,10 +183,10 @@ struct SettingsView: View {
             Toggle("Group strips (each deck's group as a full strip)", isOn: $store.profile.showGroupStrips)
             Toggle("Master filter (Auto Filter on the master)", isOn: $store.profile.showMasterFilter)
             HStack {
-                Text("Filter parameter name"); Spacer()
-                TextField("Frequency", text: $store.profile.filterParameterName).multilineTextAlignment(.trailing).frame(width: 140)
+                Text("Filter macro name (optional)"); Spacer()
+                TextField("e.g. FILTER", text: $store.profile.filterParameterName).multilineTextAlignment(.trailing).frame(width: 140)
             }
-            Text("Put an Auto Filter on any channel you want to filter: tracks, group tracks, returns or the master. StageDeck finds it by class name and drives its Frequency parameter. Which sends are shown, and extra bus strips (groups, returns, master, single tracks), are edited in the mixer with EDIT.")
+            Text("Each strip's FILTER drives the channel's Auto Filter if it has one, otherwise a rack macro called FILTER, LPF, HPF, Cutoff or the name above. Sends shown and bus strips are set in MIXER → SETUP.")
                 .font(.footnote).foregroundColor(.secondary)
         }
     }
