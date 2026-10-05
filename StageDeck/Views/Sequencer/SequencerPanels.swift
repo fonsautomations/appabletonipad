@@ -7,7 +7,7 @@ struct StepEditor: View {
     var body: some View {
         if let index = sequencer.selectedStep {
             let step = sequencer.track.step(index)
-            ScrollView(.vertical, showsIndicators: false) {
+            ScrollView([.vertical, .horizontal], showsIndicators: true) {
                 VStack(alignment: .leading, spacing: 10) {
                     CapsLabel("Step \(index + 1) · \(sequencer.track.name)", size: 10, color: Theme.textPrimary)
                     HStack(alignment: .bottom, spacing: 8) {
@@ -213,7 +213,7 @@ struct TrackEditor: View {
     @EnvironmentObject var midi: MIDIService
 
     var body: some View {
-        ScrollView(.vertical, showsIndicators: false) {
+        ScrollView([.vertical, .horizontal], showsIndicators: true) {
             VStack(alignment: .leading, spacing: 10) {
                 CapsLabel("Track", size: 10, color: Theme.textPrimary)
                 HStack(alignment: .bottom, spacing: 8) {

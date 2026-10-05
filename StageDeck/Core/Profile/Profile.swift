@@ -44,6 +44,8 @@ public struct PerformerProfile: Equatable, Codable {
     public var showGroupStrips: Bool = false
     /// Master strip shows the master track's Auto Filter next to the fader.
     public var showMasterFilter: Bool = true
+    /// true: decks packed into rows that fit the screen. false: one row of full-size strips that scrolls sideways.
+    public var mixerFitToScreen: Bool = true
     /// Return names whose send is shown on strips. nil = the first four returns.
     public var visibleSends: [String]? = nil
     /// Extra strips (groups, returns, master, any track) shown between the decks and the master.
@@ -114,6 +116,7 @@ public struct PerformerProfile: Equatable, Codable {
         macroNames = get(.macroNames, d.macroNames)
         showGroupStrips = get(.showGroupStrips, d.showGroupStrips)
         showMasterFilter = get(.showMasterFilter, d.showMasterFilter)
+        mixerFitToScreen = get(.mixerFitToScreen, d.mixerFitToScreen)
         visibleSends = get(.visibleSends, d.visibleSends)
         mixerBuses = get(.mixerBuses, d.mixerBuses)
         clipNotes = get(.clipNotes, d.clipNotes)

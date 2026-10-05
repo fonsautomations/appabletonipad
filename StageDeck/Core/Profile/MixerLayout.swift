@@ -94,6 +94,15 @@ public struct MixerLayoutPlan: Equatable {
         return MixerLayoutPlan(rows: rows, rowHeight: rowHeight, metrics: metrics, overflowingSections: overflow)
     }
 
+    /// One row of full-size strips; the row scrolls horizontally when it does not fit.
+    public static func scrolling(width: Double, height: Double, counts: [Int], sends: Int, showPan: Bool = false) -> MixerLayoutPlan {
+        let row = Array(counts.indices)
+        let strips = counts.reduce(0) { $0 + max(1, $1) }
+        let fits = rowWidth(strips: strips, sections: counts.count, stripWidth: preferredStripWidth) <= width
+        let m = metrics(rowHeight: height, stripWidth: preferredStripWidth, sends: sends, showPan: showPan)
+        return MixerLayoutPlan(rows: [row], rowHeight: height, metrics: m, overflowingSections: fits ? [] : row)
+    }
+
     static func rowWidth(strips: Int, sections: Int, stripWidth: Double) -> Double {
         Double(strips) * stripWidth + Double(max(0, strips - sections)) * stripGap + Double(max(0, sections - 1)) * sectionGap
     }

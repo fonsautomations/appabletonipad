@@ -171,6 +171,7 @@ struct SettingsView: View {
         Section("Mixer") {
             Toggle("Show sends", isOn: $store.profile.showSends)
             Toggle("Show pan", isOn: $store.profile.showPan)
+            Toggle("Fit everything on screen (off = full-size strips, scroll sideways)", isOn: $store.profile.mixerFitToScreen)
             Toggle("Group strips (each deck's group as a full strip)", isOn: $store.profile.showGroupStrips)
             Toggle("Master filter (Auto Filter on the master)", isOn: $store.profile.showMasterFilter)
             HStack {

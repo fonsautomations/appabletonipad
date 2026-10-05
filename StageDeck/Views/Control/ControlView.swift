@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// CONTROL: user-built pages of knobs, faders, buttons and XY pads mapped to Live parameters or MIDI.
 /// Shows 1, 2, 3 or 4 pages at once so macros from different groups can be played together without editing.
@@ -90,6 +91,8 @@ struct ControlPagePanel: View {
     @State private var showAddFromSet = false
     @State private var renamingPage = false
     @State private var pageName = ""
+    /// Widget being dragged to a new place (edit mode).
+    @State private var draggingWidget: UUID? = nil
 
     private var pages: [ControlPage] { store.profile.controlPages }
     private var page: ControlPage? { pages[safeIndex: pageIndex] }
@@ -98,26 +101,49 @@ struct ControlPagePanel: View {
         VStack(spacing: 6) {
             header
             if let page {
-                ScrollView(.vertical, showsIndicators: false) {
-                    VStack(spacing: 10) {
-                        ForEach(Array(ControlLayout.rows(page.widgets).enumerated()), id: \.offset) { (_, row) in
+                let rows = ControlLayout.rows(page.widgets)
+                ScrollViewReader { proxy in
+                HStack(spacing: 0) {
+                ScrollView(.vertical, showsIndicators: true) {
+                    VStack(spacing: 14) {
+                        ForEach(Array(rows.enumerated()), id: \.offset) { (ri, row) in
                             HStack(alignment: .top, spacing: compact ? 6 : 10) {
                                 ForEach(row) { widget in
                                     ControlWidgetView(widget: widget, editing: editing, compact: compact, onEdit: { editingWidget = widget })
                                         .frame(maxWidth: .infinity)
                                         .layoutPriority(Double(widget.width))
+                                        .opacity(draggingWidget == widget.id ? 0.35 : 1)
+                                        .modifier(ReorderDrag(enabled: editing, id: widget.id, dragging: $draggingWidget,
+                                                              move: { from, to in moveWidget(from, before: to) }))
                                 }
                                 if ControlLayout.rowUnits(row) < ControlPage.columns {
                                     Spacer(minLength: 0).layoutPriority(Double(ControlPage.columns - ControlLayout.rowUnits(row)))
                                 }
                             }
+                            .id(ri)
                         }
                         if page.widgets.isEmpty {
                             Text(editing ? "Empty page. Use ADD (one control) or ADD FROM SET (pick macros from any track or group)." : "Empty page. Tap EDIT to add controls.")
                                 .font(.system(size: 13, design: .rounded)).foregroundColor(Theme.textSecondary).padding(30)
                         }
                     }
-                    .padding(.vertical, 4)
+                    .padding(.vertical, 6)
+                    // Free gutters on both sides: drag here (or on any label) to scroll; knobs and faders keep their own drag.
+                    .padding(.horizontal, compact ? 14 : 22)
+                }
+                if rows.count > (compact ? 2 : 3) {
+                    VStack(spacing: 6) {
+                        scrollButton("chevron.up") { withAnimation { proxy.scrollTo(0, anchor: .top) } }
+                        Spacer()
+                        Text("\(rows.count) rows").font(.system(size: 8, design: .rounded)).foregroundColor(Theme.textSecondary)
+                            .rotationEffect(.degrees(-90)).fixedSize()
+                        Spacer()
+                        scrollButton("chevron.down") { withAnimation { proxy.scrollTo(rows.count - 1, anchor: .bottom) } }
+                    }
+                    .frame(width: 30)
+                    .padding(.vertical, 6)
+                }
+                }
                 }
                 .onAppear { control.prepare(page: page) }
                 .onChange(of: page.widgets) { _ in control.prepare(page: page) }
@@ -184,6 +210,14 @@ struct ControlPagePanel: View {
         }
     }
 
+    private func scrollButton(_ symbol: String, action: @escaping () -> Void) -> some View {
+        Button(action: { Haptics.tap(); action() }) {
+            Image(systemName: symbol).font(.system(size: 12, weight: .bold)).foregroundColor(Theme.textPrimary)
+                .frame(width: 28, height: 36).background(Theme.panelRaised).cornerRadius(8)
+        }
+        .buttonStyle(.plain)
+    }
+
     private func addPage() {
         store.profile.controlPages.append(ControlPage(name: "Page \(store.profile.controlPages.count + 1)"))
         pageIndex = store.profile.controlPages.count - 1
@@ -214,6 +248,50 @@ struct ControlPagePanel: View {
         guard pageIndex < store.profile.controlPages.count else { return }
         store.profile.controlPages[pageIndex].widgets.removeAll(where: { $0.id == id })
     }
+
+    /// Drag-to-reorder: puts `from` where `to` is (the rest shifts).
+    private func moveWidget(_ from: UUID, before to: UUID) {
+        guard pageIndex < store.profile.controlPages.count else { return }
+        var ws = store.profile.controlPages[pageIndex].widgets
+        guard let i = ws.firstIndex(where: { $0.id == from }), let j = ws.firstIndex(where: { $0.id == to }), i != j else { return }
+        let w = ws.remove(at: i)
+        ws.insert(w, at: j)
+        store.profile.controlPages[pageIndex].widgets = ws
+    }
+}
+
+/// Long-press and drag a control onto another one to swap places (EDIT mode only).
+struct ReorderDrag: ViewModifier {
+    let enabled: Bool
+    let id: UUID
+    @Binding var dragging: UUID?
+    let move: (UUID, UUID) -> Void
+
+    func body(content: Content) -> some View {
+        if enabled {
+            content
+                .onDrag {
+                    dragging = id
+                    return NSItemProvider(object: id.uuidString as NSString)
+                }
+                .onDrop(of: [UTType.text], delegate: WidgetDropDelegate(target: id, dragging: $dragging, move: move))
+        } else {
+            content
+        }
+    }
+}
+
+struct WidgetDropDelegate: DropDelegate {
+    let target: UUID
+    @Binding var dragging: UUID?
+    let move: (UUID, UUID) -> Void
+
+    func dropEntered(info: DropInfo) {
+        guard let from = dragging, from != target else { return }
+        withAnimation(.easeInOut(duration: 0.15)) { move(from, target) }
+    }
+    func dropUpdated(info: DropInfo) -> DropProposal? { DropProposal(operation: .move) }
+    func performDrop(info: DropInfo) -> Bool { dragging = nil; return true }
 }
 
 extension ControlLayout {

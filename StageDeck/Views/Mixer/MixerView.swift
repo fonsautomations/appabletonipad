@@ -39,9 +39,12 @@ struct MixerView: View {
             header(sections: sections)
             HStack(alignment: .top, spacing: 10) {
                 GeometryReader { geo in
-                    let plan = MixerLayoutPlan.plan(width: geo.size.width, height: geo.size.height,
-                                                    counts: sections.map { stripCount($0) }, sends: sendCount,
-                                                    showPan: store.profile.showPan, focus: focusIndex)
+                    let plan = store.profile.mixerFitToScreen || focusIndex != nil
+                        ? MixerLayoutPlan.plan(width: geo.size.width, height: geo.size.height,
+                                               counts: sections.map { stripCount($0) }, sends: sendCount,
+                                               showPan: store.profile.showPan, focus: focusIndex)
+                        : MixerLayoutPlan.scrolling(width: geo.size.width, height: geo.size.height,
+                                                    counts: sections.map { stripCount($0) }, sends: sendCount, showPan: store.profile.showPan)
                     VStack(spacing: MixerLayoutPlan.rowGap) {
                         ForEach(Array(plan.rows.enumerated()), id: \.offset) { (_, row) in
                             let overflowing = row.contains(where: { plan.overflowingSections.contains($0) })
@@ -101,6 +104,7 @@ struct MixerView: View {
                     store.profile.showMasterFilter.toggle()
                 }.frame(width: 110)
                 PadButton(title: "+ BUS", color: Theme.accent, active: true, height: 30, fontSize: 10) { showAddBus = true }.frame(width: 70)
+                Segmented(options: [(true, "FIT"), (false, "SCROLL")], selection: $store.profile.mixerFitToScreen, height: 30).frame(width: 130)
             } else {
                 let options: [(Int, String)] = [(-1, "ALL")] + sections.enumerated().map { (i, s) in
                     switch s {
