@@ -6,113 +6,109 @@ import Darwin
 import Glibc
 #endif
 
-/// UDP OSC transport: sends to Live's AbletonOSC port and listens for replies on the reply port.
+/// UDP OSC transport on one BSD socket bound to the reply port: everything we send leaves from
+/// port 11001 and AbletonOSC answers to the sender IP on 11001, so replies, listener pushes and
+/// broadcast discovery all land on the same socket. (Network.framework's inbound UDP flows were
+/// unreliable here: the first reply arrived, the following ones were dropped.)
 final class OSCClient: @unchecked Sendable {
-    private let queue = DispatchQueue(label: "stagedeck.osc", qos: .userInitiated)
-    private var connection: NWConnection?
-    private var listener: NWListener?
-    private var inbound: [ObjectIdentifier: NWConnection] = [:]
+    private let lock = NSLock()
+    private var fd: Int32 = -1
+    private var generation = 0
     private(set) var host: String = ""
     private(set) var port: UInt16 = 11000
     private(set) var replyPort: UInt16 = 11001
 
-    /// Called on the OSC queue for each incoming message with the sender's IP.
+    /// Called on a background thread for each incoming message with the sender's IP.
     var onMessage: (@Sendable (OSCMessage, String) -> Void)?
-    var onListenerState: (@Sendable (NWListener.State) -> Void)?
+    /// Called with "" when the reply port is bound, or with an error text.
+    var onListenerError: (@Sendable (String) -> Void)?
 
     func configure(host: String, port: Int, replyPort: Int) {
+        lock.lock()
         self.host = host
         self.port = UInt16(clamping: port)
-        self.replyPort = UInt16(clamping: replyPort)
-        queue.async { [weak self] in
-            self?.connection?.cancel()
-            self?.connection = nil
-            self?.openConnectionIfNeeded()
-        }
+        let newReply = UInt16(clamping: replyPort)
+        let rebind = newReply != self.replyPort && fd >= 0
+        self.replyPort = newReply
+        lock.unlock()
+        if rebind { stop(); startListening() }
     }
 
-    private func openConnectionIfNeeded() {
-        guard connection == nil, !host.isEmpty, let p = NWEndpoint.Port(rawValue: port) else { return }
-        let params = NWParameters.udp
-        params.allowLocalEndpointReuse = true
-        let c = NWConnection(host: NWEndpoint.Host(host), port: p, using: params)
-        c.stateUpdateHandler = { [weak self] state in
-            if case .failed = state {
-                self?.connection = nil
-            }
-        }
-        c.start(queue: queue)
-        connection = c
-    }
-
+    /// Opens the socket on the reply port (idempotent) and starts the receive thread.
     func startListening() {
-        queue.async { [weak self] in
-            guard let self, self.listener == nil else { return }
-            guard let p = NWEndpoint.Port(rawValue: self.replyPort) else { return }
-            let params = NWParameters.udp
-            params.allowLocalEndpointReuse = true
-            do {
-                let l = try NWListener(using: params, on: p)
-                l.stateUpdateHandler = { [weak self] state in
-                    self?.onListenerState?(state)
-                    if case .failed = state {
-                        self?.listener = nil
-                    }
-                }
-                l.newConnectionHandler = { [weak self] conn in
-                    self?.accept(conn)
-                }
-                l.start(queue: self.queue)
-                self.listener = l
-            } catch {
-                self.onListenerState?(.failed(.posix(.EADDRINUSE)))
-            }
+        lock.lock(); defer { lock.unlock() }
+        guard fd < 0 else { return }
+        #if canImport(Glibc)
+        let socketType = Int32(SOCK_DGRAM.rawValue)
+        #else
+        let socketType = SOCK_DGRAM
+        #endif
+        let sock = socket(AF_INET, socketType, 0)
+        guard sock >= 0 else { onListenerError?("Could not create a UDP socket"); return }
+        var yes: Int32 = 1
+        setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &yes, socklen_t(MemoryLayout<Int32>.size))
+        #if canImport(Darwin)
+        setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, &yes, socklen_t(MemoryLayout<Int32>.size))
+        #endif
+        setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &yes, socklen_t(MemoryLayout<Int32>.size))
+        var addr = sockaddr_in()
+        #if canImport(Darwin)
+        addr.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
+        #endif
+        addr.sin_family = sa_family_t(AF_INET)
+        addr.sin_port = replyPort.bigEndian
+        addr.sin_addr.s_addr = INADDR_ANY
+        let bound = withUnsafePointer(to: &addr) { ptr in
+            ptr.withMemoryRebound(to: sockaddr.self, capacity: 1) { bind(sock, $0, socklen_t(MemoryLayout<sockaddr_in>.size)) }
         }
+        guard bound == 0 else {
+            close(sock)
+            onListenerError?("Reply port \(replyPort) is in use by another app")
+            return
+        }
+        fd = sock
+        generation += 1
+        let gen = generation
+        onListenerError?("")
+        let thread = Thread { [weak self] in self?.receiveLoop(socket: sock, generation: gen) }
+        thread.name = "stagedeck.osc.receive"
+        thread.qualityOfService = .userInitiated
+        thread.start()
     }
 
     func stop() {
-        queue.async { [weak self] in
-            guard let self else { return }
-            self.listener?.cancel()
-            self.listener = nil
-            self.connection?.cancel()
-            self.connection = nil
-            for (_, c) in self.inbound { c.cancel() }
-            self.inbound.removeAll()
+        lock.lock()
+        let sock = fd
+        fd = -1
+        generation += 1
+        lock.unlock()
+        if sock >= 0 {
+            shutdown(sock, Int32(SHUT_RDWR))
+            close(sock)
         }
     }
 
-    private func accept(_ conn: NWConnection) {
-        let key = ObjectIdentifier(conn)
-        inbound[key] = conn
-        var senderIP = ""
-        if case .hostPort(let h, _) = conn.endpoint {
-            senderIP = OSCClient.plainIP(from: h)
-        }
-        conn.stateUpdateHandler = { [weak self] state in
-            switch state {
-            case .failed, .cancelled:
-                self?.inbound.removeValue(forKey: key)
-            default: break
+    private func receiveLoop(socket sock: Int32, generation gen: Int) {
+        let bufferSize = 65536
+        let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
+        defer { buffer.deallocate() }
+        while true {
+            var from = sockaddr_in()
+            var fromLen = socklen_t(MemoryLayout<sockaddr_in>.size)
+            let n = withUnsafeMutablePointer(to: &from) { ptr in
+                ptr.withMemoryRebound(to: sockaddr.self, capacity: 1) { recvfrom(sock, buffer, bufferSize, 0, $0, &fromLen) }
             }
-        }
-        conn.start(queue: queue)
-        receiveLoop(conn, senderIP: senderIP)
-    }
-
-    private func receiveLoop(_ conn: NWConnection, senderIP: String) {
-        conn.receiveMessage { [weak self, weak conn] data, _, _, error in
-            guard let self, let conn else { return }
-            if let data, !data.isEmpty {
-                for m in OSCMessage.decodePacket(data) {
-                    self.onMessage?(m, senderIP)
-                }
+            lock.lock(); let alive = generation == gen && fd == sock; lock.unlock()
+            if !alive { return }
+            if n <= 0 {
+                if n < 0 && errno == EINTR { continue }
+                return
             }
-            if error == nil {
-                self.receiveLoop(conn, senderIP: senderIP)
-            } else {
-                self.inbound.removeValue(forKey: ObjectIdentifier(conn))
-            }
+            var ip = from.sin_addr
+            var text = [CChar](repeating: 0, count: Int(INET_ADDRSTRLEN))
+            let sender = inet_ntop(AF_INET, &ip, &text, socklen_t(INET_ADDRSTRLEN)) != nil ? String(cString: text) : ""
+            let data = Data(bytes: buffer, count: n)
+            for m in OSCMessage.decodePacket(data) { onMessage?(m, sender) }
         }
     }
 
@@ -127,53 +123,44 @@ final class OSCClient: @unchecked Sendable {
 
     /// Sends one message to the configured host.
     func send(_ message: OSCMessage) {
-        let data = message.encode()
-        queue.async { [weak self] in
-            guard let self else { return }
-            self.openConnectionIfNeeded()
-            guard let c = self.connection else { return }
-            c.send(content: data, completion: .contentProcessed { _ in })
-        }
+        lock.lock()
+        let sock = fd, target = host, p = port
+        lock.unlock()
+        guard sock >= 0, !target.isEmpty else { return }
+        sendTo(sock, address: target, port: p, payload: message.encode())
     }
 
     func send(_ messages: [OSCMessage]) {
         for m in messages { send(m) }
     }
 
-    // MARK: - Discovery (UDP broadcast through a BSD socket; Network.framework cannot broadcast)
-
-    /// Broadcasts `/live/test` on every IPv4 interface. Live answers to our reply port, which
-    /// reveals its IP address.
-    func broadcastDiscovery() {
-        let payload = LiveCommand.test().encode()
-        let targets = OSCClient.broadcastAddresses() + ["255.255.255.255"]
-        #if canImport(Glibc)
-        let socketType = Int32(SOCK_DGRAM.rawValue)
-        #else
-        let socketType = SOCK_DGRAM
+    private func sendTo(_ sock: Int32, address: String, port: UInt16, payload: Data) {
+        var addr = sockaddr_in()
+        #if canImport(Darwin)
+        addr.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
         #endif
-        let fd = socket(AF_INET, socketType, 0)
-        guard fd >= 0 else { return }
-        defer { close(fd) }
-        var yes: Int32 = 1
-        setsockopt(fd, SOL_SOCKET, SO_BROADCAST, &yes, socklen_t(MemoryLayout<Int32>.size))
-        for target in targets {
-            var addr = sockaddr_in()
-            #if canImport(Darwin)
-            addr.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
-            #endif
-            addr.sin_family = sa_family_t(AF_INET)
-            addr.sin_port = port.bigEndian
-            addr.sin_addr.s_addr = inet_addr(target)
-            if addr.sin_addr.s_addr == 0xFFFF_FFFF { continue }
-            payload.withUnsafeBytes { raw in
-                guard let base = raw.baseAddress else { return }
-                withUnsafePointer(to: &addr) { ptr in
-                    ptr.withMemoryRebound(to: sockaddr.self, capacity: 1) { sa in
-                        _ = sendto(fd, base, payload.count, 0, sa, socklen_t(MemoryLayout<sockaddr_in>.size))
-                    }
+        addr.sin_family = sa_family_t(AF_INET)
+        addr.sin_port = port.bigEndian
+        addr.sin_addr.s_addr = inet_addr(address)
+        if addr.sin_addr.s_addr == 0xFFFF_FFFF && address != "255.255.255.255" { return }
+        payload.withUnsafeBytes { raw in
+            guard let base = raw.baseAddress else { return }
+            withUnsafePointer(to: &addr) { ptr in
+                ptr.withMemoryRebound(to: sockaddr.self, capacity: 1) { sa in
+                    _ = sendto(sock, base, payload.count, 0, sa, socklen_t(MemoryLayout<sockaddr_in>.size))
                 }
             }
+        }
+    }
+
+    // MARK: - Discovery (UDP broadcast of /live/test; Live answers to our reply port, which reveals its IP)
+
+    func broadcastDiscovery() {
+        lock.lock(); let sock = fd, p = port; lock.unlock()
+        guard sock >= 0 else { return }
+        let payload = LiveCommand.test().encode()
+        for target in OSCClient.broadcastAddresses() + ["255.255.255.255"] {
+            sendTo(sock, address: target, port: p, payload: payload)
         }
     }
 

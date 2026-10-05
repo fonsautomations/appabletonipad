@@ -124,14 +124,8 @@ final class LiveSession: ObservableObject {
         meterFlushTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in self?.flushMeters() }
         }
-        client.onListenerState = { [weak self] st in
-            Task { @MainActor [weak self] in
-                switch st {
-                case .failed(let e): self?.listenerError = "Reply port error: \(e)"
-                case .ready: self?.listenerError = ""
-                default: break
-                }
-            }
+        client.onListenerError = { [weak self] text in
+            Task { @MainActor [weak self] in self?.listenerError = text }
         }
     }
 
