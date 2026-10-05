@@ -10,9 +10,22 @@
 		A1000001000000000000000A /* StageDeck.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = StageDeck.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		A1000001000000000000000C /* Exceptions for "StageDeck" folder in "StageDeck" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = A1000001000000000000000F /* StageDeck */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		A1000001000000000000000B /* StageDeck */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A1000001000000000000000C /* Exceptions for "StageDeck" folder in "StageDeck" target */,
+			);
 			path = StageDeck;
 			sourceTree = "<group>";
 		};
