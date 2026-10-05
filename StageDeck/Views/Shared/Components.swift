@@ -336,3 +336,26 @@ struct ConfirmButton: View {
         }
     }
 }
+
+/// UNDO / REDO for profile edits, shown in every EDIT header.
+struct UndoButtons: View {
+    @EnvironmentObject var store: AppStore
+    var height: CGFloat = 30
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Button(action: { Haptics.tap(); store.undo() }) {
+                Image(systemName: "arrow.uturn.backward").font(.system(size: 13, weight: .bold))
+                    .foregroundColor(store.canUndo ? Theme.textPrimary : Theme.textSecondary.opacity(0.4))
+                    .frame(width: 40, height: height).background(Theme.panelRaised).cornerRadius(8)
+            }
+            .buttonStyle(.plain).disabled(!store.canUndo)
+            Button(action: { Haptics.tap(); store.redo() }) {
+                Image(systemName: "arrow.uturn.forward").font(.system(size: 13, weight: .bold))
+                    .foregroundColor(store.canRedo ? Theme.textPrimary : Theme.textSecondary.opacity(0.4))
+                    .frame(width: 40, height: height).background(Theme.panelRaised).cornerRadius(8)
+            }
+            .buttonStyle(.plain).disabled(!store.canRedo)
+        }
+    }
+}

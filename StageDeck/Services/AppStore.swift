@@ -6,7 +6,51 @@ import SwiftUI
 @MainActor
 final class AppStore: ObservableObject {
     @Published var profile: PerformerProfile {
-        didSet { scheduleSave(); applyProfile() }
+        didSet {
+            recordUndo(oldValue)
+            scheduleSave(); applyProfile()
+        }
+    }
+    /// Undo / redo of profile edits (controls, pages, buses, decks, names, settings). Quick successive
+    /// edits (typing a name, dragging) are grouped into one step.
+    @Published private(set) var canUndo = false
+    @Published private(set) var canRedo = false
+    private var undoStack: [PerformerProfile] = []
+    private var redoStack: [PerformerProfile] = []
+    private var restoringHistory = false
+    private var lastUndoPush = Date.distantPast
+    private static let undoLimit = 60
+
+    private func recordUndo(_ previous: PerformerProfile) {
+        guard !restoringHistory, previous != profile else { return }
+        let now = Date()
+        if now.timeIntervalSince(lastUndoPush) > 1.0 || undoStack.isEmpty {
+            undoStack.append(previous)
+            if undoStack.count > AppStore.undoLimit { undoStack.removeFirst() }
+        }
+        lastUndoPush = now
+        redoStack.removeAll()
+        canUndo = true; canRedo = false
+    }
+
+    func undo() {
+        guard let previous = undoStack.popLast() else { return }
+        restoringHistory = true
+        redoStack.append(profile)
+        profile = previous
+        restoringHistory = false
+        lastUndoPush = .distantPast
+        canUndo = !undoStack.isEmpty; canRedo = true
+    }
+
+    func redo() {
+        guard let next = redoStack.popLast() else { return }
+        restoringHistory = true
+        undoStack.append(profile)
+        profile = next
+        restoringHistory = false
+        lastUndoPush = .distantPast
+        canUndo = true; canRedo = !redoStack.isEmpty
     }
     @Published var activeTab: AppTab = .launcher
     @Published var launcherMode: LauncherMode = .dual

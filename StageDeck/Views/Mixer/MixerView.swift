@@ -105,6 +105,7 @@ struct MixerView: View {
                 }.frame(width: 110)
                 PadButton(title: "+ BUS", color: Theme.accent, active: true, height: 30, fontSize: 10) { showAddBus = true }.frame(width: 70)
                 Segmented(options: [(true, "FIT"), (false, "SCROLL")], selection: $store.profile.mixerFitToScreen, height: 30).frame(width: 130)
+                UndoButtons()
             } else {
                 let options: [(Int, String)] = [(-1, "ALL")] + sections.enumerated().map { (i, s) in
                     switch s {

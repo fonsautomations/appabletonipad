@@ -29,6 +29,7 @@ struct ControlView: View {
                 if !control.unresolved.isEmpty {
                     CapsLabel("\(control.unresolved.count) unassigned in this set", size: 9, color: Theme.yellow)
                 }
+                if editing { UndoButtons() }
                 PadButton(title: editing ? "DONE" : "EDIT", color: Theme.yellow, active: editing, height: 30, fontSize: 11) { editing.toggle() }.frame(width: 70)
             }
             switch panelCount {
@@ -653,6 +654,7 @@ struct TargetPicker: View {
                     Text("All enabled outputs").tag(MIDIPortID.all)
                     ForEach(midi.destinations) { d in Text(d.name).tag(MIDIPortID(String(d.id))) }
                 }
+                .pickerStyle(.navigationLink)
                 .onChange(of: port) { _ in commit() }
                 Text("In Live: MIDI map mode → move this control → click the parameter. Works for hardware too.")
                     .font(.footnote).foregroundColor(.secondary)
@@ -669,6 +671,7 @@ struct TargetPicker: View {
             Picker("Track", selection: $trackIndex) {
                 ForEach(live.song.tracks) { t in Text(t.name).tag(t.index) }
             }
+            .pickerStyle(.navigationLink)
             .onChange(of: trackIndex) { _ in deviceIndex = 0; parameterIndex = 0; requestParams(); commit() }
             let devices = live.song.track(trackIndex)?.devices ?? []
             if devices.isEmpty {
@@ -677,6 +680,7 @@ struct TargetPicker: View {
                 Picker("Device", selection: $deviceIndex) {
                     ForEach(devices) { d in Text(d.name).tag(d.index) }
                 }
+                .pickerStyle(.navigationLink)
                 .onChange(of: deviceIndex) { _ in parameterIndex = 0; requestParams(); commit() }
                 let params = devices[safeIndex: deviceIndex]?.parameters ?? []
                 if params.isEmpty {
@@ -685,6 +689,7 @@ struct TargetPicker: View {
                     Picker("Parameter", selection: $parameterIndex) {
                         ForEach(params, id: \.index) { p in Text(p.name).tag(p.index) }
                     }
+                    .pickerStyle(.navigationLink)
                     .onChange(of: parameterIndex) { _ in commit() }
                 }
             }

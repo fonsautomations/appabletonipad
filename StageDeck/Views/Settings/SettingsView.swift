@@ -12,6 +12,14 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section {
+                    HStack {
+                        Text("Undo / redo last change")
+                        Spacer()
+                        Button("Undo") { store.undo() }.disabled(!store.canUndo)
+                        Button("Redo") { store.redo() }.disabled(!store.canRedo).padding(.leading, 12)
+                    }
+                }
                 Group {
                     connectionSection
                     TemplatesSection()
