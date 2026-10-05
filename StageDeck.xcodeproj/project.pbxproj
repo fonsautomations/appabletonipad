@@ -11,7 +11,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		A1000001000000000000000C /* Exceptions for "StageDeck" folder in "StageDeck" target */ = {
+		B2000001000000000000001C /* Exceptions for "StageDeck" folder in "StageDeck" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -24,7 +24,7 @@
 		A1000001000000000000000B /* StageDeck */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				A1000001000000000000000C /* Exceptions for "StageDeck" folder in "StageDeck" target */,
+				B2000001000000000000001C /* Exceptions for "StageDeck" folder in "StageDeck" target */,
 			);
 			path = StageDeck;
 			sourceTree = "<group>";
