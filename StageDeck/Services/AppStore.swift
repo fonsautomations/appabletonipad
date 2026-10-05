@@ -10,6 +10,7 @@ final class AppStore: ObservableObject {
     }
     @Published var activeTab: AppTab = .launcher
     @Published var launcherMode: LauncherMode = .dual
+    @Published var controlDual: Bool = false
     @Published var selectedDeckIndex: Int = 0
     @Published var showSettings = false
     @Published var pendingTemplate: PendingTemplate? = nil

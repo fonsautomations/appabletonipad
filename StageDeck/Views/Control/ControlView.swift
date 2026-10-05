@@ -1,14 +1,64 @@
 import SwiftUI
 
 /// CONTROL: user-built pages of knobs, faders, buttons and XY pads mapped to Live parameters or MIDI.
+/// Single page, or two pages side by side (mix macros from different groups without editing).
 struct ControlView: View {
     @EnvironmentObject var store: AppStore
     @EnvironmentObject var live: LiveSession
     @EnvironmentObject var control: ControlRuntime
-    @State private var pageIndex = 0
+    @State private var panelPages: [Int] = [0, 1]
     @State private var editing = false
+
+    private var pages: [ControlPage] { store.profile.controlPages }
+
+    var body: some View {
+        VStack(spacing: 8) {
+            HStack(spacing: 8) {
+                Segmented(options: [(false, "SINGLE"), (true, "DUAL")], selection: $store.controlDual, height: 28).frame(width: 150)
+                Spacer()
+                if !control.lastSent.isEmpty {
+                    Text(control.lastSent).font(.system(size: 10, design: .monospaced)).foregroundColor(Theme.textSecondary).lineLimit(1)
+                }
+                if !control.unresolved.isEmpty {
+                    CapsLabel("\(control.unresolved.count) unassigned in this set", size: 9, color: Theme.yellow)
+                }
+                PadButton(title: editing ? "DONE" : "EDIT", color: Theme.yellow, active: editing, height: 28, fontSize: 11) { editing.toggle() }.frame(width: 70)
+            }
+            if store.controlDual && pages.count > 0 {
+                HStack(spacing: 10) {
+                    ControlPagePanel(pageIndex: binding(0), editing: editing)
+                    Divider().background(Theme.line)
+                    ControlPagePanel(pageIndex: binding(1), editing: editing)
+                }
+            } else {
+                ControlPagePanel(pageIndex: binding(0), editing: editing)
+            }
+        }
+        .padding(8)
+        .onAppear { control.seed(from: pages) }
+    }
+
+    private func binding(_ panel: Int) -> Binding<Int> {
+        Binding(get: {
+            let v = panelPages.indices.contains(panel) ? panelPages[panel] : 0
+            return min(max(0, v), max(0, pages.count - 1))
+        }, set: { v in
+            while panelPages.count <= panel { panelPages.append(0) }
+            panelPages[panel] = v
+        })
+    }
+}
+
+/// One page with its tabs and (in edit mode) its add / rename / delete controls.
+struct ControlPagePanel: View {
+    @Binding var pageIndex: Int
+    let editing: Bool
+    @EnvironmentObject var store: AppStore
+    @EnvironmentObject var live: LiveSession
+    @EnvironmentObject var control: ControlRuntime
     @State private var editingWidget: ControlWidget? = nil
     @State private var showAddMenu = false
+    @State private var showAddFromSet = false
     @State private var renamingPage = false
     @State private var pageName = ""
 
@@ -16,7 +66,7 @@ struct ControlView: View {
     private var page: ControlPage? { pages[safeIndex: pageIndex] }
 
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 6) {
             header
             if let page {
                 ScrollView(.vertical, showsIndicators: false) {
@@ -26,7 +76,6 @@ struct ControlView: View {
                                 ForEach(row) { widget in
                                     ControlWidgetView(widget: widget, editing: editing, onEdit: { editingWidget = widget })
                                         .frame(maxWidth: .infinity)
-                                        .frame(width: nil)
                                         .layoutPriority(Double(widget.width))
                                 }
                                 if ControlLayout.rowUnits(row) < ControlPage.columns {
@@ -35,7 +84,7 @@ struct ControlView: View {
                             }
                         }
                         if page.widgets.isEmpty {
-                            Text("Empty page. Tap EDIT, then ADD to place knobs, faders, buttons or an XY pad.")
+                            Text(editing ? "Empty page. Use ADD (one control) or ADD FROM SET (pick macros from any track or group)." : "Empty page. Tap EDIT to add controls.")
                                 .font(.system(size: 13, design: .rounded)).foregroundColor(Theme.textSecondary).padding(30)
                         }
                     }
@@ -50,10 +99,12 @@ struct ControlView: View {
                 Spacer()
             }
         }
-        .padding(8)
         .sheet(item: $editingWidget) { w in
-            WidgetEditor(widget: w, onSave: { updated in updateWidget(updated) }, onDelete: { deleteWidget(w.id) })
+            WidgetEditor(widget: w, pageIndex: pageIndex, onSave: { updated in updateWidget(updated) }, onDelete: { deleteWidget(w.id) })
                 .environmentObject(store).environmentObject(live).environmentObject(store.midi)
+        }
+        .sheet(isPresented: $showAddFromSet) {
+            AddFromSetSheet(pageIndex: pageIndex).environmentObject(store).environmentObject(live)
         }
         .confirmationDialog("Add control", isPresented: $showAddMenu, titleVisibility: .visible) {
             ForEach(ControlWidgetKind.allCases) { kind in
@@ -61,7 +112,11 @@ struct ControlView: View {
             }
             Button("Cancel", role: .cancel) {}
         }
-        .onAppear { control.seed(from: pages) }
+        .alert("Page name", isPresented: $renamingPage) {
+            TextField("Name", text: $pageName)
+            Button("Save") { if pageIndex < store.profile.controlPages.count { store.profile.controlPages[pageIndex].name = pageName } }
+            Button("Cancel", role: .cancel) {}
+        }
     }
 
     private var header: some View {
@@ -70,34 +125,22 @@ struct ControlView: View {
                 HStack(spacing: 4) {
                     ForEach(Array(pages.enumerated()), id: \.element.id) { (i, p) in
                         PadButton(title: p.name, color: Theme.accent, active: i == pageIndex, height: 28, fontSize: 11) { pageIndex = i }
-                            .frame(width: 110)
+                            .frame(width: 104)
                     }
                     if editing {
-                        PadButton(title: "+ PAGE", color: Theme.panelRaised, active: false, height: 28, fontSize: 10) { addPage() }.frame(width: 70)
+                        PadButton(title: "+ PAGE", color: Theme.panelRaised, active: false, height: 28, fontSize: 10) { addPage() }.frame(width: 64)
                     }
                 }
-            }
-            Spacer()
-            if !control.lastSent.isEmpty {
-                Text(control.lastSent).font(.system(size: 10, design: .monospaced)).foregroundColor(Theme.textSecondary).lineLimit(1)
-            }
-            if !control.unresolved.isEmpty {
-                CapsLabel("\(control.unresolved.count) unassigned in this set", size: 9, color: Theme.yellow)
             }
             if editing {
                 PadButton(title: "RENAME", color: Theme.panelRaised, active: false, height: 28, fontSize: 10) {
                     pageName = page?.name ?? ""
                     renamingPage = true
-                }.frame(width: 76)
-                PadButton(title: "DELETE PAGE", color: Theme.red, active: false, height: 28, fontSize: 10) { deletePage() }.frame(width: 100)
-                PadButton(title: "ADD", color: Theme.secondary, active: true, height: 28, fontSize: 11) { showAddMenu = true }.frame(width: 70)
+                }.frame(width: 70)
+                PadButton(title: "DELETE", color: Theme.red, active: false, height: 28, fontSize: 10) { deletePage() }.frame(width: 66)
+                PadButton(title: "ADD FROM SET", color: Theme.green, active: true, height: 28, fontSize: 10) { showAddFromSet = true }.frame(width: 110)
+                PadButton(title: "ADD", color: Theme.secondary, active: true, height: 28, fontSize: 11) { showAddMenu = true }.frame(width: 56)
             }
-            PadButton(title: editing ? "DONE" : "EDIT", color: Theme.yellow, active: editing, height: 28, fontSize: 11) { editing.toggle() }.frame(width: 70)
-        }
-        .alert("Page name", isPresented: $renamingPage) {
-            TextField("Name", text: $pageName)
-            Button("Save") { if pageIndex < store.profile.controlPages.count { store.profile.controlPages[pageIndex].name = pageName } }
-            Button("Cancel", role: .cancel) {}
         }
     }
 
@@ -136,6 +179,123 @@ struct ControlView: View {
 extension ControlLayout {
     static func rowUnits(_ row: [ControlWidget]) -> Int {
         row.reduce(0) { $0 + max(1, min(ControlPage.columns, $1.width)) }
+    }
+}
+
+/// Pick any parameters of any track or group in the loaded set and add them as controls in one go.
+struct AddFromSetSheet: View {
+    let pageIndex: Int
+    @EnvironmentObject var store: AppStore
+    @EnvironmentObject var live: LiveSession
+    @Environment(\.dismiss) private var dismiss
+    @State private var selected: Set<String> = []   // "track:device:param"
+    @State private var kind: ControlWidgetKind = .knob
+    @State private var filter = ""
+    @State private var expanded: Set<Int> = []
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                if live.song.tracks.isEmpty {
+                    Text("Load a set first: connect to Live, import an .als, or use demo mode.").foregroundColor(.secondary)
+                } else {
+                    Section {
+                        Picker("Add as", selection: $kind) {
+                            Text("Knobs").tag(ControlWidgetKind.knob)
+                            Text("Faders").tag(ControlWidgetKind.fader)
+                        }
+                        .pickerStyle(.segmented)
+                        TextField("Filter by track, device or macro name", text: $filter).autocorrectionDisabled()
+                        Text("\(selected.count) selected").font(.footnote).foregroundColor(.secondary)
+                    }
+                    ForEach(live.song.tracks) { track in
+                        let devices = track.devices.filter { !$0.parameters.isEmpty || $0.className.hasSuffix("GroupDevice") || $0.isAutoFilter }
+                        if !devices.isEmpty, matches(track: track) {
+                            Section {
+                                Button(action: { toggleExpanded(track) }) {
+                                    HStack {
+                                        RoundedRectangle(cornerRadius: 4).fill(Color(track.color)).frame(width: 12, height: 12)
+                                        Text(track.isGroup ? "[GROUP] " + track.name : track.name).font(.system(size: 15, weight: .semibold))
+                                        Spacer()
+                                        Text("\(devices.count) device\(devices.count == 1 ? "" : "s")").foregroundColor(.secondary).font(.footnote)
+                                        Image(systemName: expanded.contains(track.index) ? "chevron.down" : "chevron.right").foregroundColor(.secondary)
+                                    }
+                                }
+                                .buttonStyle(.plain)
+                                if expanded.contains(track.index) || !filter.isEmpty {
+                                    ForEach(devices) { device in
+                                        DeviceParameterRows(track: track, device: device, filter: filter, selected: $selected)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Add from set")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Add \(selected.count)") { add(); dismiss() }.disabled(selected.isEmpty)
+                }
+            }
+        }
+    }
+
+    private func matches(track: LiveTrack) -> Bool {
+        guard !filter.isEmpty else { return true }
+        let f = filter.lowercased()
+        if track.name.lowercased().contains(f) { return true }
+        return track.devices.contains { d in d.name.lowercased().contains(f) || d.parameters.contains { $0.name.lowercased().contains(f) } }
+    }
+
+    private func toggleExpanded(_ track: LiveTrack) {
+        if expanded.contains(track.index) { expanded.remove(track.index) } else {
+            expanded.insert(track.index)
+            for d in track.devices where d.parameters.isEmpty { live.requestDeviceParameters(track: track.index, device: d.index) }
+        }
+    }
+
+    private func add() {
+        guard pageIndex < store.profile.controlPages.count else { return }
+        var widgets: [ControlWidget] = []
+        for track in live.song.tracks {
+            for device in track.devices {
+                for p in device.parameters where selected.contains("\(track.index):\(device.index):\(p.index)") {
+                    var w = ControlWidget(name: p.name, kind: kind, colorHex: track.color.hexString)
+                    w.target = .liveParameter(track: track.name, trackIndex: track.index, device: device.name, deviceIndex: device.index, parameter: p.name, parameterIndex: p.index)
+                    w.value = p.normalized
+                    widgets.append(w)
+                }
+            }
+        }
+        store.profile.controlPages[pageIndex].widgets.append(contentsOf: widgets)
+    }
+}
+
+struct DeviceParameterRows: View {
+    let track: LiveTrack
+    let device: LiveDevice
+    let filter: String
+    @Binding var selected: Set<String>
+
+    var body: some View {
+        let params = device.parameters.filter { $0.name != "Device On" && (filter.isEmpty || $0.name.lowercased().contains(filter.lowercased()) || device.name.lowercased().contains(filter.lowercased()) || track.name.lowercased().contains(filter.lowercased())) }
+        if params.isEmpty {
+            Text("\(device.name): loading parameters…").font(.footnote).foregroundColor(.secondary)
+        } else {
+            ForEach(params, id: \.index) { p in
+                let key = "\(track.index):\(device.index):\(p.index)"
+                Toggle(isOn: Binding(get: { selected.contains(key) }, set: { on in if on { selected.insert(key) } else { selected.remove(key) } })) {
+                    HStack {
+                        Text(p.name)
+                        Spacer()
+                        Text(device.name).font(.footnote).foregroundColor(.secondary).lineLimit(1)
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -276,12 +436,16 @@ struct XYPadView: View {
     }
 }
 
-/// Edits a widget: name, colour, size, range and target.
+/// Edits a widget: name, colour, size, range, target, and copy / move to another page.
 struct WidgetEditor: View {
     @State var widget: ControlWidget
+    let pageIndex: Int
     let onSave: (ControlWidget) -> Void
     let onDelete: () -> Void
+    @EnvironmentObject var store: AppStore
     @Environment(\.dismiss) private var dismiss
+    @State private var destinationPage: Int = 0
+    @State private var copied = false
 
     var body: some View {
         NavigationStack {
@@ -308,6 +472,18 @@ struct WidgetEditor: View {
                         TargetPicker(target: $widget.targetY, allowNotes: false)
                     }
                 }
+                Section("Other pages") {
+                    Picker("Page", selection: $destinationPage) {
+                        ForEach(Array(store.profile.controlPages.enumerated()), id: \.offset) { (i, p) in Text(p.name).tag(i) }
+                    }
+                    HStack {
+                        Button(copied ? "Copied" : "Copy to that page") { copy(move: false) }
+                        Spacer()
+                        Button("Move to that page") { copy(move: true); dismiss() }.disabled(destinationPage == pageIndex)
+                    }
+                    Button("Move left in this page") { shift(-1) }
+                    Button("Move right in this page") { shift(1) }
+                }
                 Section {
                     Button("Delete control", role: .destructive) { onDelete(); dismiss() }
                 }
@@ -319,6 +495,24 @@ struct WidgetEditor: View {
                 ToolbarItem(placement: .confirmationAction) { Button("Save") { onSave(widget); dismiss() } }
             }
         }
+        .onAppear { destinationPage = pageIndex }
+    }
+
+    private func copy(move: Bool) {
+        guard destinationPage < store.profile.controlPages.count else { return }
+        var w = widget
+        w.id = UUID()
+        store.profile.controlPages[destinationPage].widgets.append(w)
+        copied = true
+        if move { onDelete() }
+    }
+
+    private func shift(_ by: Int) {
+        guard pageIndex < store.profile.controlPages.count,
+              let i = store.profile.controlPages[pageIndex].widgets.firstIndex(where: { $0.id == widget.id }) else { return }
+        let j = i + by
+        guard j >= 0, j < store.profile.controlPages[pageIndex].widgets.count else { return }
+        store.profile.controlPages[pageIndex].widgets.swapAt(i, j)
     }
 }
 
@@ -370,7 +564,7 @@ struct TargetPicker: View {
     @ViewBuilder
     private var livePickers: some View {
         if live.song.tracks.isEmpty {
-            Text("Connect to Live (or use demo mode) to pick a parameter.").font(.footnote).foregroundColor(.secondary)
+            Text("Connect to Live, import an .als or use demo mode to pick a parameter.").font(.footnote).foregroundColor(.secondary)
         } else {
             Picker("Track", selection: $trackIndex) {
                 ForEach(live.song.tracks) { t in Text(t.name).tag(t.index) }
