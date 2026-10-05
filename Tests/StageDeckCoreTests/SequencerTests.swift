@@ -335,3 +335,49 @@ final class SequencerTests: XCTestCase {
         XCTAssertEqual(MIDIMessage.parse([0xB3, 1, 2]), .controlChange(channel: 3, controller: 1, value: 2))
     }
 }
+
+final class BounceTests: XCTestCase {
+    func testBounceBakesConditionsAndSlides() {
+        var project = SeqProject()
+        project.patterns = [Pattern.empty(name: "A", trackCount: 2)]
+        project.patterns[0].tracks[0].steps[0] = Step.on(note: 36)
+        var half = Step.on(note: 38); half.condition = .ratio(n: 2, of: 2)
+        project.patterns[0].tracks[0].steps[4] = half
+        var slide = Step.on(note: 48); slide.slide = true
+        project.patterns[0].tracks[1].steps[0] = slide
+        project.patterns[0].tracks[1].steps[1] = Step.on(note: 50)
+        var retrig = Step.on(note: 60); retrig.retrig = Retrig(count: 2, rateTicks: 12)
+        project.patterns[0].tracks[1].steps[8] = retrig
+        let notes = PatternBounce.render(project: project, patternIndex: 0, bars: 2)
+        let t0 = notes[0] ?? []
+        XCTAssertEqual(t0.map { $0.pitch }, [36, 36, 38]) // kick both bars, 2:2 only in bar 2
+        XCTAssertEqual(t0.map { $0.start }, [0, 4, 5])
+        XCTAssertEqual(t0[0].duration, 0.125, accuracy: 1e-9) // half a 16th
+        let t1 = notes[1] ?? []
+        XCTAssertEqual(t1.map { $0.pitch }, [48, 50, 60, 60, 48, 50, 60, 60])
+        XCTAssertGreaterThan(t1[0].duration, 0.25) // slide overlaps the next step
+        XCTAssertEqual(t1[2].start, 2.0, accuracy: 1e-9)
+        XCTAssertEqual(t1[3].start, 2.125, accuracy: 1e-9)
+        let chunks = PatternBounce.oscChunks(t1, chunkSize: 3)
+        XCTAssertEqual(chunks.count, 3)
+        XCTAssertEqual(chunks[0].count, 15)
+        XCTAssertEqual(chunks[0][0], .int32(48))
+    }
+
+    func testProgramChangeAndTransportFlags() {
+        var project = SeqProject()
+        project.patterns = [Pattern.empty(name: "A", trackCount: 1)]
+        project.patterns[0].tracks[0].programChange = 12
+        project.sendTransport = false
+        let e = SequencerEngine(project: project, rng: SeededGenerator(seed: 1))
+        let start = e.start(atTick: 0)
+        XCTAssertEqual(start.map { $0.message }, [.programChange(channel: 9, program: 12)])
+        XCTAssertTrue(e.stop(atTick: 10).isEmpty)
+        let old = #"{"name":"x","tempo":120,"patterns":[{"id":"7E4A1C9B-0000-4000-8000-000000000001","name":"P","tracks":[{"id":"7E4A1C9B-0000-4000-8000-000000000002","name":"T","steps":[]}],"masterLength":16,"swing":50}]}"#
+        let decoded = try? JSONDecoder().decode(SeqProject.self, from: Data(old.utf8))
+        XCTAssertEqual(decoded?.patterns.first?.tracks.first?.steps.count, SeqTiming.maxSteps)
+        XCTAssertEqual(decoded?.sendTransport, true)
+        XCTAssertEqual(decoded?.patterns.first?.tracks.first?.programChange, -1)
+        for t in BuiltInTemplates.all { XCTAssertNoThrow(try StageDeckTemplate.parse(try t.encodeJSON())) }
+    }
+}

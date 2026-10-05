@@ -698,6 +698,51 @@ final class LiveSession: ObservableObject {
         for t in tracks { setMute(track: t, on: on) }
     }
 
+    // MARK: - Writing clips (sequencer → Live)
+
+    /// Creates (or clears) the MIDI clip at track/scene and fills it with the given notes.
+    /// Returns a user-facing status line.
+    @discardableResult
+    func writeClip(track: Int, scene: Int, lengthBeats: Double, name: String, notes: [BouncedNote]) -> String {
+        guard let t = song.track(track) else { return "Track \(track + 1) not found" }
+        guard !t.isGroup else { return "\(t.name) is a group track" }
+        guard t.hasMIDIInput else { return "\(t.name) is not a MIDI track" }
+        if state == .demo {
+            update(track) { tr in
+                tr.clips[scene] = LiveClip(trackIndex: track, sceneIndex: scene, name: name, color: tr.color, length: lengthBeats, isMIDI: true)
+            }
+            return "Demo: \(notes.count) notes → \(t.name), scene \(scene + 1)"
+        }
+        guard state == .connected else { return "Not connected to Live" }
+        let length = max(1, lengthBeats)
+        if song.clip(track: track, scene: scene) != nil {
+            send(LiveCommand.removeAllNotes(track: track, scene: scene))
+            send(LiveCommand.clipSet("loop_start", track: track, scene: scene, value: .float(0)))
+            send(LiveCommand.clipSet("loop_end", track: track, scene: scene, value: .float(Float(length))))
+            send(LiveCommand.clipSet("end_marker", track: track, scene: scene, value: .float(Float(length))))
+        } else {
+            send(LiveCommand.createClip(track: track, scene: scene, lengthBeats: length))
+        }
+        for chunk in PatternBounce.oscChunks(notes) {
+            send(LiveCommand.addNotes(track: track, scene: scene, args: chunk))
+        }
+        send(LiveCommand.clipSet("name", track: track, scene: scene, value: .string(name)))
+        update(track) { tr in
+            tr.clips[scene] = LiveClip(trackIndex: track, sceneIndex: scene, name: name, color: tr.color, length: length, isMIDI: true)
+        }
+        // Re-read the clip row shortly after so names/colours match Live.
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 700_000_000)
+            self?.send(LiveCommand.trackClipNames(track: track))
+            self?.send(LiveCommand.trackClipColors(track: track))
+            self?.send(LiveCommand.trackClipLengths(track: track))
+        }
+        return "\(notes.count) notes → \(t.name), scene \(scene + 1) (\(Int(length / 4)) bars)"
+    }
+
+    /// MIDI tracks that can receive a clip.
+    var midiTracks: [LiveTrack] { song.tracks.filter { $0.hasMIDIInput && !$0.isGroup } }
+
     // MARK: - Demo mode (no Live needed)
 
     func enterDemo() {

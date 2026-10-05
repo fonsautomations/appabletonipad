@@ -86,6 +86,22 @@ Detalles y resolución de problemas en [`ableton/README.md`](ableton/README.md).
    una pista MIDI con entrada "Network Session 1" (o el puerto que uses), canal según la pista del
    secuenciador. Por defecto el secuenciador sigue el play/stop y el tempo de Live.
 
+## Con hardware, con instrumentos de Live, o improvisando
+
+* **Hardware**: cada pista del secuenciador elige puerto MIDI (USB, Bluetooth, red, o "todos") y
+  canal; clock MIDI y Start/Stop configurables (y a qué puerto van); program change por pista al
+  arrancar un patrón; lanes de CC con nombre y valor por defecto; compensación de latencia por
+  puerto en Ajustes → MIDI (por ejemplo −15 ms para Bluetooth); los puertos elegidos se recuerdan.
+  La app también puede esclavizarse a clock externo (SEQ → MIDI Clock In) o funcionar sola sin
+  Live. Plantilla incluida "Hardware: acid + drums" como punto de partida.
+* **Instrumentos de Live**: el secuenciador llega a cualquier pista MIDI de Live por Network MIDI,
+  Bluetooth o cable (IDAM). SEQ → TOOLS → **Send to Live** vuelca el patrón actual (o todas las
+  pistas, por nombre) a un clip MIDI de la pista y escena que elijas, con condiciones,
+  probabilidad, retrigs, swing y micro‑timing ya convertidos en notas; eliges cuántos compases.
+* **Improvisación**: teclado en escala y pads con grabación en vivo cuantizada, FILL, mute/solo por
+  pista, cola de patrones, euclid y random al vuelo, páginas CTRL con XY y botones, y nada que
+  dependa de un set preparado: el secuenciador y las páginas CTRL funcionan sin Live.
+
 ## Estructura del proyecto
 
 ```

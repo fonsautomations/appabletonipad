@@ -353,7 +353,35 @@ public enum SetDescriber {
 
 /// Templates shipped with the app.
 public enum BuiltInTemplates {
-    public static var all: [StageDeckTemplate] { [macros8, stemsAB, drumSeq909] }
+    public static var all: [StageDeckTemplate] { [macros8, stemsAB, drumSeq909, hardwareAcid] }
+
+    public static var hardwareAcid: StageDeckTemplate {
+        var t = StageDeckTemplate(name: "Hardware: acid + drums")
+        t.author = "StageDeck"
+        t.description = "For a hardware rig: BASS track on channel 1 with 303-style slides/accents and CC lanes (cutoff 74, resonance 71, env 73, decay 75, accent 72), DRUMS on channel 10, program change on pattern start. Send clock from the sequencer."
+        var p = Pattern.empty(name: "ACID 1", trackCount: 2)
+        p.tracks[0].name = "BASS"; p.tracks[0].channel = 0; p.tracks[0].isDrum = false; p.tracks[0].defaultNote = 36; p.tracks[0].programChange = 0
+        p.tracks[0].ccLanes = [CCLane(name: "Cutoff", controller: 74, defaultValue: 40), CCLane(name: "Reso", controller: 71, defaultValue: 90),
+                               CCLane(name: "Env mod", controller: 73, defaultValue: 70), CCLane(name: "Decay", controller: 75, defaultValue: 50), CCLane(name: "Accent", controller: 72, defaultValue: 80)]
+        let bassline: [(Int, Int, Bool, Bool)] = [(0, 36, true, false), (2, 36, false, true), (3, 48, false, false), (6, 36, true, false), (8, 39, false, true), (9, 36, false, false), (11, 43, false, false), (12, 36, true, false), (14, 48, false, true), (15, 46, false, false)]
+        for (i, note, accent, slide) in bassline {
+            var st = Step.on(note: note, velocity: 100); st.accent = accent; st.slide = slide
+            if i == 6 { st.locks = [74: 90] }
+            if i == 14 { st.locks = [74: 20] }
+            p.tracks[0].steps[i] = st
+        }
+        var lfo = LFO(); lfo.enabled = true; lfo.shape = .triangle; lfo.periodTicks = 768; lfo.depth = 60; lfo.center = 50; lfo.destination = .cc(74)
+        p.tracks[0].lfos[0] = lfo
+        p.tracks[1].name = "DRUMS"; p.tracks[1].channel = 9; p.tracks[1].isDrum = true
+        for i in [0, 4, 8, 12] { p.tracks[1].steps[i] = Step.on(note: 36, velocity: 120) }
+        for i in [4, 12] { var st = Step.on(note: 38, velocity: 100); st.notes = [36, 38]; p.tracks[1].steps[i] = st }
+        for i in stride(from: 2, to: 16, by: 4) { p.tracks[1].steps[i] = Step.on(note: 42, velocity: 90) }
+        var q = p; q.id = UUID(); q.name = "ACID 2"; q.tracks[0].transpose = 5
+        t.patterns = [p, q]
+        var s = StageDeckTemplate.SequencerSettings(); s.tempo = 132; s.arrangeMode = .chain; s.chain = [0, 0, 1, 0]
+        t.sequencer = s
+        return t
+    }
 
     public static var macros8: StageDeckTemplate {
         var t = StageDeckTemplate(name: "Macros 8")

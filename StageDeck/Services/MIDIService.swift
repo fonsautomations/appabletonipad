@@ -51,6 +51,11 @@ final class MIDIService: ObservableObject, @unchecked Sendable {
     }
     @Published private(set) var lastSentDescription: String = ""
     @Published private(set) var inputActivity: Int = 0
+    /// Per-destination timing offset in milliseconds (negative = send earlier, e.g. -20 for Bluetooth MIDI).
+    @Published var portOffsetsMs: [Int32: Double] = [:] {
+        didSet { rebuildOffsetCache() }
+    }
+    private var offsetTicksByRef: [MIDIEndpointRef: Int64] = [:]
 
     /// Called on the MIDI thread for every incoming message.
     var onMessage: (@Sendable (MIDIMessage, UInt64) -> Void)?
@@ -146,6 +151,27 @@ final class MIDIService: ObservableObject, @unchecked Sendable {
         lock.lock()
         activeDestinationRefs = enabledDestinationIDs.compactMap { destinationRefs[$0] }
         lock.unlock()
+        rebuildOffsetCache()
+    }
+
+    private func rebuildOffsetCache() {
+        lock.lock()
+        var map: [MIDIEndpointRef: Int64] = [:]
+        for (uid, ms) in portOffsetsMs {
+            if let ref = destinationRefs[uid], abs(ms) > 0.01 {
+                let ticks = HostTime.hostTicks(fromSeconds: abs(ms) / 1000.0)
+                map[ref] = ms < 0 ? -Int64(ticks) : Int64(ticks)
+            }
+        }
+        offsetTicksByRef = map
+        lock.unlock()
+    }
+
+    /// Applies a destination's latency offset to a timestamp (0 = "now" stays 0).
+    private func shifted(_ ts: UInt64, by offset: Int64) -> UInt64 {
+        guard ts != 0, offset != 0 else { return ts }
+        let v = Int64(bitPattern: ts) &+ offset
+        return v > 0 ? UInt64(v) : 1
     }
 
     private func reconnectSources() {
@@ -173,6 +199,7 @@ final class MIDIService: ObservableObject, @unchecked Sendable {
         guard !messages.isEmpty else { return }
         lock.lock()
         let targets = activeDestinationRefs
+        let offsets = offsetTicksByRef
         lock.unlock()
         let specific: MIDIEndpointRef? = {
             if port == .all { return nil }
@@ -180,25 +207,40 @@ final class MIDIService: ObservableObject, @unchecked Sendable {
             lock.lock(); defer { lock.unlock() }
             return destinationRefs[uid]
         }()
-        // Group by timestamp to keep event lists small and ordered.
+        let words: [(UInt64, UInt32)] = messages.compactMap { m, ts in MIDIService.umpWord(for: m).map { (ts, $0) } }
+        guard !words.isEmpty else { return }
+        let destinations: [MIDIEndpointRef] = specific.map { [$0] } ?? targets
+        for dest in destinations {
+            sendWords(words, to: dest, offset: offsets[dest] ?? 0)
+        }
+        sendWords(words, to: nil, offset: 0) // virtual source for other apps / IDAM
+        sendCounter += 1
+        if sendCounter % 32 == 0, let last = messages.last {
+            let text = last.0.description
+            DispatchQueue.main.async { [weak self] in self?.lastSentDescription = text }
+        }
+    }
+
+    /// Builds one event list (ascending timestamps, offset applied) and sends it to a destination,
+    /// or publishes it on the virtual source when `dest` is nil.
+    private func sendWords(_ words: [(UInt64, UInt32)], to dest: MIDIEndpointRef?, offset: Int64) {
         var groups: [(UInt64, [UInt32])] = []
-        for (message, ts) in messages {
-            guard let word = MIDIService.umpWord(for: message) else { continue }
-            if let last = groups.last, last.0 == ts, last.1.count < 60 {
+        for (ts, word) in words {
+            let stamped = shifted(ts, by: offset)
+            if let last = groups.last, last.0 == stamped, last.1.count < 60 {
                 groups[groups.count - 1].1.append(word)
             } else {
-                groups.append((ts, [word]))
+                groups.append((stamped, [word]))
             }
         }
-        // Build one event list (ascending timestamps) in a heap buffer that outlives every call.
         let bufferSize = 4096
         let raw = UnsafeMutableRawPointer.allocate(byteCount: bufferSize, alignment: MemoryLayout<MIDIEventList>.alignment)
         defer { raw.deallocate() }
         let listPtr = raw.bindMemory(to: MIDIEventList.self, capacity: 1)
         var packet = MIDIEventListInit(listPtr, ._1_0)
         var added = 0
-        for (ts, words) in groups {
-            var w = words
+        for (ts, ws) in groups {
+            var w = ws
             let next = MIDIEventListAdd(listPtr, bufferSize, packet, ts, w.count, &w)
             if let p = next as UnsafeMutablePointer<MIDIEventPacket>? {
                 packet = p
@@ -208,16 +250,10 @@ final class MIDIService: ObservableObject, @unchecked Sendable {
             }
         }
         guard added > 0 else { return }
-        if let dest = specific {
+        if let dest {
             MIDISendEventList(outputPort, dest, listPtr)
         } else {
-            for dest in targets { MIDISendEventList(outputPort, dest, listPtr) }
-        }
-        MIDIReceivedEventList(virtualSource, listPtr)
-        sendCounter += 1
-        if sendCounter % 32 == 0, let last = messages.last {
-            let text = last.0.description
-            DispatchQueue.main.async { [weak self] in self?.lastSentDescription = text }
+            MIDIReceivedEventList(virtualSource, listPtr)
         }
     }
 

@@ -57,6 +57,31 @@ final class AppStore: ObservableObject {
             .sink { [weak self] _ in self?.scheduleSave() }
             .store(in: &cancellables)
 
+        // MIDI hardware choices live in the profile so they survive relaunches.
+        midi.enabledDestinationIDs = Set(profile.midiEnabledDestinations.compactMap { Int32($0) })
+        midi.enabledSourceIDs = Set(profile.midiEnabledSources.compactMap { Int32($0) })
+        midi.portOffsetsMs = Dictionary(uniqueKeysWithValues: profile.midiPortOffsetsMs.compactMap { k, v in Int32(k).map { ($0, v) } })
+        midi.networkSessionEnabled = profile.midiNetworkSession
+        midi.$enabledDestinationIDs.dropFirst().sink { [weak self] ids in
+            guard let self else { return }
+            let list = ids.map { String($0) }.sorted()
+            if list != self.profile.midiEnabledDestinations { self.profile.midiEnabledDestinations = list }
+        }.store(in: &cancellables)
+        midi.$enabledSourceIDs.dropFirst().sink { [weak self] ids in
+            guard let self else { return }
+            let list = ids.map { String($0) }.sorted()
+            if list != self.profile.midiEnabledSources { self.profile.midiEnabledSources = list }
+        }.store(in: &cancellables)
+        midi.$portOffsetsMs.dropFirst().sink { [weak self] offsets in
+            guard let self else { return }
+            let map = Dictionary(uniqueKeysWithValues: offsets.map { (String($0.key), $0.value) })
+            if map != self.profile.midiPortOffsetsMs { self.profile.midiPortOffsetsMs = map }
+        }.store(in: &cancellables)
+        midi.$networkSessionEnabled.dropFirst().sink { [weak self] on in
+            guard let self else { return }
+            if on != self.profile.midiNetworkSession { self.profile.midiNetworkSession = on }
+        }.store(in: &cancellables)
+
         live.onSessionLoaded = { [weak self] in
             self?.sessionLoaded()
         }

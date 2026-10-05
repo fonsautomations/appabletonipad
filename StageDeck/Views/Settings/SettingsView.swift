@@ -94,15 +94,28 @@ struct SettingsView: View {
                     .font(.footnote).foregroundColor(.secondary)
             }
             ForEach(midi.destinations) { d in
-                Toggle(isOn: Binding(get: { midi.enabledDestinationIDs.contains(d.id) }, set: { on in
-                    if on { midi.enabledDestinationIDs.insert(d.id) } else { midi.enabledDestinationIDs.remove(d.id) }
-                })) {
-                    HStack {
-                        Image(systemName: d.isBluetooth ? "wave.3.right" : (d.isNetwork ? "network" : "cable.connector"))
-                        Text(d.name)
+                VStack(alignment: .leading, spacing: 4) {
+                    Toggle(isOn: Binding(get: { midi.enabledDestinationIDs.contains(d.id) }, set: { on in
+                        if on { midi.enabledDestinationIDs.insert(d.id) } else { midi.enabledDestinationIDs.remove(d.id) }
+                    })) {
+                        HStack {
+                            Image(systemName: d.isBluetooth ? "wave.3.right" : (d.isNetwork ? "network" : "cable.connector"))
+                            Text(d.name)
+                        }
+                    }
+                    if midi.enabledDestinationIDs.contains(d.id) {
+                        HStack {
+                            Text("Timing offset").font(.footnote).foregroundColor(.secondary)
+                            Spacer()
+                            Stepper("\(Int(midi.portOffsetsMs[d.id] ?? 0)) ms", value: Binding(get: { midi.portOffsetsMs[d.id] ?? 0 },
+                                                                                         set: { midi.portOffsetsMs[d.id] = $0 }), in: -50...50, step: 1)
+                                .font(.footnote)
+                                .frame(width: 170)
+                        }
                     }
                 }
             }
+            Text("Negative offset sends earlier to compensate a slow link (Bluetooth MIDI is typically 10–20 ms late).").font(.footnote).foregroundColor(.secondary)
             if !midi.sources.isEmpty {
                 Text("Clock input (sync the sequencer to external MIDI clock)").font(.footnote).foregroundColor(.secondary)
                 ForEach(midi.sources) { s in
@@ -114,6 +127,11 @@ struct SettingsView: View {
                 }
             }
             Toggle("Send MIDI clock from the sequencer", isOn: $store.profile.sequencerSendsClock)
+            Toggle("Send MIDI Start/Stop with the clock", isOn: $sequencer.project.sendTransport)
+            Picker("Clock goes to", selection: $sequencer.project.clockPort) {
+                Text("All enabled outputs").tag(MIDIPortID.all)
+                ForEach(midi.destinations) { d in Text(d.name).tag(MIDIPortID(String(d.id))) }
+            }
             Button("MIDI panic (all notes off)", role: .destructive) { sequencer.panic() }
         }
     }

@@ -61,6 +61,12 @@ public struct PerformerProfile: Equatable, Codable {
     // Control pages (editable MIDI / Live parameter controller)
     public var controlPages: [ControlPage] = [ControlPage.starter()]
 
+    // MIDI hardware: remembered port choices (CoreMIDI unique IDs as strings) and per-port latency offsets (ms, negative = earlier)
+    public var midiEnabledDestinations: [String] = []
+    public var midiEnabledSources: [String] = []
+    public var midiPortOffsetsMs: [String: Double] = [:]
+    public var midiNetworkSession: Bool = true
+
     public init() {}
 
     /// Tolerant decoding: any key missing from an older file keeps its default value.
@@ -108,6 +114,10 @@ public struct PerformerProfile: Equatable, Codable {
         accentHex = get(.accentHex, d.accentHex)
         secondaryHex = get(.secondaryHex, d.secondaryHex)
         controlPages = get(.controlPages, d.controlPages)
+        midiEnabledDestinations = get(.midiEnabledDestinations, d.midiEnabledDestinations)
+        midiEnabledSources = get(.midiEnabledSources, d.midiEnabledSources)
+        midiPortOffsetsMs = get(.midiPortOffsetsMs, d.midiPortOffsetsMs)
+        midiNetworkSession = get(.midiNetworkSession, d.midiNetworkSession)
     }
 
     public static func clipNoteKey(track: String, clip: String) -> String { "\(track)|\(clip)" }

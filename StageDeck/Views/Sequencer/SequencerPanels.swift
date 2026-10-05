@@ -225,6 +225,7 @@ struct TrackEditor: View {
                         ValueDial(title: "Transpose", value: Binding(get: { sequencer.track.transpose }, set: { v in sequencer.updateTrack { $0.transpose = v } }), range: -36...36).frame(width: 90)
                         ValueDial(title: "Chance %", value: Binding(get: { sequencer.track.chance }, set: { v in sequencer.updateTrack { $0.chance = v } }), range: 0...100, step: 5).frame(width: 90)
                         ValueDial(title: "Swing", value: Binding(get: { sequencer.track.swing ?? sequencer.pattern.swing }, set: { v in sequencer.updateTrack { $0.swing = v } }), range: 50...80).frame(width: 90)
+                        ValueDial(title: "Prog chg", value: Binding(get: { sequencer.track.programChange }, set: { v in sequencer.updateTrack { $0.programChange = v } }), range: -1...127, format: { $0 < 0 ? "—" : "\($0 + 1)" }).frame(width: 90)
                     }
                     HStack(spacing: 8) {
                         ToggleButton(title: "DRUM", isOn: Binding(get: { sequencer.track.isDrum }, set: { v in sequencer.updateTrack { $0.isDrum = v } }), color: Theme.secondary, height: 32).frame(width: 80)
@@ -526,14 +527,71 @@ struct ArrangeView: View {
     }
 }
 
-/// Generative helpers: euclid, randomize, clear, copy track.
+/// Generative helpers: euclid, randomize, clear, copy track, send to Live.
 struct ToolsView: View {
     @EnvironmentObject var sequencer: SequencerRuntime
+    @EnvironmentObject var live: LiveSession
+    @EnvironmentObject var store: AppStore
     @State private var pulses = 4
     @State private var rotation = 0
     @State private var density = 40
+    @State private var liveTrack: Int = -1
+    @State private var liveScene: Int = 0
+    @State private var bars: Int = 2
+    @State private var sendResult = ""
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            generativeTools
+            sendToLive
+        }
+        .padding(4)
+    }
+
+    private var sendToLive: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            CapsLabel("Send pattern to a Live MIDI clip (conditions, probability, retrigs, swing and micro-timing get baked in)", size: 10, color: Theme.textPrimary)
+            if live.midiTracks.isEmpty {
+                Text(live.state == .connected || live.state == .demo ? "No MIDI tracks in the set. Add a MIDI track in Live (with an instrument) and reload." : "Connect to Live to send patterns as clips.")
+                    .font(.system(size: 12, design: .rounded)).foregroundColor(Theme.textSecondary)
+            } else {
+                HStack(spacing: 8) {
+                    ValueDial(title: "Live track", value: Binding(get: { max(0, live.midiTracks.firstIndex(where: { $0.index == liveTrack }) ?? 0) },
+                                                                 set: { liveTrack = live.midiTracks[max(0, min(live.midiTracks.count - 1, $0))].index }),
+                              range: 0...max(0, live.midiTracks.count - 1), format: { i in live.midiTracks[safeIndex: i]?.name ?? "?" }).frame(width: 170)
+                    ValueDial(title: "Scene", value: $liveScene, range: 0...max(0, live.song.scenes.count - 1), format: { i in live.song.scenes[safeIndex: i]?.name ?? "\(i + 1)" }).frame(width: 150)
+                    ValueDial(title: "Bars", value: $bars, range: 1...16, format: { "\($0)" }).frame(width: 80)
+                    PadButton(title: "SEND \(sequencer.track.name.uppercased())", color: Theme.green, active: true, height: 34, fontSize: 11) { send(all: false) }.frame(width: 150)
+                    PadButton(title: "SEND ALL (BY NAME)", color: Theme.secondary, active: false, height: 34, fontSize: 10) { send(all: true) }.frame(width: 150)
+                }
+                if !sendResult.isEmpty {
+                    Text(sendResult).font(.system(size: 11, design: .rounded)).foregroundColor(Theme.textSecondary)
+                }
+            }
+        }
+        .onAppear { if liveTrack < 0, let first = live.midiTracks.first { liveTrack = first.index } }
+    }
+
+    private func send(all: Bool) {
+        let notes = PatternBounce.render(project: sequencer.project, patternIndex: sequencer.currentPatternIndex, bars: bars, seed: UInt64(Date().timeIntervalSince1970))
+        let length = Double(bars) * PatternBounce.beatsPerBar
+        var results: [String] = []
+        if all {
+            for (i, t) in sequencer.pattern.tracks.enumerated() {
+                guard let target = live.midiTracks.first(where: { $0.name.caseInsensitiveCompare(t.name) == .orderedSame || store.profile.displayName(forTrack: $0.name).caseInsensitiveCompare(t.name) == .orderedSame }) else { continue }
+                results.append(live.writeClip(track: target.index, scene: liveScene, lengthBeats: length, name: "\(sequencer.pattern.name) \(t.name)", notes: notes[i] ?? []))
+            }
+            if results.isEmpty { results.append("No Live MIDI track names match the sequencer tracks (\(sequencer.pattern.tracks.map { $0.name }.joined(separator: ", "))).") }
+        } else {
+            let target = liveTrack >= 0 ? liveTrack : (live.midiTracks.first?.index ?? 0)
+            results.append(live.writeClip(track: target, scene: liveScene, lengthBeats: length, name: "\(sequencer.pattern.name) \(sequencer.track.name)", notes: notes[sequencer.selectedTrack] ?? []))
+        }
+        sendResult = results.joined(separator: " · ")
+        store.lastImportSummary = sendResult
+        Haptics.launch()
+    }
+
+    private var generativeTools: some View {
         HStack(alignment: .top, spacing: 16) {
             VStack(alignment: .leading, spacing: 6) {
                 CapsLabel("Euclid", size: 10, color: Theme.textPrimary)
@@ -560,7 +618,6 @@ struct ToolsView: View {
                 }
             }
         }
-        .padding(4)
     }
 
     private func shift(_ by: Int) {

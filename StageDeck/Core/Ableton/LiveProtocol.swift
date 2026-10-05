@@ -87,6 +87,21 @@ public enum LiveCommand {
     public static func clipGet(_ property: String, track: Int, scene: Int) -> OSCMessage {
         OSCMessage("/live/clip/get/\(property)", [.int32(Int32(track)), .int32(Int32(scene))])
     }
+    public static func createClip(track: Int, scene: Int, lengthBeats: Double) -> OSCMessage {
+        OSCMessage("/live/clip_slot/create_clip", [.int32(Int32(track)), .int32(Int32(scene)), .float(Float(lengthBeats))])
+    }
+    public static func removeAllNotes(track: Int, scene: Int) -> OSCMessage {
+        OSCMessage("/live/clip/remove/notes", [.int32(Int32(track)), .int32(Int32(scene))])
+    }
+    public static func addNotes(track: Int, scene: Int, args: [OSCValue]) -> OSCMessage {
+        OSCMessage("/live/clip/add/notes", [.int32(Int32(track)), .int32(Int32(scene))] + args)
+    }
+    public static func clipSet(_ property: String, track: Int, scene: Int, value: OSCValue) -> OSCMessage {
+        OSCMessage("/live/clip/set/\(property)", [.int32(Int32(track)), .int32(Int32(scene)), value])
+    }
+    public static func sceneSetName(_ scene: Int, name: String) -> OSCMessage {
+        OSCMessage("/live/scene/set/name", [.int32(Int32(scene)), .string(name)])
+    }
     public static func fireScene(_ scene: Int) -> OSCMessage { OSCMessage("/live/scene/fire", [.int32(Int32(scene))]) }
     public static func sceneGet(_ property: String, scene: Int) -> OSCMessage {
         OSCMessage("/live/scene/get/\(property)", [.int32(Int32(scene))])

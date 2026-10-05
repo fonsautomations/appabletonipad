@@ -265,9 +265,43 @@ public struct SeqTrack: Equatable, Hashable, Codable, Identifiable {
     public var ccLanes: [CCLane] = []
     public var sendClock: Bool = false
     public var isDrum: Bool = false
+    /// MIDI program change sent on the port/channel when the pattern starts (-1 = none).
+    public var programChange: Int = -1
 
     public init(name: String) {
         self.name = name
+    }
+
+    /// Tolerant decoding so saved projects survive new fields.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        func get<T: Decodable>(_ key: CodingKeys, _ fallback: T) -> T { (try? c.decodeIfPresent(T.self, forKey: key)) ?? fallback }
+        let d = SeqTrack(name: "Track")
+        id = get(.id, UUID())
+        name = get(.name, d.name)
+        colorHex = get(.colorHex, d.colorHex)
+        port = get(.port, d.port)
+        channel = get(.channel, d.channel)
+        defaultNote = get(.defaultNote, d.defaultNote)
+        defaultVelocity = get(.defaultVelocity, d.defaultVelocity)
+        accentVelocity = get(.accentVelocity, d.accentVelocity)
+        length = get(.length, d.length)
+        speed = get(.speed, d.speed)
+        direction = get(.direction, d.direction)
+        mute = get(.mute, d.mute)
+        solo = get(.solo, d.solo)
+        transpose = get(.transpose, d.transpose)
+        scaleLock = get(.scaleLock, d.scaleLock)
+        swing = get(.swing, d.swing)
+        chance = get(.chance, d.chance)
+        var decodedSteps = get(.steps, d.steps)
+        if decodedSteps.count < SeqTiming.maxSteps { decodedSteps.append(contentsOf: Array(repeating: Step(), count: SeqTiming.maxSteps - decodedSteps.count)) }
+        steps = Array(decodedSteps.prefix(SeqTiming.maxSteps))
+        lfos = get(.lfos, d.lfos)
+        ccLanes = get(.ccLanes, d.ccLanes)
+        sendClock = get(.sendClock, d.sendClock)
+        isDrum = get(.isDrum, d.isDrum)
+        programChange = get(.programChange, d.programChange)
     }
 
     public func step(_ i: Int) -> Step {
@@ -350,10 +384,32 @@ public struct SeqProject: Equatable, Codable {
     public var scaleName: String = Scale.minor.name
     public var globalTranspose: Int = 0
     public var sendMIDIClock: Bool = true
+    /// Also send MIDI Start/Stop with the clock (some hardware should free-run instead).
+    public var sendTransport: Bool = true
     public var clockPort: MIDIPortID = .all
     public var sendDefaultsOnPatternStart: Bool = false
 
     public init() {}
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        func get<T: Decodable>(_ key: CodingKeys, _ fallback: T) -> T { (try? c.decodeIfPresent(T.self, forKey: key)) ?? fallback }
+        let d = SeqProject()
+        name = get(.name, d.name)
+        tempo = get(.tempo, d.tempo)
+        patterns = get(.patterns, d.patterns)
+        if patterns.isEmpty { patterns = d.patterns }
+        chain = get(.chain, d.chain)
+        song = get(.song, d.song)
+        arrangeMode = get(.arrangeMode, d.arrangeMode)
+        rootNote = get(.rootNote, d.rootNote)
+        scaleName = get(.scaleName, d.scaleName)
+        globalTranspose = get(.globalTranspose, d.globalTranspose)
+        sendMIDIClock = get(.sendMIDIClock, d.sendMIDIClock)
+        sendTransport = get(.sendTransport, d.sendTransport)
+        clockPort = get(.clockPort, d.clockPort)
+        sendDefaultsOnPatternStart = get(.sendDefaultsOnPatternStart, d.sendDefaultsOnPatternStart)
+    }
 
     public var scale: Scale { Scale.named(scaleName) }
 

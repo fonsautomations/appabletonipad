@@ -7,9 +7,11 @@ public struct ScheduledEvent: Equatable, CustomStringConvertible {
     public var message: MIDIMessage
     /// Sort order inside a tick: clock < note off < control < note on.
     public var order: Int
+    /// Sequencer track that produced the event (-1 for clock / transport).
+    public var track: Int
 
-    public init(tick: Int, port: MIDIPortID, message: MIDIMessage, order: Int) {
-        self.tick = tick; self.port = port; self.message = message; self.order = order
+    public init(tick: Int, port: MIDIPortID, message: MIDIMessage, order: Int, track: Int = -1) {
+        self.tick = tick; self.port = port; self.message = message; self.order = order; self.track = track
     }
 
     public var description: String { "@\(tick) \(port) \(message)" }
@@ -175,7 +177,7 @@ public final class SequencerEngine {
             currentPatternIndex = first.patternIndex
         }
         var events: [ScheduledEvent] = []
-        if project.sendMIDIClock {
+        if project.sendMIDIClock && project.sendTransport {
             events.append(ScheduledEvent(tick: tick, port: project.clockPort, message: .start, order: Order.clock))
         }
         events.append(contentsOf: defaultsEvents(atTick: tick))
@@ -190,7 +192,7 @@ public final class SequencerEngine {
         }
         activeNotes.removeAll()
         deferred.removeAll()
-        if project.sendMIDIClock {
+        if project.sendMIDIClock && project.sendTransport {
             events.append(ScheduledEvent(tick: tick, port: project.clockPort, message: .stop, order: Order.clock))
         }
         isRunning = false
@@ -321,8 +323,13 @@ public final class SequencerEngine {
     }
 
     private func defaultsEvents(atTick tick: Int) -> [ScheduledEvent] {
-        guard project.sendDefaultsOnPatternStart else { return [] }
         var events: [ScheduledEvent] = []
+        for (ti, track) in currentPattern.tracks.enumerated() where track.programChange >= 0 {
+            events.append(ScheduledEvent(tick: tick, port: track.port,
+                                         message: .programChange(channel: UInt8(track.channel & 0x0F), program: UInt8(track.programChange & 0x7F)),
+                                         order: Order.control, track: ti))
+        }
+        guard project.sendDefaultsOnPatternStart else { return events }
         for track in currentPattern.tracks {
             for lane in track.ccLanes {
                 events.append(ScheduledEvent(tick: tick, port: track.port,
@@ -489,8 +496,8 @@ public final class SequencerEngine {
                     }
                 }
                 _ = key
-                deferred.append(ScheduledEvent(tick: hitTick, port: port, message: .noteOn(channel: channel, note: n, velocity: UInt8(hitVel)), order: Order.noteOn))
-                deferred.append(ScheduledEvent(tick: hitTick + hitLength, port: port, message: .noteOff(channel: channel, note: n, velocity: 0), order: Order.noteOff))
+                deferred.append(ScheduledEvent(tick: hitTick, port: port, message: .noteOn(channel: channel, note: n, velocity: UInt8(hitVel)), order: Order.noteOn, track: ti))
+                deferred.append(ScheduledEvent(tick: hitTick + hitLength, port: port, message: .noteOff(channel: channel, note: n, velocity: 0), order: Order.noteOff, track: ti))
             }
         }
         trackRuntimes[ti].lastStepSlide = step.slide
