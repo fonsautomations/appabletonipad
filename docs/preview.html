@@ -146,38 +146,49 @@ button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 1px; }
 .mhdr .chip { height: 26px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line); font-size: 10px; font-weight: 800; background: rgba(255,255,255,.08); color: var(--fg); }
 .mhdr .chip.on { color: #000; }
 .mhdr .sum { font-size: 10px; color: var(--fg2); }
-.mrow { display: flex; gap: 10px; align-items: flex-start; overflow-x: auto; flex: 1; min-height: 0; }
-.mdeck .strips .gstrip { border-right: 1px solid var(--line); padding-right: 6px; }
+.mbody { display: flex; gap: 10px; flex: 1; min-height: 0; }
+.mrows { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 10px; }
+.mrows .mrow { display: flex; gap: 0; align-items: flex-start; min-height: 0; }
+.mrows .mrow.over { overflow-x: auto; }
+.mcol { width: 186px; flex: none; background: var(--panel); border-radius: 10px; padding: 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.mcol .pair { display: flex; gap: 8px; align-items: flex-end; flex: 1; min-height: 0; }
+.mcol .col { display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; }
+.mcol .col .vf { flex: 1; min-height: 0; }
+.mcol .dbx { font-family: var(--mono); font-size: 10px; color: var(--fg2); }
+.mhdr .seg { flex: none; }
+.strip.medium { gap: 4px; } .strip.medium .send span, .strip.compact .send span { font-size: 7px; }
+.strip .vf .lbl.db { color: rgba(0,0,0,.7); }
+.mdeck .strips .gstrip { border-right: 1px solid var(--line); padding-right: 5px; margin-right: -6px; padding-right: 6px; }
 .strip .nm.grp { color: #000; }
-.strip .bustools { display: flex; gap: 3px; width: 64px; }
+.strip .bustools { display: flex; gap: 3px; width: var(--sw, 64px); }
 .strip .bustools button { flex: 1; height: 22px; border-radius: 6px; font-size: 9px; font-weight: 800; border: 1px solid var(--line); background: var(--yellow); color: #000; }
 .strip .bustools .x { flex: 0 0 24px; background: var(--red); }
-.strip .missing { width: 64px; height: 60px; font-size: 9px; color: var(--yellow); text-align: center; display: flex; align-items: center; justify-content: center; }
-.busbox { display: flex; flex-direction: column; gap: 6px; border-left: 1px solid var(--line); padding-left: 10px; }
-.busbox .bhead { height: 40px; display: flex; align-items: center; gap: 6px; }
+.strip .missing { width: var(--sw, 64px); height: 60px; font-size: 9px; color: var(--yellow); text-align: center; display: flex; align-items: center; justify-content: center; }
+.busbox { display: flex; flex-direction: column; gap: 6px; }
+.busbox .bhead { height: 34px; display: flex; align-items: center; gap: 6px; }
 .busbox .hint { width: 140px; height: auto; font-size: 10px; }
 .mdeck { display: flex; flex-direction: column; gap: 6px; }
-.mdeck + .mdeck { border-left: 1px solid var(--line); padding-left: 10px; }
+.mrow > * + * { border-left: 1px solid var(--line); padding-left: 13px; }
 .mhead { display: flex; gap: 6px; }
-.mhead .deckbtn { width: 120px; height: 40px; border-radius: 8px; font-weight: 800; font-size: 16px; color: #000; border: 1px solid var(--line); }
-.hpf { width: 160px; height: 40px; border-radius: 6px; position: relative; overflow: hidden; display: flex; align-items: center; padding-left: 8px; font-size: 11px; font-weight: 800; }
+.mhead { height: 34px; } .mhead .deckbtn { width: 120px; height: 34px; border-radius: 8px; font-weight: 800; font-size: 16px; color: #000; border: 1px solid var(--line); }
+.hpf { width: 160px; height: 34px; border-radius: 6px; position: relative; overflow: hidden; display: flex; align-items: center; padding-left: 8px; font-size: 11px; font-weight: 800; }
 .hpf i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 6px; }
 .hpf span { position: relative; text-shadow: 0 0 2px rgba(0,0,0,.6); }
 .strips { display: flex; gap: 6px; align-items: flex-start; }
-.strip { width: 64px; display: flex; flex-direction: column; gap: 5px; align-items: center; }
-.strip .nm { width: 64px; height: 22px; border-radius: 6px; background: var(--raised); font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-.send { width: 64px; height: 34px; border-radius: 6px; position: relative; overflow: hidden; display: flex; align-items: flex-end; justify-content: center; font-size: 8px; font-weight: 700; padding-bottom: 3px; cursor: ns-resize; }
+.strip { width: var(--sw, 64px); display: flex; flex-direction: column; gap: 5px; align-items: center; }
+.strip .nm { width: var(--sw, 64px); height: 22px; border-radius: 6px; background: var(--raised); font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.send { width: var(--sw, 64px); height: var(--sh, 34px); border-radius: 6px; position: relative; overflow: hidden; display: flex; align-items: flex-end; justify-content: center; font-size: 8px; font-weight: 700; padding-bottom: 3px; cursor: ns-resize; }
 .send i { position: absolute; left: 0; right: 0; bottom: 0; border-radius: 6px; }
 .send span { position: relative; }
-.vf { width: 64px; border-radius: 6px; position: relative; overflow: hidden; cursor: ns-resize; }
-.vf.lpf { height: 110px; }
-.vf.vol { height: 180px; }
+.vf { width: var(--sw, 64px); border-radius: 6px; position: relative; overflow: hidden; cursor: ns-resize; }
+.vf.lpf { height: var(--fh, 110px); }
+.vf.vol { height: var(--vh, 180px); }
 .vf .fill { position: absolute; left: 0; right: 0; bottom: 0; border-radius: 6px; }
 .vf .line { position: absolute; left: 0; right: 0; height: 2px; background: #fff; }
 .vf .mt { position: absolute; right: 4px; bottom: 2px; width: 3px; border-radius: 2px; background: rgba(0,0,0,.6); transition: height .08s linear; }
 .vf .lbl { position: absolute; left: 0; right: 0; bottom: 6px; text-align: center; font-size: 10px; font-weight: 800; color: rgba(0,0,0,.75); }
-.strip .db { width: 64px; height: 16px; border-radius: 4px; background: var(--raised); font-family: var(--mono); font-size: 10px; color: var(--fg2); display: flex; align-items: center; justify-content: center; }
-.strip .btns { display: flex; gap: 3px; width: 64px; }
+.strip .db { width: var(--sw, 64px); height: 16px; border-radius: 4px; background: var(--raised); font-family: var(--mono); font-size: 10px; color: var(--fg2); display: flex; align-items: center; justify-content: center; }
+.strip .btns { display: flex; gap: 3px; width: var(--sw, 64px); }
 .strip .btns button { flex: 1; height: 28px; border-radius: 8px; font-size: 10px; font-weight: 800; border: 1px solid var(--line); background: rgba(255,255,255,.06); }
 .strip .btns .m.on { background: var(--red); color: #000; } .strip .btns .c.on { background: var(--yellow); color: #000; }
 .mastbox { background: var(--panel); border-radius: 10px; padding: 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
@@ -309,7 +320,7 @@ button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 1px; }
 <div class="wrap">
   <div class="intro">
     <span><b>StageDeck</b> &nbsp;·&nbsp; previsualización web interactiva de la app de iPad (set de demo, sin Live)</span>
-    <span class="hint">Pulsa <b>Demo mode</b>. Toca clips, escenas, K/R, faders y pasos. En MIXER: EDIT → + BUS para añadir grupos, retornos o el master como canal propio. En CTRL: PAGES 1-4 para ver hasta cuatro páginas a la vez, EDIT → ADD FROM SET para añadir macros de cualquier pista, TEMPLATE para importar una plantilla pegada.</span>
+    <span class="hint">Pulsa <b>Demo mode</b>. Toca clips, escenas, K/R, faders y pasos. En MIXER todo cabe en pantalla (ALL) o toca un deck para verlo a lo grande; EDIT → + BUS para añadir grupos, retornos o el master como canal propio. En CTRL: PAGES 1-4 para ver hasta cuatro páginas a la vez, EDIT → ADD FROM SET para añadir macros de cualquier pista, TEMPLATE para importar una plantilla pegada.</span>
   </div>
   <div class="fit"><div class="ipad" id="ipad">
     <div class="screen">
@@ -331,7 +342,7 @@ button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 1px; }
           <div class="lmodes"><div class="seg" id="lmode"><button>INDIV.</button><button class="on">DUAL</button></div><span class="caps lock" id="lockLabel" hidden>Performance lock</span></div>
           <div class="decks" id="decks"></div>
         </div>
-        <div class="view mixer" id="view-mixer"><div class="mhdr" id="mhdr"></div><div class="mrow" id="mrow"></div><div class="ceditor" id="mbuspanel" hidden></div></div>
+        <div class="view mixer" id="view-mixer"><div class="mhdr" id="mhdr"></div><div class="mbody"><div class="mrows" id="mrows"></div><div class="mcol" id="mcol"></div></div><div class="ceditor" id="mbuspanel" hidden></div></div>
         <div class="view ctrlv" id="view-ctrl">
           <div class="chead"><span class="caps" style="font-family:inherit">PAGES</span><div class="seg" id="cmode"><button class="on" data-m="1">1</button><button data-m="2">2</button><button data-m="3">3</button><button data-m="4">4</button></div><span class="caps" id="lastSent"></span><button class="tog b" id="ctpl">TEMPLATE</button><button class="tog y" id="cedit">EDIT</button></div>
           <div class="ceditor tpl" id="ctplpanel" hidden></div>
@@ -407,7 +418,7 @@ button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 1px; }
   document.getElementById('connectBtn').onclick = () => { const d = document.getElementById('dot'); d.className = 'dot busy'; document.getElementById('stateLabel').textContent = 'Searching…'; toast('Looking for Ableton Live on the network… (web preview: use Demo mode)'); setTimeout(() => { d.className = 'dot'; document.getElementById('stateLabel').textContent = 'Offline'; }, 2500); };
 
   // ---------- tabs ----------
-  document.getElementById('tabs').onclick = e => { const b = e.target.closest('button'); if (!b) return; [...e.currentTarget.children].forEach(x => x.classList.toggle('on', x === b)); document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === 'view-' + b.dataset.tab)); renderMid(); };
+  document.getElementById('tabs').onclick = e => { const b = e.target.closest('button'); if (!b) return; [...e.currentTarget.children].forEach(x => x.classList.toggle('on', x === b)); document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === 'view-' + b.dataset.tab)); if (b.dataset.tab === 'mixer' && welcome.classList.contains('hide')) buildMixer(); renderMid(); };
   document.getElementById('view-launch').classList.add('on');
 
   // ---------- transport ----------
@@ -502,20 +513,39 @@ button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 1px; }
   const mhdr = document.getElementById('mhdr'), mrow = document.getElementById('mrow'), mbus = document.getElementById('mbuspanel');
   function visibleSends() { return RETURNS.map((r, i) => i).filter(i => mix.sendsOn[i]); }
   // ch: { name, color, sends, lpf, vol, mute, cue (optional), hasFilter, grp, meter }
-  function stripEl(ch, opts) {
+  // Same packing as the app's MixerLayoutPlan: sections into rows that fit the width, strips adapt to the row height.
+  const ML = { stripGap: 6, sectionGap: 14, rowGap: 10, minW: 48, maxW: 104, headerH: 40 };
+  function rowWidth(strips, sections, sw) { return strips * sw + Math.max(0, strips - sections) * ML.stripGap + Math.max(0, sections - 1) * ML.sectionGap; }
+  function planLayout(W, H, counts, sends, focus) {
+    let rows = [], over = [];
+    if (focus != null && focus >= 0 && focus < counts.length) rows = [[focus]];
+    else { let cur = [], n = 0; counts.forEach((c, i) => { c = Math.max(1, c); if (!cur.length) { cur = [i]; n = c; return; } if (rowWidth(n + c, cur.length + 1, ML.minW) <= W) { cur.push(i); n += c; } else { rows.push(cur); cur = [i]; n = c; } }); if (cur.length) rows.push(cur); }
+    let sw = ML.maxW; rows.forEach(r => { const strips = r.reduce((a, i) => a + Math.max(1, counts[i]), 0); const gaps = (strips - r.length) * ML.stripGap + (r.length - 1) * ML.sectionGap; sw = Math.min(sw, (W - gaps) / strips); });
+    if (sw < ML.minW) { rows.forEach(r => { if (rowWidth(r.reduce((a, i) => a + Math.max(1, counts[i]), 0), r.length, ML.minW) > W) over.push(...r); }); sw = ML.minW; }
+    sw = Math.max(ML.minW, Math.min(ML.maxW, Math.floor(sw)));
+    const rowH = Math.max(0, (H - (rows.length - 1) * ML.rowGap) / rows.length);
+    const area = rowH - ML.headerH, nameH = 22, dbH = 16, btnH = 28;
+    const fader = (sh, fh, db, parts, gap) => area - (nameH + sends * sh + fh + (db ? dbH : 0) + btnH) - parts * gap;
+    let m; const full = fader(34, 110, true, 5 + sends, 5);
+    if (full >= 120) m = { sw, sh: 34, fh: 110, vh: Math.min(260, full), density: 'full' };
+    else { const med = fader(18, 52, false, 4 + sends, 4); if (med >= 80) m = { sw, sh: 18, fh: 52, vh: med, density: 'medium' }; else m = { sw, sh: 0, fh: 0, vh: Math.max(60, area - nameH - btnH - 10), density: 'compact' }; }
+    return { rows, rowH, m, over };
+  }
+  // ch: { name, color, sends, lpf, vol, mute, cue (optional), hasFilter, meter }
+  function stripEl(ch, m, opts) {
     opts = opts || {};
-    const s = document.createElement('div'); s.className = 'strip';
-    const nm = document.createElement('div'); nm.className = 'nm' + (opts.grp ? ' grp' : ''); nm.textContent = ch.alias || ch.name; if (opts.nameBg) nm.style.background = opts.nameBg; s.appendChild(nm);
-    if (opts.showSends !== false && ch.sends) visibleSends().forEach(i => { const se = document.createElement('div'); se.className = 'send'; se.style.background = ch.color + '2e'; se.innerHTML = '<i style="background:' + ch.color + 'cc;height:' + Math.max(8, ch.sends[i] * 100) + '%"></i><span>' + RETURNS[i].name + '</span>'; dragV(se, v => { ch.sends[i] = v; se.firstChild.style.height = Math.max(8, v * 100) + '%'; }); s.appendChild(se); });
-    if (opts.showFilter !== false) {
-      if (ch.hasFilter === false) { const nf = document.createElement('div'); nf.className = 'vf lpf'; nf.style.background = 'var(--panel)'; nf.innerHTML = '<div class="lbl" style="color:var(--fg2);bottom:45%">no filter</div>'; s.appendChild(nf); }
+    const s = document.createElement('div'); s.className = 'strip ' + m.density; s.style.setProperty('--sw', m.sw + 'px'); s.style.setProperty('--sh', m.sh + 'px'); s.style.setProperty('--fh', m.fh + 'px'); s.style.setProperty('--vh', m.vh + 'px');
+    const nm = document.createElement('div'); nm.className = 'nm' + (opts.grp ? ' grp' : ''); nm.textContent = ch.alias || ch.name; if (opts.nameBg) nm.style.background = opts.nameBg; if (m.sw < 56) nm.style.fontSize = '9px'; s.appendChild(nm);
+    if (m.density !== 'compact' && opts.showSends !== false && ch.sends) visibleSends().forEach(i => { const se = document.createElement('div'); se.className = 'send'; se.style.background = ch.color + '2e'; se.innerHTML = '<i style="background:' + ch.color + 'cc;height:' + Math.max(8, ch.sends[i] * 100) + '%"></i><span>' + RETURNS[i].name + '</span>'; dragV(se, v => { ch.sends[i] = v; se.firstChild.style.height = Math.max(8, v * 100) + '%'; }); s.appendChild(se); });
+    if (m.density !== 'compact' && opts.showFilter !== false) {
+      if (ch.hasFilter === false) { const nf = document.createElement('div'); nf.className = 'vf lpf'; nf.style.background = 'var(--panel)'; nf.innerHTML = '<div class="lbl" style="color:var(--fg2);bottom:40%">no filter</div>'; s.appendChild(nf); }
       else { const lpf = document.createElement('div'); lpf.className = 'vf lpf'; lpf.style.background = ch.color + '38'; lpf.innerHTML = '<div class="fill" style="background:' + ch.color + 'e6;height:' + (ch.lpf * 100) + '%"></div><div class="lbl">LPF</div>'; dragV(lpf, v => { ch.lpf = v; lpf.firstChild.style.height = (v * 100) + '%'; }); s.appendChild(lpf); }
     }
-    const dbl = document.createElement('div'); dbl.className = 'db'; dbl.textContent = dbLabel(ch.vol); s.appendChild(dbl);
-    const vol = document.createElement('div'); vol.className = 'vf vol'; vol.style.background = ch.color + '38'; vol.innerHTML = '<div class="fill" style="background:' + ch.color + ';height:' + (ch.vol * 100) + '%"></div><div class="mt" style="height:0"></div><div class="line" style="bottom:' + (ch.vol * 100) + '%"></div>';
-    if (opts.meter) ch.mixMeter = vol.children[1]; dragV(vol, v => { ch.vol = v; vol.children[0].style.height = (v * 100) + '%'; vol.children[2].style.bottom = (v * 100) + '%'; dbl.textContent = dbLabel(v); }); s.appendChild(vol);
+    let dbl = null; if (m.density === 'full') { dbl = document.createElement('div'); dbl.className = 'db'; dbl.textContent = dbLabel(ch.vol); s.appendChild(dbl); }
+    const vol = document.createElement('div'); vol.className = 'vf vol'; vol.style.background = ch.color + '38'; vol.innerHTML = '<div class="fill" style="background:' + ch.color + ';height:' + (ch.vol * 100) + '%"></div><div class="mt" style="height:0"></div><div class="line" style="bottom:' + (ch.vol * 100) + '%"></div>' + (dbl ? '' : '<div class="lbl db">' + dbLabel(ch.vol) + '</div>');
+    if (opts.meter) ch.mixMeter = vol.children[1]; dragV(vol, v => { ch.vol = v; vol.children[0].style.height = (v * 100) + '%'; vol.children[2].style.bottom = (v * 100) + '%'; if (dbl) dbl.textContent = dbLabel(v); else vol.children[3].textContent = dbLabel(v); }); s.appendChild(vol);
     if (opts.buttons !== false) {
-      const btns = document.createElement('div'); btns.className = 'btns'; btns.innerHTML = '<button class="m' + (ch.mute ? ' on' : '') + '">M</button>' + (ch.cue !== undefined ? '<button class="c' + (ch.cue ? ' on' : '') + '">CUE</button>' : '');
+      const btns = document.createElement('div'); btns.className = 'btns'; btns.innerHTML = '<button class="m' + (ch.mute ? ' on' : '') + '">M</button>' + (ch.cue !== undefined && m.density !== 'compact' ? '<button class="c' + (ch.cue ? ' on' : '') + '">CUE</button>' : '');
       btns.children[0].onclick = () => { ch.mute = !ch.mute; renderClips(); renderMixer(); }; if (btns.children[1]) btns.children[1].onclick = () => { ch.cue = !ch.cue; renderClips(); renderMixer(); }; ch.mixBtns = btns; s.appendChild(btns);
     }
     return s;
@@ -527,7 +557,41 @@ button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 1px; }
     for (const d of decks) { const t = d.tracks.find(t => t.name === b.name); if (t) return t; }
     return null;
   }
+  mix.focus = -1;
+  const mrows = document.getElementById('mrows'), mcol = document.getElementById('mcol');
+  function deckSection(deck, m) {
+    const d = document.createElement('div'); d.className = 'mdeck';
+    const head = document.createElement('div'); head.className = 'mhead';
+    const db = document.createElement('button'); db.className = 'deckbtn'; db.textContent = deck.name; db.style.background = deck.tracks.every(t => t.mute) ? deck.color + '59' : deck.color; db.style.width = Math.min(120, Math.max(70, m.sw * 1.6)) + 'px'; db.onclick = () => { const on = !deck.tracks.every(t => t.mute); deck.tracks.forEach(t => t.mute = on); db.style.background = on ? deck.color + '59' : deck.color; renderClips(); renderMixer(); };
+    const hpf = document.createElement('div'); hpf.className = 'hpf'; hpf.style.width = Math.min(160, Math.max(90, m.sw * 2)) + 'px'; hpf.style.background = deck.color + '38'; hpf.innerHTML = '<i style="background:' + deck.color + ';width:' + (deck.hpf * 100) + '%"></i><span>HPF</span>';
+    dragH(hpf, v => { deck.hpf = v; hpf.firstChild.style.width = (v * 100) + '%'; });
+    head.append(db, hpf); d.appendChild(head);
+    const strips = document.createElement('div'); strips.className = 'strips';
+    if (mix.groupStrips) { const g = stripEl(deck, m, { grp: true, nameBg: deck.color + '73' }); g.classList.add('gstrip'); strips.appendChild(g); }
+    deck.tracks.forEach(t => strips.appendChild(stripEl(t, m, { meter: true })));
+    d.appendChild(strips); return d;
+  }
+  function busSection(m) {
+    const box = document.createElement('div'); box.className = 'busbox';
+    const bh = document.createElement('div'); bh.className = 'bhead'; bh.innerHTML = '<span class="caps">BUSES</span>'; if (mix.editing) { const ab = document.createElement('button'); ab.className = 'chip on'; ab.textContent = '+ BUS'; ab.style.background = 'var(--accent)'; ab.onclick = () => { mix.addOpen = true; buildMixer(); }; bh.appendChild(ab); } box.appendChild(bh);
+    const strips = document.createElement('div'); strips.className = 'strips';
+    if (!mix.buses.length) strips.innerHTML = '<div class="hint" style="width:120px;height:auto;font-size:10px">Add a group, a return, the master or any track as its own strip.</div>';
+    mix.buses.forEach((b, bi) => {
+      const ch = busChannel(b); let s;
+      if (ch) {
+        const nameBg = b.kind === 'group' ? ch.color + '73' : b.kind === 'return' ? ch.color + '4d' : b.kind === 'master' ? 'rgba(125,194,77,.35)' : null;
+        s = stripEl(Object.assign(Object.create(ch), { alias: b.label || ch.alias || ch.name }), m, { grp: b.kind === 'group', nameBg, showSends: b.showSends !== false && b.kind !== 'master', showFilter: b.showFilter !== false, buttons: b.kind !== 'master', meter: false });
+        if (b.kind === 'master') { s.querySelectorAll('.vf.vol').forEach(v => dragV(v, val => { mix.master.vol = val; buildMixer(); })); }
+      } else { s = document.createElement('div'); s.className = 'strip'; s.style.setProperty('--sw', m.sw + 'px'); s.innerHTML = '<div class="nm" style="color:var(--yellow)">' + (b.label || b.name) + '</div><div class="missing">' + b.kind + ' not in this set</div>'; }
+      if (mix.editing) { const tools = document.createElement('div'); tools.className = 'bustools'; tools.innerHTML = '<button>' + (b.showSends === false ? 'SENDS OFF' : 'SENDS ON') + '</button><button class="x">×</button>'; tools.children[0].onclick = () => { b.showSends = b.showSends === false; buildMixer(); }; tools.children[1].onclick = () => { mix.buses.splice(bi, 1); buildMixer(); }; s.prepend(tools); }
+      strips.appendChild(s);
+    });
+    box.appendChild(strips); return box;
+  }
   function buildMixer() {
+    const sections = decks.map((d, i) => ({ kind: 'deck', i, name: d.name, count: d.tracks.length + (mix.groupStrips ? 1 : 0) }));
+    if (mix.buses.length || mix.editing) sections.push({ kind: 'buses', name: 'BUSES', count: Math.max(1, mix.buses.length) });
+    if (mix.focus >= sections.length) mix.focus = -1;
     // header
     mhdr.innerHTML = '';
     const chip = (txt, on, color, fn, w) => { const b = document.createElement('button'); b.className = 'chip' + (on ? ' on' : ''); b.textContent = txt; b.style.background = on ? color : color + '59'; if (w) b.style.width = w + 'px'; b.onclick = fn; mhdr.appendChild(b); return b; };
@@ -539,48 +603,26 @@ button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 1px; }
       chip('MASTER FILTER', mix.masterFilter, '#7DC24D', () => { mix.masterFilter = !mix.masterFilter; buildMixer(); });
       chip('+ BUS', true, 'var(--accent)', () => { mix.addOpen = true; buildMixer(); });
     } else {
-      const cap = document.createElement('span'); cap.className = 'caps'; cap.textContent = 'MIXER'; mhdr.appendChild(cap);
-      const sum = document.createElement('span'); sum.className = 'sum'; sum.textContent = decks.length + ' decks · ' + visibleSends().length + ' sends · ' + mix.buses.length + ' bus' + (mix.buses.length === 1 ? '' : 'es') + (mix.groupStrips ? ' · group strips' : ''); mhdr.appendChild(sum);
+      const seg = document.createElement('div'); seg.className = 'seg'; seg.style.width = (sections.length + 1) * 86 + 'px';
+      [{ i: -1, name: 'ALL' }].concat(sections.map((sct, i) => ({ i, name: sct.name }))).forEach(o => { const b = document.createElement('button'); b.textContent = o.name; b.classList.toggle('on', mix.focus === o.i); b.onclick = () => { mix.focus = o.i; buildMixer(); }; seg.appendChild(b); });
+      mhdr.appendChild(seg);
       const sp = document.createElement('div'); sp.style.flex = 1; mhdr.appendChild(sp);
+      const sum = document.createElement('span'); sum.className = 'sum'; sum.textContent = visibleSends().length + ' sends' + (mix.buses.length ? ' · ' + mix.buses.length + ' bus' + (mix.buses.length === 1 ? '' : 'es') : '') + (mix.groupStrips ? ' · group strips' : ''); mhdr.appendChild(sum);
     }
     chip(mix.editing ? 'DONE' : 'EDIT', mix.editing, 'var(--yellow)', () => { mix.editing = !mix.editing; mix.addOpen = false; buildMixer(); }, 70);
-    // decks
-    mrow.innerHTML = '';
-    decks.forEach(deck => {
-      const d = document.createElement('div'); d.className = 'mdeck';
-      const head = document.createElement('div'); head.className = 'mhead';
-      const db = document.createElement('button'); db.className = 'deckbtn'; db.textContent = deck.name; db.style.background = deck.color; db.onclick = () => { const on = !deck.tracks.every(t => t.mute); deck.tracks.forEach(t => t.mute = on); db.style.background = on ? deck.color + '59' : deck.color; renderClips(); renderMixer(); };
-      const hpf = document.createElement('div'); hpf.className = 'hpf'; hpf.style.background = deck.color + '38'; hpf.innerHTML = '<i style="background:' + deck.color + ';width:' + (deck.hpf * 100) + '%"></i><span>HPF</span>';
-      dragH(hpf, v => { deck.hpf = v; hpf.firstChild.style.width = (v * 100) + '%'; });
-      head.append(db, hpf); d.appendChild(head);
-      const strips = document.createElement('div'); strips.className = 'strips';
-      if (mix.groupStrips) { const g = stripEl(deck, { grp: true, nameBg: deck.color + '73' }); g.classList.add('gstrip'); strips.appendChild(g); }
-      deck.tracks.forEach(t => strips.appendChild(stripEl(t, { meter: true })));
-      d.appendChild(strips); mrow.appendChild(d);
+    // rows
+    const W = (mrows.clientWidth || 964) - 8, H = mrows.clientHeight || 636;
+    const plan = planLayout(W, H, sections.map(x => x.count), visibleSends().length, mix.focus >= 0 ? mix.focus : null);
+    mrows.innerHTML = '';
+    plan.rows.forEach(row => {
+      const r = document.createElement('div'); r.className = 'mrow' + (row.some(i => plan.over.includes(i)) ? ' over' : ''); r.style.height = plan.rowH + 'px';
+      row.forEach(i => { const sct = sections[i]; r.appendChild(sct.kind === 'deck' ? deckSection(decks[sct.i], plan.m) : busSection(plan.m)); });
+      mrows.appendChild(r);
     });
-    // buses
-    if (mix.buses.length || mix.editing) {
-      const box = document.createElement('div'); box.className = 'busbox';
-      const bh = document.createElement('div'); bh.className = 'bhead'; bh.innerHTML = '<span class="caps">BUSES</span>'; if (mix.editing) { const ab = document.createElement('button'); ab.className = 'chip on'; ab.textContent = '+ BUS'; ab.style.background = 'var(--accent)'; ab.onclick = () => { mix.addOpen = true; buildMixer(); }; bh.appendChild(ab); } box.appendChild(bh);
-      const strips = document.createElement('div'); strips.className = 'strips';
-      if (!mix.buses.length) strips.innerHTML = '<div class="hint">Add a group, a return, the master or any track as its own strip.</div>';
-      mix.buses.forEach((b, bi) => {
-        const ch = busChannel(b); let s;
-        if (ch) {
-          const nameBg = b.kind === 'group' ? ch.color + '73' : b.kind === 'return' ? ch.color + '4d' : b.kind === 'master' ? 'rgba(125,194,77,.35)' : null;
-          s = stripEl(Object.assign(Object.create(ch), { alias: b.label || ch.alias || ch.name }), { grp: b.kind === 'group', nameBg, showSends: b.showSends !== false && b.kind !== 'master', showFilter: b.showFilter !== false, buttons: b.kind !== 'master', meter: false });
-          if (b.kind === 'master') { s.querySelectorAll('.vf.vol').forEach(v => dragV(v, val => { mix.master.vol = val; buildMixer(); })); }
-        } else { s = document.createElement('div'); s.className = 'strip'; s.innerHTML = '<div class="nm" style="color:var(--yellow)">' + (b.label || b.name) + '</div><div class="missing">' + b.kind + ' not in this set</div>'; }
-        if (mix.editing) { const tools = document.createElement('div'); tools.className = 'bustools'; tools.innerHTML = '<button>' + (b.showSends === false ? 'SENDS OFF' : 'SENDS ON') + '</button><button class="x">×</button>'; tools.children[0].onclick = () => { b.showSends = b.showSends === false; buildMixer(); }; tools.children[1].onclick = () => { mix.buses.splice(bi, 1); buildMixer(); }; s.prepend(tools); }
-        strips.appendChild(s);
-      });
-      box.appendChild(strips); mrow.appendChild(box);
-    }
-    // master
-    const m = document.createElement('div'); m.className = 'mastbox'; m.innerHTML = '<span class="caps">Master / Cue</span><div class="pair">' + (mix.masterFilter ? '<div class="col"><div class="vf vol" id="mastLpf" style="height:300px;width:48px;background:rgba(125,194,77,.22)"><div class="fill" style="background:rgba(125,194,77,.9);height:' + (mix.master.lpf * 100) + '%"></div><div class="lbl">LPF</div></div><span class="caps">Filter</span></div>' : '') + '<div class="col"><span class="dbx" id="mastDb">' + dbLabel(mix.master.vol) + '</span><div class="vf vol" id="mastVol" style="height:300px;background:rgba(125,194,77,.22)"><div class="fill" style="background:var(--green);height:' + (mix.master.vol * 100) + '%"></div><div class="mt" id="mastMt" style="height:0"></div><div class="line" style="bottom:' + (mix.master.vol * 100) + '%"></div></div><span class="caps">Master</span></div><div class="col"><span class="dbx">-0.0</span><div class="vf vol" style="height:300px;width:48px;background:rgba(242,214,61,.22)"><div class="fill" style="background:var(--yellow);height:85%"></div><div class="line" style="bottom:85%"></div></div><span class="caps">Cue</span></div></div>';
-    mrow.appendChild(m);
-    const mv = m.querySelector('#mastVol'); dragV(mv, v => { mix.master.vol = v; mv.children[0].style.height = (v * 100) + '%'; mv.children[2].style.bottom = (v * 100) + '%'; m.querySelector('#mastDb').textContent = dbLabel(v); });
-    const ml = m.querySelector('#mastLpf'); if (ml) dragV(ml, v => { mix.master.lpf = v; ml.children[0].style.height = (v * 100) + '%'; });
+    // master column (always visible)
+    mcol.innerHTML = '<span class="caps" style="height:28px;display:flex;align-items:center">MASTER</span><div class="pair">' + (mix.masterFilter ? '<div class="col"><div class="vf" id="mastLpf" style="width:48px;background:rgba(125,194,77,.22)"><div class="fill" style="background:rgba(125,194,77,.9);height:' + (mix.master.lpf * 100) + '%"></div><div class="lbl">LPF</div></div><span class="caps">Filter</span></div>' : '') + '<div class="col"><span class="dbx" id="mastDb">' + dbLabel(mix.master.vol) + '</span><div class="vf" id="mastVol" style="width:64px;background:rgba(125,194,77,.22)"><div class="fill" style="background:var(--green);height:' + (mix.master.vol * 100) + '%"></div><div class="mt" id="mastMt" style="height:0"></div><div class="line" style="bottom:' + (mix.master.vol * 100) + '%"></div></div><span class="caps">Master</span></div><div class="col"><span class="dbx">-0.0</span><div class="vf" style="width:44px;background:rgba(242,214,61,.22)"><div class="fill" style="background:var(--yellow);height:85%"></div><div class="line" style="bottom:85%"></div></div><span class="caps">Cue</span></div></div>';
+    const mv = mcol.querySelector('#mastVol'); dragV(mv, v => { mix.master.vol = v; mv.children[0].style.height = (v * 100) + '%'; mv.children[2].style.bottom = (v * 100) + '%'; mcol.querySelector('#mastDb').textContent = dbLabel(v); });
+    const ml = mcol.querySelector('#mastLpf'); if (ml) dragV(ml, v => { mix.master.lpf = v; ml.children[0].style.height = (v * 100) + '%'; });
     renderAddBus();
   }
   function renderAddBus() {
