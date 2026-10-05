@@ -96,6 +96,7 @@ public enum LiveCommand {
     }
     public static func selectScene(_ scene: Int) -> OSCMessage { OSCMessage("/live/view/set/selected_scene", [.int32(Int32(scene))]) }
     public static func selectTrack(_ track: Int) -> OSCMessage { OSCMessage("/live/view/set/selected_track", [.int32(Int32(track))]) }
+    public static func selectedDevice() -> OSCMessage { OSCMessage("/live/view/get/selected_device") }
 
     // MARK: Devices
 
@@ -182,6 +183,7 @@ public enum LiveEvent: Equatable {
     case deviceParameterMins(track: Int, device: Int, [Double])
     case deviceParameterMaxes(track: Int, device: Int, [Double])
     case deviceParameterValue(track: Int, device: Int, parameter: Int, Double)
+    case selectedDevice(track: Int, device: Int)
     case masterVolume(Double)
     case masterMeter(Double)
     case cueVolume(Double)
@@ -300,6 +302,8 @@ public enum LiveEventDecoder {
         case "/live/device/get/parameter/value":
             if let t = i(0), let dv = i(1), let p = i(2), let v = d(3) { return .deviceParameterValue(track: t, device: dv, parameter: p, v) }
 
+        case "/live/view/get/selected_device":
+            if let t = i(0), let dv = i(1) { return .selectedDevice(track: t, device: dv) }
         case "/live/master/get/volume":
             if let v = d(0) { return .masterVolume(v) }
         case "/live/master/get/output_meter_level":

@@ -41,7 +41,7 @@ button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 1px; }
 .seg { display: flex; gap: 2px; padding: 2px; background: var(--raised); border-radius: 8px; }
 .seg button { flex: 1; height: 26px; padding: 0 10px; font-size: 11px; font-weight: 800; color: var(--fg2); border-radius: 6px; white-space: nowrap; }
 .seg button.on { background: rgba(255,255,255,.9); color: #000; }
-.top .seg { width: 260px; margin: 0 auto; }
+.top .seg { width: 340px; margin: 0 auto; }
 .gear { width: 36px; height: 32px; color: var(--fg2); font-size: 18px; }
 
 /* transport bar */
@@ -170,6 +170,44 @@ button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 1px; }
 .mastbox .col { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .mastbox .dbx { font-family: var(--mono); font-size: 10px; color: var(--fg2); }
 
+/* control pages */
+.ctrlv { padding: 8px; gap: 8px; }
+.chead { display: flex; gap: 6px; align-items: center; }
+.cpages { display: flex; gap: 4px; flex: 1; }
+.cpages button { height: 28px; padding: 0 16px; border-radius: 8px; border: 1px solid var(--line); background: rgba(242,140,40,.35); font-size: 11px; font-weight: 800; }
+.cpages button.on { background: var(--accent); color: #000; }
+.cpages .add { background: var(--raised); }
+.chead .caps { font-family: var(--mono); text-transform: none; letter-spacing: 0; }
+.cgrid { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 4px 2px; }
+.crow { display: flex; gap: 10px; align-items: flex-start; }
+.widget { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
+.widget .area { width: 100%; position: relative; border-radius: 10px; }
+.widget.editing .area { box-shadow: inset 0 0 0 2px var(--yellow); }
+.widget .edit { position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; border-radius: 6px; background: var(--yellow); color: #000; font-size: 12px; font-weight: 900; display: none; }
+.widget.editing .edit { display: block; }
+.widget .nm { font-size: 11px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.widget .tg { font-size: 8px; color: var(--fg2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.knob { height: 96px; display: flex; align-items: center; justify-content: center; cursor: ns-resize; }
+.knob svg { width: 84px; height: 84px; }
+.knob .val { position: absolute; font-size: 18px; font-weight: 800; font-family: var(--mono); }
+.cfader { height: 170px; cursor: ns-resize; overflow: hidden; }
+.cfader .fill { position: absolute; left: 0; right: 0; bottom: 0; border-radius: 10px; }
+.cfader .line { position: absolute; left: 0; right: 0; height: 2px; background: #fff; }
+.cfader .lbl { position: absolute; left: 0; right: 0; bottom: 6px; text-align: center; font-size: 10px; font-weight: 800; color: rgba(0,0,0,.75); }
+.cbtn { height: 96px; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 900; user-select: none; cursor: pointer; }
+.cbtn.on { color: #000; }
+.xy { height: 170px; border: 1px solid var(--line); cursor: crosshair; overflow: hidden; }
+.xy .dot { position: absolute; width: 26px; height: 26px; border-radius: 50%; transform: translate(-50%, -50%); }
+.xy::before, .xy::after { content: ""; position: absolute; background: rgba(255,255,255,.08); }
+.xy::before { left: 50%; top: 0; bottom: 0; width: 1px; } .xy::after { top: 50%; left: 0; right: 0; height: 1px; }
+.ceditor { position: absolute; right: 8px; top: 48px; bottom: 8px; width: 360px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; z-index: 3; overflow-y: auto; }
+.ceditor label { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: var(--fg2); }
+.ceditor input, .ceditor select { font: inherit; font-size: 12px; background: var(--raised); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; width: 200px; }
+.ceditor h3 { margin: 0; font-size: 14px; }
+.ceditor .t { font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--fg); margin-top: 6px; }
+.ceditor .row { display: flex; gap: 6px; }
+.ceditor .note { font-size: 11px; color: var(--fg2); line-height: 1.5; }
+
 /* sequencer */
 .seqv { padding: 8px; flex-direction: row !important; gap: 8px; }
 .tracks { width: 150px; display: flex; flex-direction: column; gap: 3px; overflow-y: auto; }
@@ -240,13 +278,13 @@ button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 1px; }
 <div class="wrap">
   <div class="intro">
     <span><b>StageDeck</b> &nbsp;·&nbsp; previsualización web interactiva de la app de iPad (set de demo, sin Live)</span>
-    <span class="hint">Pulsa <b>Demo mode</b>. Toca clips, escenas, K/R, faders y pasos. Mantén pulsado un clip para ver su nota.</span>
+    <span class="hint">Pulsa <b>Demo mode</b>. Toca clips, escenas, K/R, faders y pasos. En CTRL pulsa EDIT para añadir y asignar controles.</span>
   </div>
   <div class="fit"><div class="ipad" id="ipad">
     <div class="screen">
       <div class="top">
         <div class="status"><span class="dot" id="dot"></span><span id="stateLabel">Offline</span></div>
-        <div class="seg" id="tabs"><button class="on" data-tab="launch">LAUNCH</button><button data-tab="mixer">MIXER</button><button data-tab="seq">SEQ</button></div>
+        <div class="seg" id="tabs"><button class="on" data-tab="launch">LAUNCH</button><button data-tab="mixer">MIXER</button><button data-tab="ctrl">CTRL</button><button data-tab="seq">SEQ</button></div>
         <button class="gear" aria-label="Settings">⚙</button>
       </div>
       <div class="content">
@@ -263,6 +301,11 @@ button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 1px; }
           <div class="decks" id="decks"></div>
         </div>
         <div class="view mixer" id="view-mixer"></div>
+        <div class="view ctrlv" id="view-ctrl">
+          <div class="chead"><div class="cpages" id="cpages"></div><span class="caps" id="lastSent"></span><button class="tog y" id="cedit">EDIT</button></div>
+          <div class="cgrid" id="cgrid"></div>
+          <div class="ceditor" id="ceditor" hidden></div>
+        </div>
         <div class="view seqv" id="view-seq">
           <div class="tracks" id="tracks"></div>
           <div class="seqmain">
@@ -529,6 +572,58 @@ button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 1px; }
   seqRec.onclick = () => { seq.rec = !seq.rec; seqRec.classList.toggle('on', seq.rec); };
   document.getElementById('sync').onclick = e => { const b = e.target.closest('button'); if (b) [...b.parentElement.children].forEach(x => x.classList.toggle('on', x === b)); };
   document.getElementById('lmode').onclick = e => { const b = e.target.closest('button'); if (!b) return; [...b.parentElement.children].forEach(x => x.classList.toggle('on', x === b)); const single = b.textContent === 'INDIV.'; [...decksEl.children].forEach((d, i) => d.style.display = single && i > 0 ? 'none' : ''); };
+
+  // ---------- control pages (editable MIDI / Live-parameter controller) ----------
+  const palette = ['#F28C28','#F2D33C','#7ED957','#3CC8E6','#8FB4DD','#9A6BFF','#E05A9A','#B16AF0'];
+  const ctrl = { pages: [{ name: 'Macros', widgets: [] }, { name: 'Drop', widgets: [] }], cur: 0, editing: false, sel: null };
+  for (let i = 0; i < 8; i++) ctrl.pages[0].widgets.push({ id: 'k' + i, name: 'Macro ' + (i + 1), kind: 'knob', color: palette[i], w: 1, target: { type: 'live', track: 'SYN-1', device: 'SYN-1 Rack', param: 'Macro ' + (i + 1) }, value: (i + 1) / 9 });
+  ctrl.pages[0].widgets.push({ id: 'xy', name: 'FX XY', kind: 'xy', color: '#E05A9A', w: 2, target: { type: 'cc', ch: 1, cc: 30 }, targetY: { type: 'cc', ch: 1, cc: 31 }, value: .5, valueY: .5 });
+  ['A', 'B', 'C', 'D'].forEach((n, i) => ctrl.pages[0].widgets.push({ id: 'f' + i, name: 'Send ' + n, kind: 'fader', color: palette[i + 2], w: 1, target: { type: 'cc', ch: 1, cc: 40 + i }, value: [.1, 0, .3, 0][i] }));
+  ctrl.pages[0].widgets.push({ id: 'b1', name: 'Build', kind: 'button', color: '#F2D33C', w: 1, target: { type: 'note', ch: 1, note: 60 }, value: 0 }, { id: 't1', name: 'Delay', kind: 'toggle', color: '#3CC8E6', w: 1, target: { type: 'cc', ch: 1, cc: 50 }, value: 0 });
+  ctrl.pages[1].widgets.push({ id: 'd1', name: 'Deck A HPF', kind: 'fader', color: '#F28C28', w: 2, target: { type: 'live', track: 'A', device: 'Auto Filter', param: 'Frequency' }, value: 0 }, { id: 'd2', name: 'Deck B HPF', kind: 'fader', color: '#8FB4DD', w: 2, target: { type: 'live', track: 'B', device: 'Auto Filter', param: 'Frequency' }, value: 0 }, { id: 'd3', name: 'Riser', kind: 'knob', color: '#9A6BFF', w: 1, target: { type: 'cc', ch: 1, cc: 21 }, value: 0 }, { id: 'd4', name: 'Stutter', kind: 'button', color: '#E05A9A', w: 1, target: { type: 'note', ch: 1, note: 36 }, value: 0 });
+  const tlabel = t => !t || t.type === 'none' ? 'Not assigned' : t.type === 'live' ? t.track + ' · ' + t.device + ' · ' + t.param : t.type === 'cc' ? 'CC ' + t.cc + ' ch ' + t.ch : 'Note ' + NOTE(t.note) + ' ch ' + t.ch;
+  const lastSentEl = document.getElementById('lastSent');
+  function csend(w, t, v) { if (!t || t.type === 'none') return; lastSentEl.textContent = t.type === 'live' ? (tlabel(t) + ' = ' + Math.round(v * 100) + '%  (OSC, with feedback)') : t.type === 'cc' ? ('CC' + t.cc + '=' + Math.round(v * 127) + ' ch' + t.ch + '  (MIDI → map it in Live)') : ((v >= .5 ? 'NoteOn ' : 'NoteOff ') + NOTE(t.note) + ' ch' + t.ch); }
+  const cpagesEl = document.getElementById('cpages'), cgridEl = document.getElementById('cgrid'), ceditEl = document.getElementById('ceditor');
+  function renderCtrl() {
+    cpagesEl.innerHTML = ''; ctrl.pages.forEach((p, i) => { const b = document.createElement('button'); b.textContent = p.name; b.classList.toggle('on', i === ctrl.cur); b.onclick = () => { ctrl.cur = i; ctrl.sel = null; renderCtrl(); }; cpagesEl.appendChild(b); });
+    if (ctrl.editing) { const a = document.createElement('button'); a.className = 'add'; a.textContent = '+ PAGE'; a.onclick = () => { ctrl.pages.push({ name: 'Page ' + (ctrl.pages.length + 1), widgets: [] }); ctrl.cur = ctrl.pages.length - 1; renderCtrl(); }; cpagesEl.appendChild(a); const ad = document.createElement('button'); ad.className = 'add'; ad.textContent = '+ ADD CONTROL'; ad.onclick = () => { const n = page().widgets.length + 1; const w = { id: 'w' + Date.now(), name: 'Knob ' + n, kind: 'knob', color: palette[n % 8], w: 1, target: { type: 'none' }, value: .5, valueY: .5 }; page().widgets.push(w); ctrl.sel = w; renderCtrl(); }; cpagesEl.appendChild(ad); }
+    document.getElementById('cedit').textContent = ctrl.editing ? 'DONE' : 'EDIT'; document.getElementById('cedit').classList.toggle('on', ctrl.editing);
+    cgridEl.innerHTML = ''; const rows = []; let row = [], used = 0;
+    page().widgets.forEach(w => { const width = Math.max(1, Math.min(8, w.w)); if (used + width > 8 && row.length) { rows.push(row); row = []; used = 0; } row.push(w); used += width; }); if (row.length) rows.push(row);
+    if (!rows.length) cgridEl.innerHTML = '<div class="hint">Empty page. Tap EDIT, then + ADD CONTROL to place knobs, faders, buttons or an XY pad.</div>';
+    rows.forEach(r => { const re = document.createElement('div'); re.className = 'crow'; let units = 0; r.forEach(w => { units += w.w; re.appendChild(widgetEl(w)); }); if (units < 8) { const sp = document.createElement('div'); sp.style.flex = (8 - units); re.appendChild(sp); } cgridEl.appendChild(re); });
+    renderEditor();
+  }
+  function page() { return ctrl.pages[ctrl.cur]; }
+  function widgetEl(w) {
+    const el = document.createElement('div'); el.className = 'widget' + (ctrl.editing ? ' editing' : ''); el.style.flex = w.w;
+    const area = document.createElement('div'); area.className = 'area';
+    const pct = v => Math.round(v * 100);
+    if (w.kind === 'knob') { area.classList.add('knob'); const draw = () => { const a = w.value * 270; area.innerHTML = '<svg viewBox="0 0 100 100"><path d="' + arc(50, 50, 40, 135, 405) + '" fill="none" stroke="' + w.color + '38" stroke-width="8" stroke-linecap="round"/><path d="' + arc(50, 50, 40, 135, 135 + Math.max(.5, a)) + '" fill="none" stroke="' + w.color + '" stroke-width="8" stroke-linecap="round"/></svg><span class="val">' + pct(w.value) + '</span>'; }; draw(); let y0, v0; area.onpointerdown = e => { if (ctrl.editing) return; area.setPointerCapture(e.pointerId); y0 = e.clientY; v0 = w.value; area.onpointermove = ev => { if (!ev.buttons) return; w.value = Math.max(0, Math.min(1, v0 + (y0 - ev.clientY) / 150)); draw(); csend(w, w.target, w.value); }; }; area.onpointerup = () => area.onpointermove = null; }
+    else if (w.kind === 'fader') { area.classList.add('cfader'); area.style.background = w.color + '38'; const draw = () => { area.innerHTML = '<div class="fill" style="background:' + w.color + ';height:' + pct(w.value) + '%"></div><div class="line" style="bottom:' + pct(w.value) + '%"></div><div class="lbl">' + pct(w.value) + '</div>'; }; draw(); let y0, v0; area.onpointerdown = e => { if (ctrl.editing) return; area.setPointerCapture(e.pointerId); y0 = e.clientY; v0 = w.value; const h = area.getBoundingClientRect().height; area.onpointermove = ev => { if (!ev.buttons) return; w.value = Math.max(0, Math.min(1, v0 + (y0 - ev.clientY) / h * (1180 / ipad.getBoundingClientRect().width))); draw(); csend(w, w.target, w.value); }; }; area.onpointerup = () => area.onpointermove = null; }
+    else if (w.kind === 'button' || w.kind === 'toggle') { area.classList.add('cbtn'); const draw = () => { const on = w.value >= .5; area.classList.toggle('on', on); area.style.background = on ? w.color : w.color + '4d'; area.textContent = w.kind === 'toggle' ? (on ? 'ON' : 'OFF') : 'PUSH'; }; draw(); area.onpointerdown = e => { if (ctrl.editing) return; area.setPointerCapture(e.pointerId); w.value = w.kind === 'toggle' ? (w.value >= .5 ? 0 : 1) : 1; draw(); csend(w, w.target, w.value); }; area.onpointerup = () => { if (w.kind === 'button') { w.value = 0; draw(); csend(w, w.target, 0); } }; }
+    else { area.classList.add('xy'); area.style.background = w.color + '2e'; const dot = document.createElement('div'); dot.className = 'dot'; dot.style.background = w.color; const draw = () => { dot.style.left = pct(w.value) + '%'; dot.style.top = pct(1 - (w.valueY || 0)) + '%'; }; area.appendChild(dot); draw(); area.onpointerdown = e => { if (ctrl.editing) return; area.setPointerCapture(e.pointerId); const go = ev => { const r = area.getBoundingClientRect(); w.value = Math.max(0, Math.min(1, (ev.clientX - r.left) / r.width)); w.valueY = Math.max(0, Math.min(1, 1 - (ev.clientY - r.top) / r.height)); draw(); csend(w, w.target, w.value); csend(w, w.targetY, w.valueY); }; go(e); area.onpointermove = ev => { if (ev.buttons) go(ev); }; }; area.onpointerup = () => area.onpointermove = null; }
+    const ed = document.createElement('button'); ed.className = 'edit'; ed.textContent = '≡'; ed.onclick = () => { ctrl.sel = w; renderEditor(); }; area.appendChild(ed);
+    el.appendChild(area); el.innerHTML += '<span class="nm">' + w.name + '</span><span class="tg">' + tlabel(w.target) + (w.kind === 'xy' ? ' / ' + tlabel(w.targetY) : '') + '</span>';
+    el.firstChild.replaceWith(area); return el;
+  }
+  function arc(cx, cy, r, a0, a1) { const p = a => [cx + r * Math.cos(a * Math.PI / 180), cy + r * Math.sin(a * Math.PI / 180)]; const [x0, y0] = p(a0), [x1, y1] = p(a1); return 'M' + x0 + ' ' + y0 + ' A' + r + ' ' + r + ' 0 ' + (a1 - a0 > 180 ? 1 : 0) + ' 1 ' + x1 + ' ' + y1; }
+  const demoTracks = ['A', 'B'].concat(stems.map(s => s[0]));
+  const demoDevices = t => (t === 'A' || t === 'B') ? ['Auto Filter'] : ['Auto Filter', t + ' Rack'];
+  const demoParams = d => d === 'Auto Filter' ? ['Device On', 'Frequency', 'Resonance'] : ['Device On'].concat([1,2,3,4,5,6,7,8].map(i => 'Macro ' + i));
+  function renderEditor() {
+    const w = ctrl.sel; ceditEl.hidden = !(ctrl.editing && w); if (ceditEl.hidden) return;
+    const t = w.target; const targetHTML = (t, key) => '<div class="t">' + (key === 'targetY' ? 'Target Y' : 'Target') + '</div><label>Type<select data-k="' + key + '.type"><option value="none"' + (t.type === 'none' ? ' selected' : '') + '>None</option><option value="live"' + (t.type === 'live' ? ' selected' : '') + '>Live parameter (OSC, feedback)</option><option value="cc"' + (t.type === 'cc' ? ' selected' : '') + '>MIDI CC</option>' + (key === 'target' && (w.kind === 'button' || w.kind === 'toggle') ? '<option value="note"' + (t.type === 'note' ? ' selected' : '') + '>MIDI note</option>' : '') + '</select></label>' +
+      (t.type === 'live' ? '<label>Track<select data-k="' + key + '.track">' + demoTracks.map(x => '<option' + (x === t.track ? ' selected' : '') + '>' + x + '</option>').join('') + '</select></label><label>Device<select data-k="' + key + '.device">' + demoDevices(t.track).map(x => '<option' + (x === t.device ? ' selected' : '') + '>' + x + '</option>').join('') + '</select></label><label>Parameter<select data-k="' + key + '.param">' + demoParams(t.device).map(x => '<option' + (x === t.param ? ' selected' : '') + '>' + x + '</option>').join('') + '</select></label><div class="note">In the app you can also press “Use the device selected in Live”. The value is read back from Live, so the knob follows automation.</div>' : '') +
+      (t.type === 'cc' || t.type === 'note' ? '<label>Channel<input type="number" min="1" max="16" value="' + t.ch + '" data-k="' + key + '.ch"></label><label>' + (t.type === 'cc' ? 'CC number' : 'Note') + '<input type="number" min="0" max="127" value="' + (t.type === 'cc' ? t.cc : t.note) + '" data-k="' + key + '.' + (t.type === 'cc' ? 'cc' : 'note') + '"></label><label>Port<select><option>All enabled outputs</option><option>Network Session 1</option><option>Bluetooth MIDI</option><option>USB interface</option></select></label><div class="note">In Live: MIDI Map mode → move this control → click the parameter. Works for hardware too.</div>' : '');
+    ceditEl.innerHTML = '<h3>Edit control</h3><label>Name<input value="' + w.name + '" data-k="name"></label><label>Kind<select data-k="kind">' + ['knob', 'fader', 'button', 'toggle', 'xy'].map(k => '<option value="' + k + '"' + (k === w.kind ? ' selected' : '') + '>' + k + '</option>').join('') + '</select></label><label>Colour<input type="color" value="' + w.color + '" data-k="color"></label><label>Width (of 8)<input type="number" min="1" max="8" value="' + w.w + '" data-k="w"></label>' + targetHTML(w.target, 'target') + (w.kind === 'xy' ? targetHTML(w.targetY || { type: 'none' }, 'targetY') : '') + '<div class="row"><button class="tog" style="background:rgba(237,84,69,.35)" id="wdel">DELETE</button><button class="tog y on" id="wdone">DONE</button></div>';
+    ceditEl.querySelectorAll('[data-k]').forEach(inp => { inp.onchange = () => { const path = inp.dataset.k.split('.'); let v = inp.type === 'number' ? parseInt(inp.value, 10) : inp.value; if (path.length === 1) { w[path[0]] = path[0] === 'w' ? Math.max(1, Math.min(8, v)) : v; } else { if (!w[path[0]]) w[path[0]] = { type: 'none' }; if (path[1] === 'type') { w[path[0]] = v === 'live' ? { type: 'live', track: 'SYN-1', device: 'SYN-1 Rack', param: 'Macro 1' } : v === 'cc' ? { type: 'cc', ch: 1, cc: 1 } : v === 'note' ? { type: 'note', ch: 1, note: 60 } : { type: 'none' }; } else { w[path[0]][path[1]] = v; if (path[1] === 'track') { w[path[0]].device = demoDevices(v)[0]; w[path[0]].param = demoParams(w[path[0]].device)[0]; } if (path[1] === 'device') w[path[0]].param = demoParams(v)[0]; } } renderCtrl(); }; });
+    document.getElementById('wdel').onclick = () => { page().widgets = page().widgets.filter(x => x !== w); ctrl.sel = null; renderCtrl(); };
+    document.getElementById('wdone').onclick = () => { ctrl.sel = null; renderCtrl(); };
+  }
+  document.getElementById('cedit').onclick = () => { ctrl.editing = !ctrl.editing; if (!ctrl.editing) ctrl.sel = null; renderCtrl(); };
+  renderCtrl();
 
   // ---------- clock: clip progress, meters, sequencer playhead ----------
   let seqAcc = 0, beatAcc = 0;

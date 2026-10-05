@@ -16,6 +16,7 @@ final class AppStore: ObservableObject {
     let live = LiveSession()
     let midi = MIDIService()
     let sequencer: SequencerRuntime
+    let control: ControlRuntime
 
     private var saveTimer: Timer?
     private var cancellables: Set<AnyCancellable> = []
@@ -27,6 +28,7 @@ final class AppStore: ObservableObject {
     enum AppTab: String, CaseIterable, Identifiable {
         case launcher = "LAUNCH"
         case mixer = "MIXER"
+        case control = "CTRL"
         case sequencer = "SEQ"
         var id: String { rawValue }
     }
@@ -44,6 +46,7 @@ final class AppStore: ObservableObject {
         }
         profile = document.profile
         sequencer = SequencerRuntime(project: document.project, midi: midi)
+        control = ControlRuntime(live: live, midi: midi)
 
         sequencer.$project
             .dropFirst()

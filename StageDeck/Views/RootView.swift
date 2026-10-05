@@ -40,6 +40,8 @@ struct RootView: View {
             } else {
                 MixerView()
             }
+        case .control:
+            ControlView()
         case .sequencer:
             SequencerView()
         }
@@ -69,7 +71,7 @@ struct TopBar: View {
             Spacer()
 
             Segmented(options: AppStore.AppTab.allCases.map { ($0, $0.rawValue) }, selection: $store.activeTab)
-                .frame(width: 260)
+                .frame(width: 340)
 
             Spacer()
 

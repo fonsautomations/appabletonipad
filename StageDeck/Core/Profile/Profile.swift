@@ -58,7 +58,57 @@ public struct PerformerProfile: Equatable, Codable {
     public var accentHex: String = "#F28C28"
     public var secondaryHex: String = "#8FB4DD"
 
+    // Control pages (editable MIDI / Live parameter controller)
+    public var controlPages: [ControlPage] = [ControlPage.starter()]
+
     public init() {}
+
+    /// Tolerant decoding: any key missing from an older file keeps its default value.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        func get<T: Decodable>(_ key: CodingKeys, _ fallback: T) -> T { (try? c.decodeIfPresent(T.self, forKey: key)) ?? fallback }
+        let d = PerformerProfile()
+        name = get(.name, d.name)
+        liveHost = get(.liveHost, d.liveHost)
+        livePort = get(.livePort, d.livePort)
+        replyPort = get(.replyPort, d.replyPort)
+        autoReconnect = get(.autoReconnect, d.autoReconnect)
+        meterRefreshEnabled = get(.meterRefreshEnabled, d.meterRefreshEnabled)
+        decks = get(.decks, d.decks)
+        launchGroups = get(.launchGroups, d.launchGroups)
+        clipHeight = get(.clipHeight, d.clipHeight)
+        clipFontSize = get(.clipFontSize, d.clipFontSize)
+        showClipProgress = get(.showClipProgress, d.showClipProgress)
+        showTrackMeters = get(.showTrackMeters, d.showTrackMeters)
+        showClipNotes = get(.showClipNotes, d.showClipNotes)
+        showSceneButtons = get(.showSceneButtons, d.showSceneButtons)
+        showStopButtons = get(.showStopButtons, d.showStopButtons)
+        showCueButtons = get(.showCueButtons, d.showCueButtons)
+        showSections = get(.showSections, d.showSections)
+        followPlayingScene = get(.followPlayingScene, d.followPlayingScene)
+        bigTextMode = get(.bigTextMode, d.bigTextMode)
+        dimStoppedClips = get(.dimStoppedClips, d.dimStoppedClips)
+        hideEmptyScenes = get(.hideEmptyScenes, d.hideEmptyScenes)
+        confirmSceneLaunch = get(.confirmSceneLaunch, d.confirmSceneLaunch)
+        confirmStopAll = get(.confirmStopAll, d.confirmStopAll)
+        performanceLock = get(.performanceLock, d.performanceLock)
+        hapticsEnabled = get(.hapticsEnabled, d.hapticsEnabled)
+        clipTapRequiresLongPress = get(.clipTapRequiresLongPress, d.clipTapRequiresLongPress)
+        showSends = get(.showSends, d.showSends)
+        showPan = get(.showPan, d.showPan)
+        filterParameterName = get(.filterParameterName, d.filterParameterName)
+        macroNames = get(.macroNames, d.macroNames)
+        clipNotes = get(.clipNotes, d.clipNotes)
+        sceneNotes = get(.sceneNotes, d.sceneNotes)
+        trackAliases = get(.trackAliases, d.trackAliases)
+        sequencerSendsClock = get(.sequencerSendsClock, d.sequencerSendsClock)
+        sequencerFollowsLiveTransport = get(.sequencerFollowsLiveTransport, d.sequencerFollowsLiveTransport)
+        sequencerSyncsTempoFromLive = get(.sequencerSyncsTempoFromLive, d.sequencerSyncsTempoFromLive)
+        keyboardOctave = get(.keyboardOctave, d.keyboardOctave)
+        accentHex = get(.accentHex, d.accentHex)
+        secondaryHex = get(.secondaryHex, d.secondaryHex)
+        controlPages = get(.controlPages, d.controlPages)
+    }
 
     public static func clipNoteKey(track: String, clip: String) -> String { "\(track)|\(clip)" }
 

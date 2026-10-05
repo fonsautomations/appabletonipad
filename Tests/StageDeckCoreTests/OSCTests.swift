@@ -115,3 +115,49 @@ final class OSCTests: XCTestCase {
         XCTAssertEqual(back.profile.clipNote(track: "KICK", clip: "basilar_5-K"), "drop here")
     }
 }
+
+final class ControlPageTests: XCTestCase {
+    func testLayoutPacksRows() {
+        var a = ControlWidget(name: "a", kind: .knob); a.width = 3
+        var b = ControlWidget(name: "b", kind: .knob); b.width = 3
+        var c = ControlWidget(name: "c", kind: .knob); c.width = 3
+        let d = ControlWidget(name: "d", kind: .xy) // width 2
+        let rows = ControlLayout.rows([a, b, c, d])
+        XCTAssertEqual(rows.map { $0.map { $0.name } }, [["a", "b"], ["c", "d"]])
+        XCTAssertEqual(ControlLayout.rows([]).count, 0)
+        var huge = ControlWidget(name: "h", kind: .fader); huge.width = 99
+        XCTAssertEqual(ControlLayout.rows([huge, a]).count, 2)
+    }
+
+    func testTargetCodableAndResolve() throws {
+        let page = ControlPage.starter()
+        let data = try JSONEncoder().encode(page)
+        let back = try JSONDecoder().decode(ControlPage.self, from: data)
+        XCTAssertEqual(back, page)
+
+        var song = LiveSongState()
+        var t = LiveTrack(index: 3, name: "SYN-1")
+        t.devices = [LiveDevice(trackIndex: 3, index: 0, name: "Auto Filter", className: "AutoFilter"),
+                     LiveDevice(trackIndex: 3, index: 1, name: "Rack", className: "AudioEffectGroupDevice",
+                                parameters: [LiveDeviceParameter(index: 0, name: "Device On", value: 1, min: 0, max: 1),
+                                             LiveDeviceParameter(index: 1, name: "Macro 1", value: 0.3, min: 0, max: 1)])]
+        song.tracks = [LiveTrack(index: 0, name: "KICK"), LiveTrack(index: 1, name: "x"), LiveTrack(index: 2, name: "y"), t]
+        let target = ControlTarget.liveParameter(track: "syn-1", trackIndex: 0, device: "rack", deviceIndex: 5, parameter: "macro 1", parameterIndex: 9)
+        XCTAssertEqual(ControlResolver.resolve(target, in: song), ControlResolver.Resolved(track: 3, device: 1, parameter: 1))
+        XCTAssertNil(ControlResolver.resolve(.midiCC(channel: 0, controller: 1, port: .all), in: song))
+        XCTAssertEqual(target.label, "syn-1 · rack · macro 1")
+        var w = ControlWidget(name: "w", kind: .fader); w.minimum = 0.25; w.maximum = 0.75
+        XCTAssertEqual(w.scaled(0.5), 0.5, accuracy: 1e-9)
+        XCTAssertEqual(w.unscaled(0.75), 1, accuracy: 1e-9)
+    }
+
+    func testProfileDecodesWithMissingKeys() throws {
+        let json = #"{"name":"old","liveHost":"10.0.0.2","clipHeight":60}"#
+        let p = try JSONDecoder().decode(PerformerProfile.self, from: Data(json.utf8))
+        XCTAssertEqual(p.liveHost, "10.0.0.2")
+        XCTAssertEqual(p.clipHeight, 60)
+        XCTAssertTrue(p.showSections)
+        XCTAssertEqual(p.controlPages.count, 1)
+        XCTAssertEqual(LiveEventDecoder.decode(OSCMessage("/live/view/get/selected_device", [.int32(2), .int32(1)])), .selectedDevice(track: 2, device: 1))
+    }
+}

@@ -12,6 +12,7 @@ struct StageDeckApp: App {
                 .environmentObject(store.live)
                 .environmentObject(store.sequencer)
                 .environmentObject(store.midi)
+                .environmentObject(store.control)
                 .preferredColorScheme(.dark)
                 .onAppear {
                     UIApplication.shared.isIdleTimerDisabled = true

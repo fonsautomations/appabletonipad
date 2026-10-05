@@ -70,6 +70,10 @@ final class LiveSession: ObservableObject {
     @Published private(set) var lastMessageAt: Date = .distantPast
     @Published private(set) var messagesReceived: Int = 0
     @Published var meterRefreshEnabled: Bool = true
+    @Published private(set) var selectedDeviceInLive: SelectedDevice? = nil
+    struct SelectedDevice: Equatable { var track: Int; var device: Int }
+    private var selectedDeviceCallbacks: [(Int, Int) -> Void] = []
+    private var listenedParameters: Set<String> = []
     let meters = LiveMeters()
     private var pendingMeters: [Int: Double] = [:]
     private var pendingPositions: [String: Double] = [:]
@@ -252,6 +256,7 @@ final class LiveSession: ObservableObject {
         loadingTracks.removeAll()
         listenedClips.removeAll()
         deviceParamsRequested.removeAll()
+        listenedParameters.removeAll()
         send(LiveCommand.version())
         send(LiveCommand.numTracks())
         send(LiveCommand.numScenes())
@@ -484,6 +489,11 @@ final class LiveSession: ObservableObject {
                 guard d < tr.devices.count, p < tr.devices[d].parameters.count else { return }
                 tr.devices[d].parameters[p].value = v
             }
+        case .selectedDevice(let t, let d):
+            selectedDeviceInLive = SelectedDevice(track: t, device: d)
+            let callbacks = selectedDeviceCallbacks
+            selectedDeviceCallbacks.removeAll()
+            for cb in callbacks { cb(t, d) }
         case .masterVolume(let v): song.masterVolume = v
         case .masterMeter(let v): pendingMaster = v
         case .cueVolume(let v): song.cueVolume = v
@@ -537,6 +547,24 @@ final class LiveSession: ObservableObject {
             listenedClips[track] = scene
             send(LiveCommand.clipListen("playing_position", track: track, scene: scene, start: true))
         }
+    }
+
+    /// Subscribes to a device parameter so widgets show Live's value (idempotent).
+    func listenParameter(track: Int, device: Int, parameter: Int) {
+        let key = "\(track):\(device):\(parameter)"
+        guard !listenedParameters.contains(key), state == .connected else { return }
+        listenedParameters.insert(key)
+        send(LiveCommand.deviceParameterListen(track: track, device: device, parameter: parameter, start: true))
+    }
+
+    /// Asks Live which device is selected; the callback runs when the answer arrives.
+    func requestSelectedDevice(_ completion: @escaping (Int, Int) -> Void) {
+        if state == .demo {
+            completion(1, 0)
+            return
+        }
+        selectedDeviceCallbacks.append(completion)
+        send(LiveCommand.selectedDevice())
     }
 
     func requestDeviceParameters(track: Int, device: Int) {
@@ -774,7 +802,10 @@ enum DemoSet {
                 t.devices = [LiveDevice(trackIndex: t.index, index: 0, name: "Auto Filter", className: "AutoFilter",
                                         parameters: [LiveDeviceParameter(index: 0, name: "Device On", value: 1, min: 0, max: 1),
                                                      LiveDeviceParameter(index: 1, name: "Frequency", value: 1, min: 0, max: 1),
-                                                     LiveDeviceParameter(index: 2, name: "Resonance", value: 0.2, min: 0, max: 1)])]
+                                                     LiveDeviceParameter(index: 2, name: "Resonance", value: 0.2, min: 0, max: 1)]),
+                             LiveDevice(trackIndex: t.index, index: 1, name: "\(name) Rack", className: "AudioEffectGroupDevice",
+                                        parameters: [LiveDeviceParameter(index: 0, name: "Device On", value: 1, min: 0, max: 1)] +
+                                            (1...8).map { LiveDeviceParameter(index: $0, name: "Macro \($0)", value: Double($0) / 9.0, min: 0, max: 1) })]
                 tracks.append(t)
             }
         }

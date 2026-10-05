@@ -7,6 +7,7 @@ sin mirar el portátil, en la línea de BWX Launcher pero con más cosas:
 |---|---|
 | **LAUNCH** | Tu Session View por toque: clips con su nombre y color real, barra de progreso del clip, estado *queued* (parpadeo) / *playing*, dos decks (grupos de Live) o uno solo a lo grande, secciones automáticas (escenas `BASIL_1…BASIL_8` → botón **BASIL**), botones de grupo **K / R** (dispara sólo los kicks de una fila, o el resto), fila STOP, fila CUE, botón "cortar deck", notas por clip (letra, tonalidad, recordatorios) que se ven dentro del clip. |
 | **MIXER** | Fader por stem con vúmetro en vivo y dB, envíos a cada retorno, macro de filtro por pista (Auto Filter de Live), HPF por deck (Auto Filter en la pista de grupo), mute / CUE / arm, master y cue volume. |
+| **CTRL** | Controlador editable: páginas de knobs, faders, botones, toggles y pads XY que tú colocas. Cada control se asigna a un parámetro de Live (pista → dispositivo → parámetro, por ejemplo las Macro 1‑8 de un rack) por OSC con feedback, o a un CC / nota MIDI para mapearlo en Live con MIDI Map o mandarlo a hardware. |
 | **SEQ** | Secuenciador por pasos tipo Elektron / Oxi One: 16 pistas, hasta 64 pasos, p-locks (CC por paso), condiciones de trig (1:2, 2:4, FILL, PRE, NEI, 1ST…), probabilidad, retrig/ratchet con rampa, micro-timing, swing, acento y **slide** (estilo TB-303), acordes por paso, longitud y velocidad por pista (polimetría, 2x…1/8x), dirección (←, →, ping-pong, random), 2 LFOs por pista (CC, pitch bend o velocidad), lanes de CC, escalas y *scale lock*, euclídeo, random, botón FILL, cadenas de patrones y modo canción, grabación en vivo desde el teclado de pantalla. Sale por MIDI a Ableton o a hardware, con MIDI clock, o se esclaviza a clock externo. |
 
 Todo es configurable desde Ajustes: tamaño y tipografía de los clips, qué filas mostrar, decks y
@@ -67,7 +68,8 @@ Detalles y resolución de problemas en [`ableton/README.md`](ableton/README.md).
 5. Mantén pulsado un clip para escribir una nota (letra, "subir filtro", tonalidad…).
 6. Para el filtro por pista en el mixer, pon un **Auto Filter** en cada pista (y en la pista de
    grupo para el HPF de deck). StageDeck lo detecta por nombre de clase y mueve su *Frequency*.
-7. Secuenciador: Ajustes → MIDI → activa el destino (Network Session, Bluetooth, USB). En Live crea
+7. Controlador (CTRL): pulsa EDIT → ADD, elige el tipo, y en el editor asigna el control a un parámetro de Live (con "Use the device selected in Live" te ahorra buscarlo) o a un CC MIDI (luego MIDI Map en Live). Las páginas se guardan con tu perfil.
+8. Secuenciador: Ajustes → MIDI → activa el destino (Network Session, Bluetooth, USB). En Live crea
    una pista MIDI con entrada "Network Session 1" (o el puerto que uses), canal según la pista del
    secuenciador. Por defecto el secuenciador sigue el play/stop y el tempo de Live.
 

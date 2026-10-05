@@ -51,6 +51,14 @@ cue volume, vúmetro master, número y nombres de retornos, volumen/mute de reto
   tramo se marcan relativos al pulso recibido.
 * La UI lee la posición a 30 Hz y sólo publica cuando cambia el paso.
 
+## Páginas de control
+
+`ControlPage` / `ControlWidget` / `ControlTarget` viven en Core (`Profile/ControlPage.swift`). Un
+target de Live se guarda por nombre de pista, dispositivo y parámetro con índices de respaldo;
+`ControlResolver` lo resuelve contra el set actual. `ControlRuntime` (servicio) envía por OSC
+(`setDeviceParameter`, con listener de feedback) o por MIDI (`MIDIService.send`), y mantiene los
+valores de los controles MIDI. `ControlLayout.rows` empaqueta los widgets en filas de 8 unidades.
+
 ## Persistencia
 
 Un único JSON (`Documents/stagedeck.json`) con `PerformerProfile` (todo lo configurable, notas de
