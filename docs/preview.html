@@ -179,6 +179,15 @@ button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 1px; }
 .cpages button.on { background: var(--accent); color: #000; }
 .cpages .add { background: var(--raised); }
 .chead .caps { font-family: var(--mono); text-transform: none; letter-spacing: 0; }
+.chead .seg { flex: none; }
+.cpanels { flex: 1; min-height: 0; display: flex; gap: 8px; }
+.cpanel { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.cpanels.dual .cpanel { border: 1px solid var(--line); border-radius: 10px; padding: 6px; }
+.cpanels.dual .cpanel.focus { border-color: var(--accent); }
+.cpanel .cpages { flex: none; flex-wrap: wrap; }
+.ceditor details { font-size: 12px; } .ceditor summary { cursor: pointer; font-weight: 800; padding: 4px 0; }
+.ceditor .pl { display: flex; align-items: center; gap: 8px; font-size: 12px; padding: 3px 0 3px 14px; justify-content: flex-start; color: var(--fg); }
+.ceditor .pl input { width: auto; }
 .cgrid { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 4px 2px; }
 .crow { display: flex; gap: 10px; align-items: flex-start; }
 .widget { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
@@ -282,7 +291,7 @@ button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 1px; }
 <div class="wrap">
   <div class="intro">
     <span><b>StageDeck</b> &nbsp;·&nbsp; previsualización web interactiva de la app de iPad (set de demo, sin Live)</span>
-    <span class="hint">Pulsa <b>Demo mode</b>. Toca clips, escenas, K/R, faders y pasos. En CTRL: EDIT para añadir controles, TEMPLATE para importar una plantilla pegada.</span>
+    <span class="hint">Pulsa <b>Demo mode</b>. Toca clips, escenas, K/R, faders y pasos. En CTRL: DUAL para ver dos páginas a la vez, EDIT → ADD FROM SET para añadir macros de cualquier pista, TEMPLATE para importar una plantilla pegada.</span>
   </div>
   <div class="fit"><div class="ipad" id="ipad">
     <div class="screen">
@@ -306,9 +315,10 @@ button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 1px; }
         </div>
         <div class="view mixer" id="view-mixer"></div>
         <div class="view ctrlv" id="view-ctrl">
-          <div class="chead"><div class="cpages" id="cpages"></div><span class="caps" id="lastSent"></span><button class="tog b" id="ctpl">TEMPLATE</button><button class="tog y" id="cedit">EDIT</button></div>
+          <div class="chead"><div class="seg" id="cmode"><button class="on" data-m="single">SINGLE</button><button data-m="dual">DUAL</button></div><span class="caps" id="lastSent"></span><button class="tog b" id="ctpl">TEMPLATE</button><button class="tog y" id="cedit">EDIT</button></div>
           <div class="ceditor tpl" id="ctplpanel" hidden></div>
-          <div class="cgrid" id="cgrid"></div>
+          <div class="cpanels" id="cpanels"></div>
+          <div class="ceditor" id="csetpanel" hidden></div>
           <div class="ceditor" id="ceditor" hidden></div>
         </div>
         <div class="view seqv" id="view-seq">
@@ -584,7 +594,7 @@ button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 1px; }
 
   // ---------- control pages (editable MIDI / Live-parameter controller) ----------
   const palette = ['#F28C28','#F2D33C','#7ED957','#3CC8E6','#8FB4DD','#9A6BFF','#E05A9A','#B16AF0'];
-  const ctrl = { pages: [{ name: 'Macros', widgets: [] }, { name: 'Drop', widgets: [] }], cur: 0, editing: false, sel: null };
+  const ctrl = { pages: [{ name: 'Macros', widgets: [] }, { name: 'Drop', widgets: [] }], cur: [0, 1], dual: false, focus: 0, editing: false, sel: null };
   for (let i = 0; i < 8; i++) ctrl.pages[0].widgets.push({ id: 'k' + i, name: 'Macro ' + (i + 1), kind: 'knob', color: palette[i], w: 1, target: { type: 'live', track: 'SYN-1', device: 'SYN-1 Rack', param: 'Macro ' + (i + 1) }, value: (i + 1) / 9 });
   ctrl.pages[0].widgets.push({ id: 'xy', name: 'FX XY', kind: 'xy', color: '#E05A9A', w: 2, target: { type: 'cc', ch: 1, cc: 30 }, targetY: { type: 'cc', ch: 1, cc: 31 }, value: .5, valueY: .5 });
   ['A', 'B', 'C', 'D'].forEach((n, i) => ctrl.pages[0].widgets.push({ id: 'f' + i, name: 'Send ' + n, kind: 'fader', color: palette[i + 2], w: 1, target: { type: 'cc', ch: 1, cc: 40 + i }, value: [.1, 0, .3, 0][i] }));
@@ -593,18 +603,58 @@ button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 1px; }
   const tlabel = t => !t || t.type === 'none' ? 'Not assigned' : t.type === 'live' ? t.track + ' · ' + t.device + ' · ' + t.param : t.type === 'cc' ? 'CC ' + t.cc + ' ch ' + t.ch : 'Note ' + NOTE(t.note) + ' ch ' + t.ch;
   const lastSentEl = document.getElementById('lastSent');
   function csend(w, t, v) { if (!t || t.type === 'none') return; lastSentEl.textContent = t.type === 'live' ? (tlabel(t) + ' = ' + Math.round(v * 100) + '%  (OSC, with feedback)') : t.type === 'cc' ? ('CC' + t.cc + '=' + Math.round(v * 127) + ' ch' + t.ch + '  (MIDI → map it in Live)') : ((v >= .5 ? 'NoteOn ' : 'NoteOff ') + NOTE(t.note) + ' ch' + t.ch); }
-  const cpagesEl = document.getElementById('cpages'), cgridEl = document.getElementById('cgrid'), ceditEl = document.getElementById('ceditor');
+  const cpanelsEl = document.getElementById('cpanels'), ceditEl = document.getElementById('ceditor'), csetEl = document.getElementById('csetpanel');
+  function page(p) { if (p === undefined) p = ctrl.focus; ctrl.cur[p] = Math.min(ctrl.cur[p], ctrl.pages.length - 1); return ctrl.pages[ctrl.cur[p]]; }
+  function pageOf(w) { return ctrl.pages.find(pg => pg.widgets.includes(w)); }
   function renderCtrl() {
-    cpagesEl.innerHTML = ''; ctrl.pages.forEach((p, i) => { const b = document.createElement('button'); b.textContent = p.name; b.classList.toggle('on', i === ctrl.cur); b.onclick = () => { ctrl.cur = i; ctrl.sel = null; renderCtrl(); }; cpagesEl.appendChild(b); });
-    if (ctrl.editing) { const a = document.createElement('button'); a.className = 'add'; a.textContent = '+ PAGE'; a.onclick = () => { ctrl.pages.push({ name: 'Page ' + (ctrl.pages.length + 1), widgets: [] }); ctrl.cur = ctrl.pages.length - 1; renderCtrl(); }; cpagesEl.appendChild(a); const ad = document.createElement('button'); ad.className = 'add'; ad.textContent = '+ ADD CONTROL'; ad.onclick = () => { const n = page().widgets.length + 1; const w = { id: 'w' + Date.now(), name: 'Knob ' + n, kind: 'knob', color: palette[n % 8], w: 1, target: { type: 'none' }, value: .5, valueY: .5 }; page().widgets.push(w); ctrl.sel = w; renderCtrl(); }; cpagesEl.appendChild(ad); }
+    cpanelsEl.innerHTML = ''; cpanelsEl.classList.toggle('dual', ctrl.dual);
+    if (!ctrl.dual) ctrl.focus = 0;
+    for (let p = 0; p < (ctrl.dual ? 2 : 1); p++) cpanelsEl.appendChild(ctrlPanelEl(p));
+    document.querySelectorAll('#cmode button').forEach(b => b.classList.toggle('on', (b.dataset.m === 'dual') === ctrl.dual));
     document.getElementById('cedit').textContent = ctrl.editing ? 'DONE' : 'EDIT'; document.getElementById('cedit').classList.toggle('on', ctrl.editing);
-    cgridEl.innerHTML = ''; const rows = []; let row = [], used = 0;
-    page().widgets.forEach(w => { const width = Math.max(1, Math.min(8, w.w)); if (used + width > 8 && row.length) { rows.push(row); row = []; used = 0; } row.push(w); used += width; }); if (row.length) rows.push(row);
-    if (!rows.length) cgridEl.innerHTML = '<div class="hint">Empty page. Tap EDIT, then + ADD CONTROL to place knobs, faders, buttons or an XY pad.</div>';
-    rows.forEach(r => { const re = document.createElement('div'); re.className = 'crow'; let units = 0; r.forEach(w => { units += w.w; re.appendChild(widgetEl(w)); }); if (units < 8) { const sp = document.createElement('div'); sp.style.flex = (8 - units); re.appendChild(sp); } cgridEl.appendChild(re); });
-    renderEditor();
+    renderEditor(); renderSetPicker();
   }
-  function page() { return ctrl.pages[ctrl.cur]; }
+  function ctrlPanelEl(p) {
+    const pane = document.createElement('div'); pane.className = 'cpanel' + (ctrl.dual && ctrl.focus === p ? ' focus' : '');
+    pane.onpointerdown = () => { ctrl.focus = p; [...cpanelsEl.children].forEach((c, i) => c.classList.toggle('focus', ctrl.dual && i === p)); };
+    const tabs = document.createElement('div'); tabs.className = 'cpages';
+    ctrl.pages.forEach((pg, i) => { const b = document.createElement('button'); b.textContent = pg.name; b.classList.toggle('on', i === ctrl.cur[p]); b.onclick = () => { ctrl.cur[p] = i; ctrl.focus = p; ctrl.sel = null; renderCtrl(); }; tabs.appendChild(b); });
+    if (ctrl.editing) {
+      const mk = (txt, fn) => { const b = document.createElement('button'); b.className = 'add'; b.textContent = txt; b.onclick = () => { ctrl.focus = p; fn(); }; tabs.appendChild(b); };
+      mk('+ PAGE', () => { ctrl.pages.push({ name: 'Page ' + (ctrl.pages.length + 1), widgets: [] }); ctrl.cur[p] = ctrl.pages.length - 1; renderCtrl(); });
+      mk('+ ADD CONTROL', () => { const n = page(p).widgets.length + 1; const w = { id: 'w' + Date.now(), name: 'Knob ' + n, kind: 'knob', color: palette[n % 8], w: 1, target: { type: 'none' }, value: .5, valueY: .5 }; page(p).widgets.push(w); ctrl.sel = w; renderCtrl(); });
+      mk('ADD FROM SET', () => { ctrl.sel = null; setPick.open = true; setPick.page = ctrl.cur[p]; setPick.chosen = {}; renderCtrl(); });
+    }
+    pane.appendChild(tabs);
+    const grid = document.createElement('div'); grid.className = 'cgrid';
+    const rows = []; let row = [], used = 0;
+    page(p).widgets.forEach(w => { const width = Math.max(1, Math.min(8, w.w)); if (used + width > 8 && row.length) { rows.push(row); row = []; used = 0; } row.push(w); used += width; }); if (row.length) rows.push(row);
+    if (!rows.length) grid.innerHTML = '<div class="hint">Empty page. Tap EDIT, then + ADD CONTROL or ADD FROM SET (macros of any track or group).</div>';
+    rows.forEach(r => { const re = document.createElement('div'); re.className = 'crow'; let units = 0; r.forEach(w => { units += w.w; re.appendChild(widgetEl(w)); }); if (units < 8) { const sp = document.createElement('div'); sp.style.flex = (8 - units); re.appendChild(sp); } grid.appendChild(re); });
+    pane.appendChild(grid); return pane;
+  }
+  // ---- ADD FROM SET: pick parameters of any track/device and drop them on a page (like the app's sheet)
+  const setPick = { open: false, page: 0, chosen: {}, kind: 'knob', filter: '' };
+  function renderSetPicker() {
+    csetEl.hidden = !(ctrl.editing && setPick.open); if (csetEl.hidden) return;
+    const f = setPick.filter.toLowerCase();
+    const tracks = demoTracks.filter(t => !f || t.toLowerCase().includes(f) || demoDevices(t).some(d => d.toLowerCase().includes(f)));
+    const n = Object.keys(setPick.chosen).length;
+    csetEl.innerHTML = '<h3>Add from set → <span style="color:var(--accent)">' + ctrl.pages[setPick.page].name + '</span></h3><div class="note">Every track and device of the current set. Tick parameters from any group and add them together on one page.</div><label>Filter<input id="spf" value="' + setPick.filter + '" placeholder="track or device"></label><label>Add as<select id="spk"><option value="knob"' + (setPick.kind === 'knob' ? ' selected' : '') + '>Knobs</option><option value="fader"' + (setPick.kind === 'fader' ? ' selected' : '') + '>Faders</option></select></label>' +
+      tracks.map((t, ti) => '<details' + (f ? ' open' : '') + '><summary><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:' + palette[ti % palette.length] + ';margin-right:6px"></span>' + t + '</summary>' + demoDevices(t).map(d => '<div class="t">' + d + '</div>' + demoParams(d).filter(x => x !== 'Device On').map(x => { const k = t + '|' + d + '|' + x; return '<label class="pl"><input type="checkbox" data-sp="' + k + '"' + (setPick.chosen[k] ? ' checked' : '') + '>' + x + '</label>'; }).join('')).join('') + '</details>').join('') +
+      '<div class="row" style="margin-top:8px"><button class="tog" id="spcancel">CANCEL</button><button class="tog y on" id="spadd"' + (n ? '' : ' disabled') + '>ADD ' + n + '</button></div>';
+    csetEl.querySelector('#spf').oninput = e => { setPick.filter = e.target.value; renderSetPicker(); csetEl.querySelector('#spf').focus(); };
+    csetEl.querySelector('#spk').onchange = e => { setPick.kind = e.target.value; };
+    csetEl.querySelectorAll('[data-sp]').forEach(cb => { cb.onchange = () => { if (cb.checked) setPick.chosen[cb.dataset.sp] = true; else delete setPick.chosen[cb.dataset.sp]; csetEl.querySelector('#spadd').textContent = 'ADD ' + Object.keys(setPick.chosen).length; csetEl.querySelector('#spadd').disabled = !Object.keys(setPick.chosen).length; }; });
+    csetEl.querySelector('#spcancel').onclick = () => { setPick.open = false; renderCtrl(); };
+    csetEl.querySelector('#spadd').onclick = () => {
+      const pg = ctrl.pages[setPick.page];
+      Object.keys(setPick.chosen).forEach((k, i) => { const [track, device, param] = k.split('|'); pg.widgets.push({ id: 's' + Date.now() + i, name: param, kind: setPick.kind, color: palette[demoTracks.indexOf(track) % palette.length], w: 1, target: { type: 'live', track, device, param }, value: 0, valueY: 0 }); });
+      toast('Added ' + Object.keys(setPick.chosen).length + ' control(s) to "' + pg.name + '"');
+      setPick.open = false; renderCtrl();
+    };
+  }
+  document.querySelectorAll('#cmode button').forEach(b => b.onclick = () => { ctrl.dual = b.dataset.m === 'dual'; if (ctrl.dual && ctrl.cur[1] === ctrl.cur[0]) ctrl.cur[1] = (ctrl.cur[0] + 1) % ctrl.pages.length; renderCtrl(); });
   function widgetEl(w) {
     const el = document.createElement('div'); el.className = 'widget' + (ctrl.editing ? ' editing' : ''); el.style.flex = w.w;
     const area = document.createElement('div'); area.className = 'area';
@@ -626,12 +676,18 @@ button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 1px; }
     const t = w.target; const targetHTML = (t, key) => '<div class="t">' + (key === 'targetY' ? 'Target Y' : 'Target') + '</div><label>Type<select data-k="' + key + '.type"><option value="none"' + (t.type === 'none' ? ' selected' : '') + '>None</option><option value="live"' + (t.type === 'live' ? ' selected' : '') + '>Live parameter (OSC, feedback)</option><option value="cc"' + (t.type === 'cc' ? ' selected' : '') + '>MIDI CC</option>' + (key === 'target' && (w.kind === 'button' || w.kind === 'toggle') ? '<option value="note"' + (t.type === 'note' ? ' selected' : '') + '>MIDI note</option>' : '') + '</select></label>' +
       (t.type === 'live' ? '<label>Track<select data-k="' + key + '.track">' + demoTracks.map(x => '<option' + (x === t.track ? ' selected' : '') + '>' + x + '</option>').join('') + '</select></label><label>Device<select data-k="' + key + '.device">' + demoDevices(t.track).map(x => '<option' + (x === t.device ? ' selected' : '') + '>' + x + '</option>').join('') + '</select></label><label>Parameter<select data-k="' + key + '.param">' + demoParams(t.device).map(x => '<option' + (x === t.param ? ' selected' : '') + '>' + x + '</option>').join('') + '</select></label><div class="note">In the app you can also press “Use the device selected in Live”. The value is read back from Live, so the knob follows automation.</div>' : '') +
       (t.type === 'cc' || t.type === 'note' ? '<label>Channel<input type="number" min="1" max="16" value="' + t.ch + '" data-k="' + key + '.ch"></label><label>' + (t.type === 'cc' ? 'CC number' : 'Note') + '<input type="number" min="0" max="127" value="' + (t.type === 'cc' ? t.cc : t.note) + '" data-k="' + key + '.' + (t.type === 'cc' ? 'cc' : 'note') + '"></label><label>Port<select><option>All enabled outputs</option><option>Network Session 1</option><option>Bluetooth MIDI</option><option>USB interface</option></select></label><div class="note">In Live: MIDI Map mode → move this control → click the parameter. Works for hardware too.</div>' : '');
-    ceditEl.innerHTML = '<h3>Edit control</h3><label>Name<input value="' + w.name + '" data-k="name"></label><label>Kind<select data-k="kind">' + ['knob', 'fader', 'button', 'toggle', 'xy'].map(k => '<option value="' + k + '"' + (k === w.kind ? ' selected' : '') + '>' + k + '</option>').join('') + '</select></label><label>Colour<input type="color" value="' + w.color + '" data-k="color"></label><label>Width (of 8)<input type="number" min="1" max="8" value="' + w.w + '" data-k="w"></label>' + targetHTML(w.target, 'target') + (w.kind === 'xy' ? targetHTML(w.targetY || { type: 'none' }, 'targetY') : '') + '<div class="row"><button class="tog" style="background:rgba(237,84,69,.35)" id="wdel">DELETE</button><button class="tog y on" id="wdone">DONE</button></div>';
+    ceditEl.innerHTML = '<h3>Edit control</h3><label>Name<input value="' + w.name + '" data-k="name"></label><label>Kind<select data-k="kind">' + ['knob', 'fader', 'button', 'toggle', 'xy'].map(k => '<option value="' + k + '"' + (k === w.kind ? ' selected' : '') + '>' + k + '</option>').join('') + '</select></label><label>Colour<input type="color" value="' + w.color + '" data-k="color"></label><label>Width (of 8)<input type="number" min="1" max="8" value="' + w.w + '" data-k="w"></label>' + targetHTML(w.target, 'target') + (w.kind === 'xy' ? targetHTML(w.targetY || { type: 'none' }, 'targetY') : '') + '<div class="t">Other pages</div><label>Page<select id="wpage">' + ctrl.pages.map((p, i) => '<option value="' + i + '"' + (p === pageOf(w) ? ' disabled' : '') + '>' + p.name + '</option>').join('') + '</select></label><div class="row"><button class="tog b" id="wcopy">COPY TO PAGE</button><button class="tog b" id="wmove">MOVE TO PAGE</button></div><div class="row"><button class="tog" id="wleft">◀ MOVE LEFT</button><button class="tog" id="wright">MOVE RIGHT ▶</button></div><div class="note">Mix macros from different groups on one page, or open two pages at once with DUAL.</div><div class="row"><button class="tog" style="background:rgba(237,84,69,.35)" id="wdel">DELETE</button><button class="tog y on" id="wdone">DONE</button></div>';
     ceditEl.querySelectorAll('[data-k]').forEach(inp => { inp.onchange = () => { const path = inp.dataset.k.split('.'); let v = inp.type === 'number' ? parseInt(inp.value, 10) : inp.value; if (path.length === 1) { w[path[0]] = path[0] === 'w' ? Math.max(1, Math.min(8, v)) : v; } else { if (!w[path[0]]) w[path[0]] = { type: 'none' }; if (path[1] === 'type') { w[path[0]] = v === 'live' ? { type: 'live', track: 'SYN-1', device: 'SYN-1 Rack', param: 'Macro 1' } : v === 'cc' ? { type: 'cc', ch: 1, cc: 1 } : v === 'note' ? { type: 'note', ch: 1, note: 60 } : { type: 'none' }; } else { w[path[0]][path[1]] = v; if (path[1] === 'track') { w[path[0]].device = demoDevices(v)[0]; w[path[0]].param = demoParams(w[path[0]].device)[0]; } if (path[1] === 'device') w[path[0]].param = demoParams(v)[0]; } } renderCtrl(); }; });
-    document.getElementById('wdel').onclick = () => { page().widgets = page().widgets.filter(x => x !== w); ctrl.sel = null; renderCtrl(); };
+    const src = pageOf(w);
+    const targetPage = () => { const i = parseInt(document.getElementById('wpage').value, 10); return isNaN(i) || ctrl.pages[i] === src ? null : ctrl.pages[i]; };
+    document.getElementById('wcopy').onclick = () => { const dst = targetPage(); if (!dst) return; dst.widgets.push(Object.assign({}, w, { id: 'c' + Date.now(), target: Object.assign({}, w.target), targetY: Object.assign({}, w.targetY || { type: 'none' }) })); toast('Copied "' + w.name + '" to "' + dst.name + '"'); };
+    document.getElementById('wmove').onclick = () => { const dst = targetPage(); if (!dst) return; src.widgets = src.widgets.filter(x => x !== w); dst.widgets.push(w); ctrl.sel = null; toast('Moved "' + w.name + '" to "' + dst.name + '"'); renderCtrl(); };
+    const shift = d => { const i = src.widgets.indexOf(w), j = i + d; if (j < 0 || j >= src.widgets.length) return; src.widgets.splice(i, 1); src.widgets.splice(j, 0, w); renderCtrl(); };
+    document.getElementById('wleft').onclick = () => shift(-1); document.getElementById('wright').onclick = () => shift(1);
+    document.getElementById('wdel').onclick = () => { src.widgets = src.widgets.filter(x => x !== w); ctrl.sel = null; renderCtrl(); };
     document.getElementById('wdone').onclick = () => { ctrl.sel = null; renderCtrl(); };
   }
-  document.getElementById('cedit').onclick = () => { ctrl.editing = !ctrl.editing; if (!ctrl.editing) ctrl.sel = null; renderCtrl(); };
+  document.getElementById('cedit').onclick = () => { ctrl.editing = !ctrl.editing; if (!ctrl.editing) { ctrl.sel = null; setPick.open = false; } renderCtrl(); };
   // ---- templates (.stagedeck JSON): paste → check → import, same rules as the app
   const tplPanel = document.getElementById('ctplpanel');
   const sampleTpl = JSON.stringify({ format: 'stagedeck-template', version: 1, name: 'Drop (ejemplo IA)', author: 'ChatGPT / Claude', description: 'Página con las macros del rack de SYN-2 y nombres en castellano.', trackAliases: { 'KICK': 'BOMBO', 'LO': 'BAJO', 'HI PERC': 'PERC AGUDA' }, controlPages: [{ name: 'Drop IA', widgets: [{ name: 'Filtro lead', kind: 'knob', color: '#9A6BFF', w: 1, target: { type: 'live', track: 'SYN-2', device: 'SYN-2 Rack', param: 'Macro 1' }, value: .5 }, { name: 'Riser', kind: 'fader', color: '#F2D33C', w: 1, target: { type: 'cc', ch: 1, cc: 21 }, value: 0 }, { name: 'Delay XY', kind: 'xy', color: '#E05A9A', w: 2, target: { type: 'live', track: 'FX', device: 'FX Rack', param: 'Macro 2' }, targetY: { type: 'live', track: 'FX', device: 'FX Rack', param: 'Macro 3' }, value: .5, valueY: .5 }, { name: 'Stutter', kind: 'button', color: '#F28C28', w: 1, target: { type: 'note', ch: 1, note: 36 }, value: 0 }, { name: 'Coro', kind: 'knob', color: '#3CC8E6', w: 1, target: { type: 'live', track: 'VOX', device: 'Vocal Rack', param: 'Macro 1' }, value: .3 }] }] }, null, 2);
@@ -652,7 +708,7 @@ button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 1px; }
       const missingT = [...refTracks].filter(n => !demoTracks.some(d => d.toLowerCase() === n.toLowerCase()));
       const missingD = refDevices.filter(([tr, d]) => demoTracks.some(x => x.toLowerCase() === tr.toLowerCase()) && !demoDevices(demoTracks.find(x => x.toLowerCase() === tr.toLowerCase())).some(x => x.toLowerCase() === d.toLowerCase())).map(x => x.join(' / '));
       res.innerHTML = '<div><b>' + t.name + '</b>' + (t.author ? ' · by ' + t.author : '') + '</div>' + (t.description ? '<div class="note">' + t.description + '</div>' : '') + '<div style="margin-top:6px"><b>Contains:</b> ' + [pages.length ? pages.length + ' control page(s) (' + pages.map(p => p.name).join(', ') + ')' : null, Object.keys(aliases).length ? Object.keys(aliases).length + ' channel name(s)' : null].filter(Boolean).join('; ') + '</div>' + (missingT.length || missingD.length ? '<div class="warn" style="margin-top:6px">Missing in this set → ' + (missingT.length ? 'tracks: ' + missingT.join(', ') + '. ' : '') + (missingD.length ? 'devices: ' + missingD.join(', ') + '.' : '') + ' Those controls import unassigned (yellow).</div>' : '<div class="ok" style="margin-top:6px">All referenced tracks and devices exist in the current set.</div>') + '<div class="row" style="margin-top:8px"><button class="tog y on" id="tplAdd">ADD</button><button class="tog" style="background:rgba(237,84,69,.35)" id="tplReplace">REPLACE</button></div>';
-      const doImport = replace => { const fresh = pages.map(p => ({ name: p.name, widgets: p.widgets.map((w, i) => Object.assign({ id: 'i' + Date.now() + i, w: 1, value: 0, valueY: 0, targetY: { type: 'none' } }, w, { target: w.target || { type: 'none' } })) })); ctrl.pages = replace ? fresh : ctrl.pages.concat(fresh); ctrl.cur = replace ? 0 : ctrl.pages.length - fresh.length; Object.entries(aliases).forEach(([k, v]) => { decks.forEach(d => d.tracks.forEach(tr => { if (tr.name.toLowerCase() === k.toLowerCase()) { tr.alias = v; if (tr.headEl) tr.headEl.querySelector('b').textContent = v; } })); }); buildMixer(); tplPanel.hidden = true; renderCtrl(); toast('Imported "' + t.name + '" (' + (replace ? 'replace' : 'add') + ')'); };
+      const doImport = replace => { const fresh = pages.map(p => ({ name: p.name, widgets: p.widgets.map((w, i) => Object.assign({ id: 'i' + Date.now() + i, w: 1, value: 0, valueY: 0, targetY: { type: 'none' } }, w, { target: w.target || { type: 'none' } })) })); ctrl.pages = replace ? fresh : ctrl.pages.concat(fresh); ctrl.cur[ctrl.focus] = replace ? 0 : ctrl.pages.length - fresh.length; Object.entries(aliases).forEach(([k, v]) => { decks.forEach(d => d.tracks.forEach(tr => { if (tr.name.toLowerCase() === k.toLowerCase()) { tr.alias = v; if (tr.headEl) tr.headEl.querySelector('b').textContent = v; } })); }); buildMixer(); tplPanel.hidden = true; renderCtrl(); toast('Imported "' + t.name + '" (' + (replace ? 'replace' : 'add') + ')'); };
       document.getElementById('tplAdd').onclick = () => doImport(false); document.getElementById('tplReplace').onclick = () => doImport(true);
     };
   }
