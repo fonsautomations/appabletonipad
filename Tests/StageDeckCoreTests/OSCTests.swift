@@ -394,3 +394,18 @@ final class MixerLayoutTests: XCTestCase {
         XCTAssertEqual(plan.metrics.stripWidth, MixerLayoutPlan.minStripWidth)
     }
 }
+
+final class ResolverIndexTests: XCTestCase {
+    func testUnloadedParametersResolveToMinusOne() {
+        var song = LiveSongState()
+        var t = LiveTrack(index: 0, name: "01 PULSO")
+        t.devices = [LiveDevice(trackIndex: 0, index: 0, name: "ENERGIA subir y soltar", className: "AudioEffectGroupDevice")] // parameters not loaded
+        song.tracks = [t]
+        let target = ControlTarget.liveParameter(track: "01 PULSO", trackIndex: -1, device: "ENERGIA subir y soltar", deviceIndex: -1, parameter: "Energía", parameterIndex: -1)
+        let r = ControlResolver.resolve(target, in: song)
+        XCTAssertEqual(r?.track, 0); XCTAssertEqual(r?.device, 0); XCTAssertEqual(r?.parameter, -1)
+        song.tracks[0].devices[0].parameters = [LiveDeviceParameter(index: 0, name: "Device On", value: 1, min: 0, max: 1), LiveDeviceParameter(index: 1, name: "Energía", value: 0, min: 0, max: 1)]
+        XCTAssertEqual(ControlResolver.resolve(target, in: song)?.parameter, 1)
+        XCTAssertNotEqual(song.deviceSignature, LiveSongState().deviceSignature)
+    }
+}

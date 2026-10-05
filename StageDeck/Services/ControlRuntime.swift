@@ -37,7 +37,11 @@ final class ControlRuntime: ObservableObject {
             for target in [w.target, w.targetY] where target.isLive {
                 if let r = ControlResolver.resolve(target, in: live.song) {
                     live.requestDeviceParameters(track: r.track, device: r.device)
-                    live.listenParameter(track: r.track, device: r.device, parameter: r.parameter)
+                    if r.parameter >= 0 {
+                        live.listenParameter(track: r.track, device: r.device, parameter: r.parameter)
+                    } else if live.state == .connected, live.song.devices(ofTrack: r.track)[safe: r.device].map({ $0.parameters.count > 1 }) == true {
+                        missing.insert(w.id) // parameters loaded but no such name
+                    }
                 } else if live.state == .connected {
                     missing.insert(w.id)
                 }
@@ -49,8 +53,8 @@ final class ControlRuntime: ObservableObject {
     /// Normalized value shown by a widget (Live targets read back from Live).
     func value(for widget: ControlWidget, axisY: Bool = false) -> Double {
         let target = axisY ? widget.targetY : widget.target
-        if case .liveParameter = target, let r = ControlResolver.resolve(target, in: live.song),
-           let p = live.song.track(r.track)?.devices[safeIndex: r.device]?.parameters[safeIndex: r.parameter] {
+        if case .liveParameter = target, let r = ControlResolver.resolve(target, in: live.song), r.parameter >= 0,
+           let p = live.song.devices(ofTrack: r.track)[safe: r.device]?.parameters[safe: r.parameter] {
             return widget.unscaled(p.normalized)
         }
         return values[widget.id.uuidString + (axisY ? ":y" : "")] ?? (axisY ? widget.valueY : widget.value)
@@ -92,7 +96,7 @@ final class ControlRuntime: ObservableObject {
         case .none:
             break
         case .liveParameter:
-            guard let r = ControlResolver.resolve(target, in: live.song) else { return }
+            guard let r = ControlResolver.resolve(target, in: live.song), r.parameter >= 0 else { return }
             live.setDeviceParameter(track: r.track, device: r.device, parameter: r.parameter, normalized: normalized)
             lastSent = "\(target.label) = \(Int((normalized * 100).rounded()))%"
         case .midiCC(let ch, let cc, let port):

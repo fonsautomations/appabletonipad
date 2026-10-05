@@ -33,6 +33,7 @@ public enum DemoSet {
                 t.volume = 0.85 - Double.random(in: 0...0.2)
                 t.sends = [0.1, 0.0, 0.3]
                 t.hasMIDIInput = name.hasPrefix("SYN")
+                t.canBeArmed = true
                 var seed = (name.count * 7 + tracks.count * 13)
                 for scene in scenes {
                     seed = (seed * 1103515245 + 12345) & 0x7FFFFFFF

@@ -121,7 +121,8 @@ struct ControlPagePanel: View {
                 }
                 .onAppear { control.prepare(page: page) }
                 .onChange(of: page.widgets) { _ in control.prepare(page: page) }
-                .onChange(of: live.song.tracks.count) { _ in control.prepare(page: page) }
+                .onChange(of: live.song.deviceSignature) { _ in control.prepare(page: page) }
+                .onChange(of: live.state) { _ in control.prepare(page: page) }
             } else {
                 Spacer()
                 PadButton(title: "CREATE FIRST PAGE", color: Theme.accent, active: true, height: 44) { addPage() }.frame(width: 220)

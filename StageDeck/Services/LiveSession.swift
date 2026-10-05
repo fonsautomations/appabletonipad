@@ -296,7 +296,6 @@ final class LiveSession: ObservableObject {
         send(LiveCommand.trackGet("volume", track: t))
         send(LiveCommand.trackGet("panning", track: t))
         send(LiveCommand.trackGet("can_be_armed", track: t))
-        send(LiveCommand.trackGet("arm", track: t))
         send(LiveCommand.trackDeviceNames(track: t))
         send(LiveCommand.trackDeviceClassNames(track: t))
         for s in 0..<song.numSends { send(LiveCommand.getSend(track: t, send: s)) }
@@ -413,7 +412,9 @@ final class LiveSession: ObservableObject {
         case .trackMute(let t, let v): update(t) { $0.mute = v }
         case .trackSolo(let t, let v): update(t) { $0.solo = v }
         case .trackArm(let t, let v): update(t) { $0.arm = v }
-        case .trackCanBeArmed(let t, let v): update(t) { $0.canBeArmed = v }
+        case .trackCanBeArmed(let t, let v):
+            update(t) { $0.canBeArmed = v }
+            if v { send(LiveCommand.trackGet("arm", track: t)) }
         case .trackVolume(let t, let v): update(t) { $0.volume = v }
         case .trackPanning(let t, let v): update(t) { $0.panning = v }
         case .trackSend(let t, let s, let v):
@@ -483,7 +484,7 @@ final class LiveSession: ObservableObject {
             if s < song.scenes.count { song.scenes[s].isTriggered = v }
         case .deviceParameterNames(let t, let d, let names):
             updateDevices(t) { devices in
-                guard d < devices.count else { return }
+                guard d >= 0, d < devices.count else { return }
                 var params = devices[d].parameters
                 for (i, n) in names.enumerated() {
                     if i < params.count { params[i].name = n } else { params.append(LiveDeviceParameter(index: i, name: n, value: 0, min: 0, max: 1)) }
@@ -495,22 +496,22 @@ final class LiveSession: ObservableObject {
             }
         case .deviceParameterValues(let t, let d, let values):
             updateDevices(t) { devices in
-                guard d < devices.count else { return }
+                guard d >= 0, d < devices.count else { return }
                 for (i, v) in values.enumerated() where i < devices[d].parameters.count { devices[d].parameters[i].value = v }
             }
         case .deviceParameterMins(let t, let d, let values):
             updateDevices(t) { devices in
-                guard d < devices.count else { return }
+                guard d >= 0, d < devices.count else { return }
                 for (i, v) in values.enumerated() where i < devices[d].parameters.count { devices[d].parameters[i].min = v }
             }
         case .deviceParameterMaxes(let t, let d, let values):
             updateDevices(t) { devices in
-                guard d < devices.count else { return }
+                guard d >= 0, d < devices.count else { return }
                 for (i, v) in values.enumerated() where i < devices[d].parameters.count { devices[d].parameters[i].max = v }
             }
         case .deviceParameterValue(let t, let d, let p, let v):
             updateDevices(t) { devices in
-                guard d < devices.count, p < devices[d].parameters.count else { return }
+                guard d >= 0, p >= 0, d < devices.count, p < devices[d].parameters.count else { return }
                 devices[d].parameters[p].value = v
             }
         case .selectedDevice(let t, let d):
@@ -586,7 +587,7 @@ final class LiveSession: ObservableObject {
     /// Subscribes to a device parameter so widgets show Live's value (idempotent).
     func listenParameter(track: Int, device: Int, parameter: Int) {
         let key = "\(track):\(device):\(parameter)"
-        guard !listenedParameters.contains(key), state == .connected else { return }
+        guard device >= 0, parameter >= 0, !listenedParameters.contains(key), state == .connected else { return }
         listenedParameters.insert(key)
         send(LiveCommand.deviceParameterListen(track: track, device: device, parameter: parameter, start: true))
     }
@@ -602,6 +603,7 @@ final class LiveSession: ObservableObject {
     }
 
     func requestDeviceParameters(track: Int, device: Int) {
+        guard device >= 0 else { return }
         let key = "\(track):\(device)"
         guard !deviceParamsRequested.contains(key) else { return }
         deviceParamsRequested.insert(key)
@@ -717,6 +719,7 @@ final class LiveSession: ObservableObject {
 
     /// Sets a device parameter by normalized value 0...1. Works for tracks, the master and returns (pseudo indices).
     func setDeviceParameter(track: Int, device: Int, parameter: Int, normalized: Double) {
+        guard device >= 0, parameter >= 0 else { return }
         updateDevices(track) { devices in
             guard device < devices.count, parameter < devices[device].parameters.count else { return }
             var p = devices[device].parameters[parameter]

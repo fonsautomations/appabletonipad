@@ -97,7 +97,8 @@ public struct LiveTrack: Equatable, Hashable, Identifiable {
     public var mute: Bool = false
     public var solo: Bool = false
     public var arm: Bool = false
-    public var canBeArmed: Bool = true
+    /// False until Live reports can_be_armed (group, return and master tracks never can).
+    public var canBeArmed: Bool = false
     public var volume: Double = 0.85
     public var panning: Double = 0
     public var sends: [Double] = []
@@ -238,6 +239,14 @@ public struct LiveSongState: Equatable {
     public init() {}
 
     public var numSends: Int { returnTrackNames.count }
+
+    /// Changes whenever device lists or their parameter lists are (re)loaded; cheap to compare.
+    public var deviceSignature: Int {
+        var n = tracks.count * 1_000 + masterDevices.count
+        for t in tracks { n += t.devices.count * 7; for d in t.devices { n += d.parameters.count } }
+        for d in masterDevices { n += d.parameters.count }
+        return n
+    }
 
     public func track(_ index: Int) -> LiveTrack? {
         guard index >= 0, index < tracks.count else { return nil }

@@ -151,10 +151,10 @@ public enum ControlResolver {
         guard let t = track else { return nil }
         let device: LiveDevice? = t.devices.first(where: { $0.name.caseInsensitiveCompare(dName) == .orderedSame }) ?? t.devices[safeIndex: dIdx]
         guard let d = device else { return nil }
-        let p = d.parameterIndex(named: pName) ?? (pIdx < d.parameters.count ? pIdx : nil)
+        let p = d.parameterIndex(named: pName) ?? (pIdx >= 0 && pIdx < d.parameters.count ? pIdx : nil)
         guard let pi = p else {
-            // Parameters not loaded yet: trust the stored index so the caller can request them.
-            return Resolved(track: t.index, device: d.index, parameter: pIdx)
+            // Parameters not loaded yet (or the name is unknown): -1 tells the caller to request them.
+            return Resolved(track: t.index, device: d.index, parameter: -1)
         }
         return Resolved(track: t.index, device: d.index, parameter: pi)
     }
