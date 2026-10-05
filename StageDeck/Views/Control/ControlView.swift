@@ -102,21 +102,24 @@ struct ControlPagePanel: View {
             header
             if let page {
                 let rows = ControlLayout.rows(page.widgets)
+                let gutter: CGFloat = compact ? 18 : 32
+                let gap: CGFloat = compact ? 6 : 10
+                GeometryReader { geo in
+                // Fixed 8-column grid: every control gets exactly its width; empty cells stay empty (no hit area).
+                let unit = max(20, (geo.size.width - 2 * gutter - 7 * gap) / 8)
                 ScrollView(.vertical, showsIndicators: true) {
                     VStack(spacing: 14) {
                         ForEach(Array(rows.enumerated()), id: \.offset) { (ri, row) in
-                            HStack(alignment: .top, spacing: compact ? 6 : 10) {
+                            HStack(alignment: .top, spacing: gap) {
                                 ForEach(row) { widget in
+                                    let units = CGFloat(max(1, min(ControlPage.columns, widget.width)))
                                     ControlWidgetView(widget: widget, editing: editing, compact: compact, onEdit: { editingWidget = widget })
-                                        .frame(maxWidth: .infinity)
-                                        .layoutPriority(Double(widget.width))
+                                        .frame(width: unit * units + gap * (units - 1))
                                         .opacity(draggingWidget == widget.id ? 0.35 : 1)
                                         .modifier(ReorderDrag(enabled: editing, id: widget.id, dragging: $draggingWidget,
                                                               move: { from, to in moveWidget(from, before: to) }))
                                 }
-                                if ControlLayout.rowUnits(row) < ControlPage.columns {
-                                    Spacer(minLength: 0).layoutPriority(Double(ControlPage.columns - ControlLayout.rowUnits(row)))
-                                }
+                                Spacer(minLength: 0)
                             }
                             .id(ri)
                         }
@@ -127,7 +130,8 @@ struct ControlPagePanel: View {
                     }
                     .padding(.vertical, 6)
                     // Free gutters on both sides: drag there (or on any label) to scroll; knobs and faders keep their own drag.
-                    .padding(.horizontal, compact ? 18 : 32)
+                    .padding(.horizontal, gutter)
+                }
                 }
                 .onAppear { control.prepare(page: page) }
                 .onChange(of: page.widgets) { _ in control.prepare(page: page) }
@@ -491,14 +495,15 @@ struct KnobView: View {
                     .foregroundColor(Theme.textPrimary)
             }
             .frame(width: size, height: size)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .contentShape(Rectangle())
+            // Only the knob itself reacts: touches around it fall through (scrolling, nothing else).
+            .contentShape(Circle())
             .gesture(DragGesture(minimumDistance: 0)
                 .onChanged { g in
                     if startValue == nil { startValue = value }
                     value = max(0, min(1, (startValue ?? value) - Double(g.translation.height) / 150.0))
                 }
                 .onEnded { _ in startValue = nil })
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 }
