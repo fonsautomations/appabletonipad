@@ -104,11 +104,31 @@ Clave `"<nombre de pista>|<nombre de clip>"`.
 "clipNotes": { "LO|basilar_5-LO": "drop aquí", "FX|perpenar_1-FX": "subir filtro" }
 ```
 
+### `mixerBuses` — canales extra del mixer
+
+Cada bus es un canal propio (fader, envíos, filtro y mute) para un grupo, un retorno, el master o
+cualquier pista. Se muestran entre los decks y el master, en el orden de la lista. `kind` es
+`group`, `returnTrack`, `master` o `track`; `name` es el nombre en Live (se ignora para `master`).
+
+```json
+"mixerBuses": [
+  { "kind": "group", "name": "01 PULSO" },
+  { "kind": "returnTrack", "name": "A-A · CINTA", "showFilter": false },
+  { "kind": "master", "label": "OUT" }
+]
+```
+
+Opcionales por bus: `label` (texto que se ve en vez del nombre), `showSends` (true), `showFilter` (true),
+`showPan` (false). El master de Live no tiene envíos; su strip muestra fader y el Auto Filter que
+tenga puesto el master.
+
 ### `layout` — ajustes de launcher y mixer
 
 Todos opcionales: `clipHeight` (36‑110), `clipFontSize` (9‑20), `showClipProgress`, `showTrackMeters`,
 `showClipNotes`, `showSceneButtons`, `showStopButtons`, `showCueButtons`, `showSections`,
-`bigTextMode`, `dimStoppedClips`, `hideEmptyScenes`, `showSends`, `showPan`, `filterParameterName`.
+`bigTextMode`, `dimStoppedClips`, `hideEmptyScenes`, `showSends`, `showPan`, `filterParameterName`,
+`showGroupStrips` (cada deck enseña su pista de grupo como strip completo), `showMasterFilter`,
+`visibleSends` (lista de nombres de retorno cuyos envíos se ven en los strips; sin ella, los 4 primeros).
 
 ### `patterns` y `sequencer` — secuenciador
 
