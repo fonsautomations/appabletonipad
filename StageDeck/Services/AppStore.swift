@@ -10,7 +10,10 @@ final class AppStore: ObservableObject {
     }
     @Published var activeTab: AppTab = .launcher
     @Published var launcherMode: LauncherMode = .dual
-    @Published var controlDual: Bool = false
+    /// How many CTRL pages are shown at once (1 = full screen, 2 = side by side, 3-4 = grid).
+    @Published var controlPanels: Int = 1 {
+        didSet { UserDefaults.standard.set(controlPanels, forKey: "stagedeck.controlPanels") }
+    }
     @Published var selectedDeckIndex: Int = 0
     @Published var showSettings = false
     @Published var pendingTemplate: PendingTemplate? = nil

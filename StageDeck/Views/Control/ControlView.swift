@@ -1,20 +1,26 @@
 import SwiftUI
 
 /// CONTROL: user-built pages of knobs, faders, buttons and XY pads mapped to Live parameters or MIDI.
-/// Single page, or two pages side by side (mix macros from different groups without editing).
+/// Shows 1, 2, 3 or 4 pages at once so macros from different groups can be played together without editing.
 struct ControlView: View {
     @EnvironmentObject var store: AppStore
     @EnvironmentObject var live: LiveSession
     @EnvironmentObject var control: ControlRuntime
-    @State private var panelPages: [Int] = [0, 1]
+    @State private var panelPages: [Int] = [0, 1, 2, 3]
     @State private var editing = false
 
+    static let maxPanels = 4
+
     private var pages: [ControlPage] { store.profile.controlPages }
+    private var panelCount: Int { pages.isEmpty ? 1 : max(1, min(ControlView.maxPanels, store.controlPanels)) }
+    /// With 3-4 pages on screen each panel is half as wide and half as tall: use smaller widgets and compact headers.
+    private var compact: Bool { panelCount >= 3 }
 
     var body: some View {
         VStack(spacing: 8) {
             HStack(spacing: 8) {
-                Segmented(options: [(false, "SINGLE"), (true, "DUAL")], selection: $store.controlDual, height: 28).frame(width: 150)
+                CapsLabel("PAGES", size: 9, color: Theme.textSecondary)
+                Segmented(options: [(1, "1"), (2, "2"), (3, "3"), (4, "4")], selection: $store.controlPanels, height: 28).frame(width: 150)
                 Spacer()
                 if !control.lastSent.isEmpty {
                     Text(control.lastSent).font(.system(size: 10, design: .monospaced)).foregroundColor(Theme.textSecondary).lineLimit(1)
@@ -24,26 +30,48 @@ struct ControlView: View {
                 }
                 PadButton(title: editing ? "DONE" : "EDIT", color: Theme.yellow, active: editing, height: 28, fontSize: 11) { editing.toggle() }.frame(width: 70)
             }
-            if store.controlDual && pages.count > 0 {
+            switch panelCount {
+            case 2:
                 HStack(spacing: 10) {
-                    ControlPagePanel(pageIndex: binding(0), editing: editing)
+                    panel(0)
                     Divider().background(Theme.line)
-                    ControlPagePanel(pageIndex: binding(1), editing: editing)
+                    panel(1)
                 }
-            } else {
-                ControlPagePanel(pageIndex: binding(0), editing: editing)
+            case 3:
+                VStack(spacing: 10) {
+                    HStack(spacing: 10) { panel(0); Divider().background(Theme.line); panel(1) }
+                    Divider().background(Theme.line)
+                    panel(2)
+                }
+            case 4:
+                VStack(spacing: 10) {
+                    HStack(spacing: 10) { panel(0); Divider().background(Theme.line); panel(1) }
+                    Divider().background(Theme.line)
+                    HStack(spacing: 10) { panel(2); Divider().background(Theme.line); panel(3) }
+                }
+            default:
+                panel(0)
             }
         }
         .padding(8)
-        .onAppear { control.seed(from: pages) }
+        .onAppear {
+            control.seed(from: pages)
+            let saved = UserDefaults.standard.integer(forKey: "stagedeck.controlPanels")
+            if saved >= 1 && saved <= ControlView.maxPanels && store.controlPanels == 1 { store.controlPanels = saved }
+        }
+    }
+
+    private func panel(_ i: Int) -> some View {
+        ControlPagePanel(pageIndex: binding(i), editing: editing, compact: compact)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private func binding(_ panel: Int) -> Binding<Int> {
         Binding(get: {
-            let v = panelPages.indices.contains(panel) ? panelPages[panel] : 0
+            let v = panelPages.indices.contains(panel) ? panelPages[panel] : panel
             return min(max(0, v), max(0, pages.count - 1))
         }, set: { v in
-            while panelPages.count <= panel { panelPages.append(0) }
+            while panelPages.count <= panel { panelPages.append(panelPages.count) }
             panelPages[panel] = v
         })
     }
@@ -53,6 +81,7 @@ struct ControlView: View {
 struct ControlPagePanel: View {
     @Binding var pageIndex: Int
     let editing: Bool
+    var compact: Bool = false
     @EnvironmentObject var store: AppStore
     @EnvironmentObject var live: LiveSession
     @EnvironmentObject var control: ControlRuntime
@@ -72,9 +101,9 @@ struct ControlPagePanel: View {
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(spacing: 10) {
                         ForEach(Array(ControlLayout.rows(page.widgets).enumerated()), id: \.offset) { (_, row) in
-                            HStack(alignment: .top, spacing: 10) {
+                            HStack(alignment: .top, spacing: compact ? 6 : 10) {
                                 ForEach(row) { widget in
-                                    ControlWidgetView(widget: widget, editing: editing, onEdit: { editingWidget = widget })
+                                    ControlWidgetView(widget: widget, editing: editing, compact: compact, onEdit: { editingWidget = widget })
                                         .frame(maxWidth: .infinity)
                                         .layoutPriority(Double(widget.width))
                                 }
@@ -124,15 +153,25 @@ struct ControlPagePanel: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 4) {
                     ForEach(Array(pages.enumerated()), id: \.element.id) { (i, p) in
-                        PadButton(title: p.name, color: Theme.accent, active: i == pageIndex, height: 28, fontSize: 11) { pageIndex = i }
-                            .frame(width: 104)
+                        PadButton(title: p.name, color: Theme.accent, active: i == pageIndex, height: 28, fontSize: compact ? 10 : 11) { pageIndex = i }
+                            .frame(width: compact ? 84 : 104)
                     }
                     if editing {
                         PadButton(title: "+ PAGE", color: Theme.panelRaised, active: false, height: 28, fontSize: 10) { addPage() }.frame(width: 64)
                     }
                 }
             }
-            if editing {
+            if editing && compact {
+                PadButton(title: "+ SET", color: Theme.green, active: true, height: 28, fontSize: 10) { showAddFromSet = true }.frame(width: 56)
+                PadButton(title: "ADD", color: Theme.secondary, active: true, height: 28, fontSize: 11) { showAddMenu = true }.frame(width: 50)
+                Menu {
+                    Button("Rename page") { pageName = page?.name ?? ""; renamingPage = true }
+                    Button("Delete page", role: .destructive) { deletePage() }
+                } label: {
+                    Image(systemName: "ellipsis").font(.system(size: 14, weight: .bold)).foregroundColor(Theme.textPrimary)
+                        .frame(width: 32, height: 28).background(Theme.panelRaised).cornerRadius(8)
+                }
+            } else if editing {
                 PadButton(title: "RENAME", color: Theme.panelRaised, active: false, height: 28, fontSize: 10) {
                     pageName = page?.name ?? ""
                     renamingPage = true
@@ -303,12 +342,13 @@ struct DeviceParameterRows: View {
 struct ControlWidgetView: View {
     let widget: ControlWidget
     let editing: Bool
+    var compact: Bool = false
     let onEdit: () -> Void
     @EnvironmentObject var control: ControlRuntime
     @EnvironmentObject var live: LiveSession
 
     private var color: Color { Color(hex: widget.colorHex) }
-    private var height: CGFloat { widget.kind.isTall ? 170 : 96 }
+    private var height: CGFloat { compact ? (widget.kind.isTall ? 118 : 64) : (widget.kind.isTall ? 170 : 96) }
 
     var body: some View {
         VStack(spacing: 4) {
@@ -332,11 +372,11 @@ struct ControlWidgetView: View {
             }
             .frame(height: height)
             Text(widget.name)
-                .font(.system(size: 11, weight: .bold, design: .rounded))
+                .font(.system(size: compact ? 10 : 11, weight: .bold, design: .rounded))
                 .foregroundColor(Theme.textPrimary)
                 .lineLimit(1)
             Text(widget.target.label + (widget.kind == .xy ? " / " + widget.targetY.label : ""))
-                .font(.system(size: 8, design: .rounded))
+                .font(.system(size: compact ? 7 : 8, design: .rounded))
                 .foregroundColor(unresolved ? Theme.yellow : Theme.textSecondary)
                 .lineLimit(1)
         }
