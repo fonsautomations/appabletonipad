@@ -86,12 +86,43 @@ struct PadButton: View {
 }
 
 /// Vertical fader with drag gesture; value 0...1.
+/// Which live level a fader shows next to its value.
+enum MeterKey: Equatable { case track(Int), master }
+
+/// Observes the meters object so the fader around it does not re-render 20 times a second.
+struct FaderMeter: View {
+    @ObservedObject var meters: LiveMeters
+    let key: MeterKey
+    let height: CGFloat
+
+    private var level: Double {
+        switch key {
+        case .track(let i): return meters.trackMeters[i] ?? 0
+        case .master: return meters.masterMeter
+        }
+    }
+
+    var body: some View {
+        HStack {
+            Spacer()
+            RoundedRectangle(cornerRadius: 1.5)
+                .fill(Color.black.opacity(0.6))
+                .frame(width: 3, height: max(0, height * CGFloat(max(0, min(1, level)))))
+                .padding(.trailing, 4)
+                .padding(.bottom, 2)
+        }
+    }
+}
+
 struct VerticalFader: View {
     @Binding var value: Double
     var color: Color = Theme.accent
     var meter: Double? = nil
     var label: String? = nil
     var onChange: ((Double) -> Void)? = nil
+    /// Live meter source (preferred over `meter`): only the meter bar re-renders on level changes.
+    var meters: LiveMeters? = nil
+    var meterKey: MeterKey? = nil
 
     @State private var dragStartValue: Double? = nil
 
@@ -103,7 +134,9 @@ struct VerticalFader: View {
                 RoundedRectangle(cornerRadius: 6)
                     .fill(color)
                     .frame(height: max(4, h * CGFloat(max(0, min(1, value)))))
-                if let meter {
+                if let meters, let meterKey {
+                    FaderMeter(meters: meters, key: meterKey, height: h)
+                } else if let meter {
                     HStack {
                         Spacer()
                         RoundedRectangle(cornerRadius: 1.5)

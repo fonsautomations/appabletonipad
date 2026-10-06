@@ -67,14 +67,24 @@ final class OSCInbox: @unchecked Sendable {
 /// All published state changes happen on the main thread.
 @MainActor
 final class LiveSession: ObservableObject {
-    @Published private(set) var song = LiveSongState()
+    /// The set as the app knows it. Changes are published at most once per run-loop turn, so a burst of
+    /// OSC replies or a fader drag at 60 Hz costs one re-render, not one per message.
+    private(set) var song = LiveSongState() { didSet { publishCoalesced() } }
     @Published private(set) var sections: [SceneSection] = []
+    private var publishScheduled = false
+
+    private func publishCoalesced() {
+        guard !publishScheduled else { return }
+        publishScheduled = true
+        objectWillChange.send()
+        DispatchQueue.main.async { [weak self] in self?.publishScheduled = false }
+    }
     @Published private(set) var state: LiveConnectionState = .disconnected
     @Published private(set) var liveHost: String = ""
     @Published private(set) var lastError: String = ""
     @Published private(set) var listenerError: String = ""
-    @Published private(set) var lastMessageAt: Date = .distantPast
-    @Published private(set) var messagesReceived: Int = 0
+    private(set) var lastMessageAt: Date = .distantPast
+    private(set) var messagesReceived: Int = 0
     @Published var meterRefreshEnabled: Bool = true
     @Published private(set) var selectedDeviceInLive: SelectedDevice? = nil
     struct SelectedDevice: Equatable { var track: Int; var device: Int }

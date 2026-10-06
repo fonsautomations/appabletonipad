@@ -191,7 +191,7 @@ struct MasterColumn: View {
             HStack(alignment: .bottom, spacing: 8) {
                 if store.profile.showMasterFilter, let f = FilterLocator.find(in: live.song.masterDevices, customName: store.profile.filterParameterName) {
                     VStack(spacing: 4) {
-                        FilterFader(trackIndex: LiveSongState.masterTrackIndex, binding: f, color: Theme.green)
+                        FilterFader(trackIndex: LiveSongState.masterTrackIndex, binding: f, color: Theme.green, live: live)
                             .frame(width: 48).frame(maxHeight: .infinity)
                         CapsLabel("Filter", size: 8)
                     }
@@ -199,7 +199,7 @@ struct MasterColumn: View {
                 VStack(spacing: 4) {
                     Text(LiveVolume.label(fader: live.song.masterVolume))
                         .font(.system(size: 10, weight: .semibold, design: .monospaced)).foregroundColor(Theme.textSecondary)
-                    MasterFaderView(meters: live.meters)
+                    MasterFaderView()
                         .frame(width: 64).frame(maxHeight: .infinity)
                     CapsLabel("Master", size: 8)
                 }
@@ -249,15 +249,26 @@ struct DeckMixer: View {
                 Spacer(minLength: 0)
             }
             .frame(height: MixerLayoutPlan.sectionHeaderHeight - 6)
+            let sendIndices = store.profile.showSends ? store.profile.sendIndices(in: live.song) : []
+            let sendNames = sendIndices.map { live.song.returnTrackNames[safe: $0] ?? "S\($0 + 1)" }
             HStack(alignment: .top, spacing: MixerLayoutPlan.stripGap) {
                 if store.profile.showGroupStrips, let g = groupTrack {
-                    ChannelStrip(track: g, deckColor: color, metrics: metrics, isGroupStrip: true)
+                    strip(g, sendIndices: sendIndices, sendNames: sendNames, isGroup: true)
                 }
                 ForEach(tracks) { track in
-                    ChannelStrip(track: track, deckColor: color, metrics: metrics)
+                    strip(track, sendIndices: sendIndices, sendNames: sendNames, isGroup: false)
                 }
             }
         }
+    }
+}
+
+extension DeckMixer {
+    func strip(_ track: LiveTrack, sendIndices: [Int], sendNames: [String], isGroup: Bool) -> some View {
+        ChannelStrip(track: track, deckColor: color, metrics: metrics, isGroupStrip: isGroup,
+                     displayName: store.profile.displayName(forTrack: track.name), sendIndices: sendIndices, sendNames: sendNames,
+                     showPan: store.profile.showPan, filterName: store.profile.filterParameterName, live: live, store: store)
+            .equatable()
     }
 }
 
@@ -292,8 +303,8 @@ struct StripModel {
     var deviceTrackIndex: Int
     /// Filter control of this channel, if it has one (Auto Filter or a filter-named macro).
     var filter: FilterBinding? = nil
-    /// Reads the live meter of this channel (observed by the strip so it animates).
-    var meter: (LiveMeters) -> Double? = { _ in nil }
+    /// Live meter shown on the fader (drawn by a child that is the only observer of the meters).
+    var meterKey: MeterKey? = nil
     var setVolume: (Double) -> Void
     var setMute: (Bool) -> Void
     var setSolo: ((Bool) -> Void)? = nil
@@ -314,10 +325,11 @@ struct StripBody: View {
     let model: StripModel
     let options: StripOptions
     let metrics: MixerLayoutPlan.Metrics
-    @ObservedObject var meters: LiveMeters
+    /// Names of the sends shown (same order as `options.sendIndices`).
+    let sendNames: [String]
+    /// Not observed: used for actions and for the meter child only.
+    let live: LiveSession
     var onNameLongPress: (() -> Void)? = nil
-    @EnvironmentObject var live: LiveSession
-    @EnvironmentObject var store: AppStore
 
     private var w: CGFloat { CGFloat(metrics.stripWidth) }
     private var gap: CGFloat { metrics.density == .full ? 5 : 4 }
@@ -336,15 +348,14 @@ struct StripBody: View {
                 .onLongPressGesture(minimumDuration: 0.5) { onNameLongPress?() }
 
             if metrics.showSends {
-                ForEach(options.sendIndices, id: \.self) { s in
-                    let name = live.song.returnTrackNames[safe: s] ?? "S\(s + 1)"
-                    SendBar(value: model.sends[safe: s] ?? 0, name: name, color: model.color, height: CGFloat(metrics.sendHeight)) { model.setSend(s, $0) }
+                ForEach(Array(options.sendIndices.enumerated()), id: \.element) { (i, s) in
+                    SendBar(value: model.sends[safe: s] ?? 0, name: sendNames[safe: i] ?? "S\(s + 1)", color: model.color, height: CGFloat(metrics.sendHeight)) { model.setSend(s, $0) }
                         .frame(width: w, height: CGFloat(metrics.sendHeight))
                 }
             }
 
             if options.showFilter && metrics.showFilter, let f = model.filter {
-                FilterFader(trackIndex: model.deviceTrackIndex, binding: f, color: model.color)
+                FilterFader(trackIndex: model.deviceTrackIndex, binding: f, color: model.color, live: live)
                     .frame(width: w, height: CGFloat(metrics.filterHeight))
             }
 
@@ -357,8 +368,9 @@ struct StripBody: View {
                     .cornerRadius(4)
             }
 
-            VerticalFader(value: Binding(get: { model.volume }, set: { model.setVolume($0) }), color: model.color, meter: model.meter(meters),
-                          label: metrics.showDB ? nil : LiveVolume.label(fader: model.volume))
+            VerticalFader(value: Binding(get: { model.volume }, set: { model.setVolume($0) }), color: model.color,
+                          label: metrics.showDB ? nil : LiveVolume.label(fader: model.volume),
+                          meters: live.meters, meterKey: model.meterKey)
                 .frame(width: w, height: CGFloat(metrics.faderHeight))
 
             if options.showPan && metrics.density == .full {
@@ -390,35 +402,46 @@ struct StripBody: View {
     }
 }
 
-/// A Live track (stem or group) as a strip.
-struct ChannelStrip: View {
+/// A Live track (stem or group) as a strip. Equatable on its data, so a change elsewhere in the set
+/// (another fader, a meter, a parameter) does not rebuild this strip.
+struct ChannelStrip: View, Equatable {
     let track: LiveTrack
     let deckColor: Color
     let metrics: MixerLayoutPlan.Metrics
     var isGroupStrip = false
-    @EnvironmentObject var store: AppStore
-    @EnvironmentObject var live: LiveSession
+    let displayName: String
+    let sendIndices: [Int]
+    let sendNames: [String]
+    let showPan: Bool
+    let filterName: String
+    let live: LiveSession
+    let store: AppStore
     @State private var renameRequest: RenameRequest? = nil
 
+    static func == (a: ChannelStrip, b: ChannelStrip) -> Bool {
+        a.track == b.track && a.deckColor == b.deckColor && a.metrics == b.metrics && a.isGroupStrip == b.isGroupStrip
+            && a.displayName == b.displayName && a.sendIndices == b.sendIndices && a.sendNames == b.sendNames
+            && a.showPan == b.showPan && a.filterName == b.filterName
+    }
+
     var body: some View {
-        StripBody(model: MixerChannels.model(track: track, live: live, store: store),
-                  options: StripOptions(sendIndices: store.profile.showSends ? store.profile.sendIndices(in: live.song) : [],
-                                        showFilter: true, showPan: store.profile.showPan,
+        StripBody(model: MixerChannels.model(track: track, displayName: displayName, filterName: filterName, live: live),
+                  options: StripOptions(sendIndices: sendIndices, showFilter: true, showPan: showPan,
                                         nameBackground: isGroupStrip ? deckColor.opacity(0.45) : nil),
-                  metrics: metrics,
-                  meters: live.meters,
+                  metrics: metrics, sendNames: sendNames, live: live,
                   onNameLongPress: { Haptics.heavy(); renameRequest = RenameRequest(liveName: track.name) })
             .sheet(item: $renameRequest) { r in RenameTrackSheet(liveName: r.liveName).environmentObject(store) }
+            .onAppear { live.loadDevices(ofTrack: track.index) }
     }
 }
 
 /// Builds strip models for every kind of channel.
 @MainActor
 enum MixerChannels {
-    static func model(track: LiveTrack, live: LiveSession, store: AppStore) -> StripModel {
-        StripModel(name: store.profile.displayName(forTrack: track.name), color: Color(track.color), volume: track.volume, mute: track.mute,
+    static func model(track: LiveTrack, displayName: String, filterName: String, live: LiveSession) -> StripModel {
+        StripModel(name: displayName, color: Color(track.color), volume: track.volume, mute: track.mute,
                    solo: track.solo, arm: track.canBeArmed && track.hasMIDIInput ? track.arm : nil, panning: track.panning, sends: track.sends,
-                   deviceTrackIndex: track.index, filter: FilterLocator.find(in: track.devices, customName: store.profile.filterParameterName), meter: { $0.trackMeters[track.index] ?? 0 },
+                   deviceTrackIndex: track.index, filter: FilterLocator.find(in: track.devices, customName: filterName), meterKey: .track(track.index),
                    setVolume: { live.setVolume(track: track.index, value: $0) },
                    setMute: { live.setMute(track: track.index, on: $0) },
                    setSolo: { live.setSolo(track: track.index, on: $0) },
@@ -429,7 +452,7 @@ enum MixerChannels {
 
     static func model(returnTrack r: LiveReturnTrack, live: LiveSession, store: AppStore) -> StripModel {
         StripModel(name: r.name, color: Color(r.color), volume: r.volume, mute: r.mute, solo: nil, arm: nil, panning: r.panning, sends: r.sends,
-                   deviceTrackIndex: LiveSongState.trackIndex(forReturn: r.index), filter: FilterLocator.find(in: r.devices, customName: store.profile.filterParameterName), meter: { _ in nil },
+                   deviceTrackIndex: LiveSongState.trackIndex(forReturn: r.index), filter: FilterLocator.find(in: r.devices, customName: store.profile.filterParameterName), meterKey: nil,
                    setVolume: { live.setReturnVolume(r.index, value: $0) },
                    setMute: { live.setReturnMute(r.index, on: $0) },
                    setPanning: { live.setReturnPanning(r.index, value: $0) },
@@ -438,7 +461,7 @@ enum MixerChannels {
 
     static func master(live: LiveSession, store: AppStore) -> StripModel {
         StripModel(name: "MASTER", color: Theme.green, volume: live.song.masterVolume, mute: false, solo: nil, arm: nil, panning: 0, sends: [],
-                   deviceTrackIndex: LiveSongState.masterTrackIndex, filter: FilterLocator.find(in: live.song.masterDevices, customName: store.profile.filterParameterName), meter: { $0.masterMeter },
+                   deviceTrackIndex: LiveSongState.masterTrackIndex, filter: FilterLocator.find(in: live.song.masterDevices, customName: store.profile.filterParameterName), meterKey: .master,
                    setVolume: { live.setMasterVolume($0) },
                    setMute: { _ in })
     }
@@ -453,7 +476,7 @@ enum MixerChannels {
             var m = model(returnTrack: r, live: live, store: store); m.name = bus.displayName; return m
         case .group, .track:
             guard let t = live.song.tracks.first(where: { $0.name.caseInsensitiveCompare(bus.name) == .orderedSame }) else { return nil }
-            var m = model(track: t, live: live, store: store)
+            var m = model(track: t, displayName: store.profile.displayName(forTrack: t.name), filterName: store.profile.filterParameterName, live: live)
             if let l = bus.label, !l.isEmpty { m.name = l }
             return m
         }
@@ -492,7 +515,7 @@ struct FilterFader: View {
     let trackIndex: Int
     let binding: FilterBinding
     let color: Color
-    @EnvironmentObject var live: LiveSession
+    @ObservedObject var live: LiveSession
 
     var body: some View {
         let param = live.song.devices(ofTrack: trackIndex)[safe: binding.device]?.parameters[safe: binding.parameter]
@@ -545,7 +568,8 @@ struct BusStrip: View {
                                             showFilter: bus.showFilter, showPan: bus.showPan,
                                             nameBackground: nameBackground(model.color)),
                       metrics: metrics,
-                      meters: live.meters,
+                      sendNames: (bus.showSends && store.profile.showSends ? store.profile.sendIndices(in: live.song) : []).map { live.song.returnTrackNames[safe: $0] ?? "S\($0 + 1)" },
+                      live: live,
                       onNameLongPress: { Haptics.heavy(); onEdit() })
         } else {
             VStack(spacing: 6) {
@@ -651,7 +675,6 @@ struct AddBusSheet: View {
             Form {
                 Section {
                     TextField("Filter by name", text: $filter)
-                    row(kind: .master, name: "", title: "Master", subtitle: live.song.masterAutoFilter != nil ? "fader + Auto Filter" : "fader (no Auto Filter on master)", color: Theme.green)
                 }
                 Section("Groups") {
                     ForEach(matching(live.song.groupTracks)) { t in
@@ -708,11 +731,10 @@ struct AddBusSheet: View {
 // MARK: - Master
 
 struct MasterFaderView: View {
-    @ObservedObject var meters: LiveMeters
     @EnvironmentObject var live: LiveSession
 
     var body: some View {
         VerticalFader(value: Binding(get: { live.song.masterVolume }, set: { live.setMasterVolume($0) }),
-                      color: Theme.green, meter: meters.masterMeter, label: nil)
+                      color: Theme.green, label: nil, meters: live.meters, meterKey: .master)
     }
 }

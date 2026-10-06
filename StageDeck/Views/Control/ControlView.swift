@@ -114,7 +114,11 @@ struct ControlPagePanel: View {
                             HStack(alignment: .top, spacing: gap) {
                                 ForEach(row) { widget in
                                     let units = CGFloat(max(1, min(ControlPage.columns, widget.width)))
-                                    ControlWidgetView(widget: widget, editing: editing, compact: compact, onEdit: { editingWidget = widget })
+                                    ControlWidgetView(widget: widget, editing: editing, compact: compact,
+                                                      value: control.value(for: widget), valueY: widget.kind == .xy ? control.value(for: widget, axisY: true) : 0,
+                                                      unresolved: control.unresolved.contains(widget.id), control: control,
+                                                      onEdit: { editingWidget = widget })
+                                        .equatable()
                                         .frame(width: unit * units + gap * (units - 1))
                                         .opacity(draggingWidget == widget.id ? 0.35 : 1)
                                         .modifier(ReorderDrag(enabled: editing, id: widget.id, dragging: $draggingWidget,
@@ -391,13 +395,21 @@ struct DeviceParameterRows: View {
 }
 
 /// One widget (fader / knob / button / toggle / XY) with its label.
-struct ControlWidgetView: View {
+/// One control. Equatable on its data (widget, value, state) so the 90 others on a page are not
+/// rebuilt when a single parameter changes.
+struct ControlWidgetView: View, Equatable {
     let widget: ControlWidget
     let editing: Bool
     var compact: Bool = false
+    let value: Double
+    let valueY: Double
+    let unresolved: Bool
+    let control: ControlRuntime
     let onEdit: () -> Void
-    @EnvironmentObject var control: ControlRuntime
-    @EnvironmentObject var live: LiveSession
+
+    static func == (a: ControlWidgetView, b: ControlWidgetView) -> Bool {
+        a.widget == b.widget && a.editing == b.editing && a.compact == b.compact && a.value == b.value && a.valueY == b.valueY && a.unresolved == b.unresolved
+    }
 
     private var color: Color { Color(hex: widget.colorHex) }
     private var height: CGFloat { compact ? (widget.kind.isTall ? 118 : 64) : (widget.kind.isTall ? 170 : 96) }
@@ -434,20 +446,18 @@ struct ControlWidgetView: View {
         }
     }
 
-    private var unresolved: Bool { control.unresolved.contains(widget.id) }
-
     @ViewBuilder
     private func body(for kind: ControlWidgetKind) -> some View {
         switch kind {
         case .fader:
-            VerticalFader(value: Binding(get: { control.value(for: widget) }, set: { control.set(widget, value: $0) }), color: color, meter: nil,
-                          label: percent(control.value(for: widget)))
+            VerticalFader(value: Binding(get: { value }, set: { control.set(widget, value: $0) }), color: color, meter: nil,
+                          label: percent(value))
                 .disabled(editing)
         case .knob:
-            KnobView(value: Binding(get: { control.value(for: widget) }, set: { control.set(widget, value: $0) }), color: color)
+            KnobView(value: Binding(get: { value }, set: { control.set(widget, value: $0) }), color: color)
                 .disabled(editing)
         case .button, .toggle:
-            let on = control.value(for: widget) >= 0.5
+            let on = value >= 0.5
             RoundedRectangle(cornerRadius: 10)
                 .fill(on ? color : color.opacity(0.3))
                 .overlay(Text(widget.kind == .toggle ? (on ? "ON" : "OFF") : "PUSH")
@@ -457,8 +467,8 @@ struct ControlWidgetView: View {
                     .onChanged { _ in if !pressed && !editing { pressed = true; Haptics.tap(); control.press(widget, down: true) } }
                     .onEnded { _ in if pressed { pressed = false; control.press(widget, down: false) } })
         case .xy:
-            XYPadView(x: Binding(get: { control.value(for: widget) }, set: { control.set(widget, value: $0) }),
-                      y: Binding(get: { control.value(for: widget, axisY: true) }, set: { control.set(widget, value: $0, axisY: true) }), color: color)
+            XYPadView(x: Binding(get: { value }, set: { control.set(widget, value: $0) }),
+                      y: Binding(get: { valueY }, set: { control.set(widget, value: $0, axisY: true) }), color: color)
                 .disabled(editing)
         }
     }

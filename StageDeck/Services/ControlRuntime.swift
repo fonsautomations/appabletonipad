@@ -12,6 +12,18 @@ final class ControlRuntime: ObservableObject {
 
     private let live: LiveSession
     private let midi: MIDIService
+    /// Name → index resolution cache, rebuilt when the set's devices or parameters change.
+    private var resolvedCache: [String: ControlResolver.Resolved?] = [:]
+    private var cacheSignature: Int = -1
+
+    private func resolve(_ target: ControlTarget, key: String) -> ControlResolver.Resolved? {
+        let sig = live.song.deviceSignature &+ live.song.tracks.count &* 7919
+        if sig != cacheSignature { resolvedCache.removeAll(); cacheSignature = sig }
+        if let cached = resolvedCache[key] { return cached }
+        let r = ControlResolver.resolve(target, in: live.song)
+        if r == nil || r!.parameter >= 0 { resolvedCache[key] = r } // keep re-trying while parameters load
+        return r
+    }
     private var lastCC: [String: Int] = [:]
     private var heldNotes: Set<String> = []
 
@@ -53,7 +65,7 @@ final class ControlRuntime: ObservableObject {
     /// Normalized value shown by a widget (Live targets read back from Live).
     func value(for widget: ControlWidget, axisY: Bool = false) -> Double {
         let target = axisY ? widget.targetY : widget.target
-        if case .liveParameter = target, let r = ControlResolver.resolve(target, in: live.song), r.parameter >= 0,
+        if case .liveParameter = target, let r = resolve(target, key: widget.id.uuidString + (axisY ? ":y" : "")), r.parameter >= 0,
            let p = live.song.devices(ofTrack: r.track)[safe: r.device]?.parameters[safe: r.parameter] {
             return widget.unscaled(p.normalized)
         }
